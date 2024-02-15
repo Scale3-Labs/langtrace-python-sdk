@@ -1,4 +1,4 @@
-from langtrace.trace_attributes.models.langtrace_span_attributes import LangTraceSpanAttributes
+from langtrace.trace_attributes import LangTraceSpanAttributes
 
 # Instantiate the model
 attributes = LangTraceSpanAttributes.model_validate({'service.provider': 'OpenAI'})
