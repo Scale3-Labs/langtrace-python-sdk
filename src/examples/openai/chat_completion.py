@@ -1,8 +1,8 @@
 import os
 from openai import OpenAI
-
+from examples.openai.setup import setup_instrumentation
 client = OpenAI()
-
+setup_instrumentation()
 def chat_completion():
     stream = client.chat.completions.create(
         model="gpt-4",
