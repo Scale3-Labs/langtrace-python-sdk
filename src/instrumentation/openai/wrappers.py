@@ -24,8 +24,8 @@ class Wrapper:
         url_full = "https://api.openai.com/v1/chat/completions"
         llm_api = "chat.completions.create"
         llm_model = "chat_gpt"
-        llm_prompts = "prompt" # Simplification for demonstration
-        llm_responses = "response"  # Placeholder, should be filled with actual response data
+        llm_prompts = "prompt" 
+        llm_responses = "response"
         spanatttributes = OpenAISpanAttributes(url_full = url_full , llm_api= llm_api, llm_model = llm_model , llm_prompts = llm_prompts, llm_responses = llm_responses)
         for key, value in spanatttributes.dict().items():
             span.set_attribute(key, value)
