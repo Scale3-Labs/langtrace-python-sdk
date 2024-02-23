@@ -6,7 +6,6 @@ from opentelemetry.trace import Span, SpanKind
 from opentelemetry.trace.status import StatusCode
 from opentelemetry.trace import get_tracer
 from opentelemetry import trace
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
 from instrumentation.openai.wrappers import Wrapper
 from instrumentation.openai.lib.span_attributes import OpenAISpanAttributes
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
