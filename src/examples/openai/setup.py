@@ -23,7 +23,7 @@ def setup_instrumentation():
     instrumentation = OpenAIInstrumentation()
 
     # Call the instrument method with some arguments
-    instrumentation.instrument(argument1='value1', argument2='value2', argument3='value3')
+    instrumentation.instrument(tracer_provider=tracer_provider, argument2='value2', argument3='value3')
 
 
     print("setup complete")
