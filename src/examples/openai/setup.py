@@ -1,13 +1,14 @@
 
-from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry import trace
-# from opentelemetry.instrumentation import _InstrumentorFactory, auto_instrumentation
-from opentelemetry.sdk.trace.export import ConsoleSpanExporter
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (ConsoleSpanExporter,
+                                            SimpleSpanProcessor)
+
 from instrumentation.openai.instrumentation import OpenAIInstrumentation
 
+
 def setup_instrumentation():
-    
+
     # Set up OpenTelemetry tracing
     tracer_provider = TracerProvider()
 
@@ -23,9 +24,6 @@ def setup_instrumentation():
     instrumentation = OpenAIInstrumentation()
 
     # Call the instrument method with some arguments
-    instrumentation.instrument(tracer_provider=tracer_provider, argument2='value2', argument3='value3')
-
+    instrumentation.instrument()
 
     print("setup complete")
-
-# Call the setup_instrumentation function to set up instrumentation

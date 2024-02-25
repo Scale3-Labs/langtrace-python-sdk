@@ -1,5 +1,6 @@
-from instrumentation.openai.lib.span_attributes import OpenAISpanAttributes
+# from instrumentation.openai.lib.span_attributes import OpenAISpanAttributes
 from opentelemetry.trace import Span, SpanKind
+
 
 class Wrapper:
     def _with_tracer_wrapper(func):
@@ -26,9 +27,9 @@ class Wrapper:
         llm_model = "chat_gpt"
         llm_prompts = "prompt" 
         llm_responses = "response"
-        spanatttributes = OpenAISpanAttributes(url_full = url_full , llm_api= llm_api, llm_model = llm_model , llm_prompts = llm_prompts, llm_responses = llm_responses)
-        for key, value in spanatttributes.dict().items():
-            span.set_attribute(key, value)
+        # spanatttributes = OpenAISpanAttributes(url_full = url_full , llm_api= llm_api, llm_model = llm_model , llm_prompts = llm_prompts, llm_responses = llm_responses)
+        # for key, value in spanatttributes.dict().items():
+            # span.set_attribute(key, value)
         print("created instance")
           
         response = wrapped(*args, **kwargs)

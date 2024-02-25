@@ -1,37 +1,38 @@
 from typing import Collection
-from openai import OpenAI 
-from wrapt import wrap_function_wrapper
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import Span, SpanKind
-from opentelemetry.trace.status import StatusCode
-from opentelemetry.trace import get_tracer
+
+import openai
 from opentelemetry import trace
-from opentelemetry.instrumentation.openai.utils import is_openai_v1
-from instrumentation.openai.wrappers import Wrapper
-from instrumentation.openai.lib.span_attributes import OpenAISpanAttributes
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.trace import Span, SpanKind, get_tracer
+from opentelemetry.trace.status import StatusCode
+from wrapt import wrap_function_wrapper
+
+from instrumentation.openai.patch import chat_completions_create
+from instrumentation.openai.wrappers import Wrapper
+
 
 class OpenAIInstrumentation(BaseInstrumentor):
 
-    def instrument(self, **kwargs):
-        print(kwargs.get('tracer_provider'))
-        tracer_provider = kwargs.get("tracer_provider")
-        tracer = get_tracer(__name__, "0.11.2", tracer_provider)
-        print(kwargs.get('argument1'))
-        chat_completion_wrapper = Wrapper
-        wrap_function_wrapper("openai.resources.chat.completions", "Completions.create", chat_completion_wrapper.completion_wrapper(tracer))
-
-        return super().instrument(**kwargs)
-    
-    def uninstrument(self, **kwargs):
-        print(kwargs)
-        return super().uninstrument(**kwargs)
-    
-    def _uninstrument(self, **kwargs):
-        # Implement logic to uninstrument here
-        pass
-
     def instrumentation_dependencies(self) -> Collection[str]:
-        # Return any instrumentation dependencies here
-        return []
+        return ["openai >= 0.27.0"]
+
+    def _instrument(self, **kwargs):
+        tracer_provider = kwargs.get("tracer_provider")
+        tracer = get_tracer(__name__, "", tracer_provider)
+        wrap_function_wrapper(
+            'openai.resources.chat.completions',
+            'Completions.create',
+            chat_completions_create(openai.chat.completions.create, tracer)
+        )
+
+        # # simple implementation
+        # def trace_openai_create(wrapped, instance, args, kwargs):
+        #     with tracer.start_as_current_span("OpenAI Chat Completions Create"):
+        #         return wrapped(*args, **kwargs)
+
+        # # Applying the wrapper
+        # wrap_function_wrapper('openai.resources.chat.completions', 'Completions.create', trace_openai_create)
+
+    def _uninstrument(self, **kwargs):
+        print(kwargs)
 
