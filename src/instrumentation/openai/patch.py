@@ -1,9 +1,8 @@
-import asyncio
 import json
 
 from langtrace.trace_attributes import Event, OpenAISpanAttributes
 from opentelemetry import trace
-from opentelemetry.trace import Span, SpanKind, StatusCode
+from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
 from constants import SERVICE_PROVIDERS
@@ -31,7 +30,7 @@ def chat_completions_create(original_method, tracer):
         if kwargs.get('user') is not None:
             attributes["llm.user"] = kwargs.get('user')
 
-        current_span = trace.get_current_span()
+        # current_span = trace.get_current_span()
 
         with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
