@@ -1,7 +1,6 @@
 import json
 
 from langtrace.trace_attributes import Event, OpenAISpanAttributes
-from opentelemetry import trace
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
