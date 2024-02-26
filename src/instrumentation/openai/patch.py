@@ -25,13 +25,13 @@ def images_generate(original_method, tracer):
         with tracer.start_as_current_span(APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
-                  span.set_attribute(field, value)
+                    span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
                 result = original_method(*args, **kwargs)
                 if kwargs.get('stream') is False:
                     span.set_attribute("llm.responses", json.dumps(result))
-                
+
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as e:
@@ -45,6 +45,7 @@ def images_generate(original_method, tracer):
                 raise
 
     return traced_method
+
 
 def chat_completions_create(original_method, tracer):
     def traced_method(wrapped, instance, args, kwargs):
@@ -72,7 +73,7 @@ def chat_completions_create(original_method, tracer):
         with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
-                  span.set_attribute(field, value)
+                    span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
                 result = original_method(*args, **kwargs)
@@ -83,14 +84,15 @@ def chat_completions_create(original_method, tracer):
                                 "message": choice.message.content if choice.message and choice.message.content else "",
                                 **({"content_filter_results": choice["content_filter_results"]} if "content_filter_results" in choice else {})
                             }
-                            for choice in result.choices 
+                            for choice in result.choices
                         ]
                     else:
                         responses = []
                     span.set_attribute("llm.responses", json.dumps(responses))
 
                     if hasattr(result, 'system_fingerprint') and result.system_fingerprint is not None:
-                        span.set_attribute("llm.system.fingerprint", result.system_fingerprint)
+                        span.set_attribute(
+                            "llm.system.fingerprint", result.system_fingerprint)
 
                     # Get the usage
                     if hasattr(result, 'usage') and result.usage is not None:
@@ -101,7 +103,8 @@ def chat_completions_create(original_method, tracer):
                                 "completion_tokens": usage.completion_tokens,
                                 "total_tokens": usage.total_tokens
                             }
-                            span.set_attribute("llm.token.counts", json.dumps(usage_dict))
+                            span.set_attribute(
+                                "llm.token.counts", json.dumps(usage_dict))
 
                     span.set_status(StatusCode.OK)
                     return result
@@ -115,16 +118,18 @@ def chat_completions_create(original_method, tracer):
                         if hasattr(chunk, 'choices') and chunk.choices is not None:
                             content = [
                                 choice.delta.content if choice.delta and choice.delta.content else ""
-                                for choice in chunk.choices 
+                                for choice in chunk.choices
                             ]
                         else:
                             content = []
                         span.add_event(Event.STREAM_OUTPUT.value, {
                             "response": "".join(content)
                         })
-                        result_content.append(content[0] if len(content) > 0 else "")
+                        result_content.append(
+                            content[0] if len(content) > 0 else "")
                     span.add_event(Event.STREAM_END.value)
-                    span.set_attribute("llm.responses", json.dumps({ "message": { "role": "assistant", "content": "".join(result_content) } }))
+                    span.set_attribute("llm.responses", json.dumps(
+                        {"message": {"role": "assistant", "content": "".join(result_content)}}))
 
             except Exception as e:
                 # Record the exception in the span
@@ -138,6 +143,7 @@ def chat_completions_create(original_method, tracer):
 
     # return the wrapped method
     return traced_method
+
 
 def embeddings_create(original_method, tracer):
     def traced_method(wrapped, instance, args, kwargs):
@@ -161,7 +167,7 @@ def embeddings_create(original_method, tracer):
         with tracer.start_as_current_span(APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
-                  span.set_attribute(field, value)
+                    span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
                 result = original_method(*args, **kwargs)

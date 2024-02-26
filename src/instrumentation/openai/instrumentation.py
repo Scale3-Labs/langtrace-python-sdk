@@ -23,7 +23,7 @@ class OpenAIInstrumentation(BaseInstrumentor):
             chat_completions_create(openai.chat.completions.create, tracer)
         )
         wrap_function_wrapper(
-            'openai.resources.images.generate',
+            'openai.resources.images',
             'Images.generate',
             images_generate(openai.images.generate, tracer)
         )
@@ -43,4 +43,3 @@ class OpenAIInstrumentation(BaseInstrumentor):
 
     def _uninstrument(self, **kwargs):
         print(kwargs)
-

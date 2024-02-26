@@ -12,7 +12,7 @@ client = OpenAI()
 
 
 @with_langtrace_root_span()
-def chat_completion():
+def images_generate():
     stream = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Say this is a test three times"}],
