@@ -1,3 +1,3 @@
-from examples.openai.chat_completion import chat_completion 
+from examples.openai.images_generate import images_generate
 
-chat_completion()
+images_generate()

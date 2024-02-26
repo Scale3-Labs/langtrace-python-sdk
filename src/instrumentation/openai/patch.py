@@ -17,7 +17,7 @@ def images_generate(original_method, tracer):
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
             "llm.stream": kwargs.get('stream'),
-            "llm.prompts": json.dumps(kwargs.get('prompts', [])),
+            "llm.prompts": json.dumps([kwargs.get('prompt', [])]),
         }
 
         attributes = OpenAISpanAttributes(**span_attributes)
@@ -29,8 +29,15 @@ def images_generate(original_method, tracer):
             try:
                 # Attempt to call the original method
                 result = original_method(*args, **kwargs)
-                if kwargs.get('stream') is False:
-                    span.set_attribute("llm.responses", json.dumps(result))
+                if kwargs.get('stream') is False or kwargs.get('stream') is None:
+                    data = result.data[0] if hasattr(
+                        result, 'data') and len(result.data) > 0 else {}
+                    response = [{
+                        "url": data.url if hasattr(data, 'url') else "",
+                        "revised_prompt": data.revised_prompt if hasattr(data, 'revised_prompt') else "",
+                    }]
+                    span.set_attribute(
+                        "llm.responses", json.dumps(response))
 
                 span.set_status(StatusCode.OK)
                 return result

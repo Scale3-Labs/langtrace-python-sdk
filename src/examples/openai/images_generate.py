@@ -13,14 +13,8 @@ client = OpenAI()
 
 @with_langtrace_root_span()
 def images_generate():
-    stream = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": "Say this is a test three times"}],
-        stream=False,
+    result = client.images.generate(
+        model="dall-e-3",
+        prompt="A cute baby sea otter",
     )
-    stream = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": "Say this is a test three times"}, {"role": "assistant", "content": "This is a test. This is a test. This is a test"},
-                  {"role": "user", "content": "Say this is a mock 4 times"}],
-        stream=False,
-    )
+    print(result)
