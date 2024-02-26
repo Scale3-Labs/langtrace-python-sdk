@@ -1,14 +1,11 @@
 from typing import Collection
 
 import openai
-from opentelemetry import trace
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import Span, SpanKind, get_tracer
-from opentelemetry.trace.status import StatusCode
+from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from instrumentation.openai.patch import chat_completions_create
-from instrumentation.openai.wrappers import Wrapper
 
 
 class OpenAIInstrumentation(BaseInstrumentor):
