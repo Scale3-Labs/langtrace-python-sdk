@@ -9,6 +9,46 @@ from constants import SERVICE_PROVIDERS
 from instrumentation.openai.lib.apis import APIS
 
 
+def images_generate(original_method, tracer):
+    def traced_method(wrapped, instance, args, kwargs):
+        service_provider = SERVICE_PROVIDERS['OPENAI']
+        span_attributes = {
+            "service.provider": service_provider,
+            "url.full": APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            "llm.model": kwargs.get('model'),
+            "llm.stream": kwargs.get('stream'),
+            "llm.prompts": json.dumps(kwargs.get('prompts', [])),
+        }
+
+        attributes = OpenAISpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT) as span:
+            for field, value in attributes.model_dump(by_alias=True).items():
+                if value is not None:
+                  span.set_attribute(field, value)
+            try:
+                # Attempt to call the original method
+                result = original_method(*args, **kwargs)
+                if kwargs.get('stream') is False:
+                    span.set_attribute("llm.responses", json.dumps(result))
+                
+                span.set_status(StatusCode.OK)
+                return result
+            except Exception as e:
+                # Record the exception in the span
+                span.record_exception(e)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+            # finally:
+            #     # End the span
+            #     span.end()
+    return traced_method
+
 def chat_completions_create(original_method, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS['OPENAI']
@@ -103,4 +143,46 @@ def chat_completions_create(original_method, tracer):
             #     span.end()
 
     # return the wrapped method
+    return traced_method
+
+def embeddings_create(original_method, tracer):
+    def traced_method(wrapped, instance, args, kwargs):
+        service_provider = SERVICE_PROVIDERS['OPENAI']
+        span_attributes = {
+            "service.provider": service_provider,
+            "url.full": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            "llm.model": kwargs.get('model'),
+        }
+
+        attributes = OpenAISpanAttributes(**span_attributes)
+
+        if kwargs.get('encoding_format') is not None:
+            attributes["llm.encoding.format"] = kwargs.get('encoding_format')
+        if kwargs.get('dimensions') is not None:
+            attributes["llm.dimensions"] = kwargs.get('dimensions')
+        if kwargs.get('user') is not None:
+            attributes["llm.user"] = kwargs.get('user')
+
+        with tracer.start_as_current_span(APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT) as span:
+            for field, value in attributes.model_dump(by_alias=True).items():
+                if value is not None:
+                  span.set_attribute(field, value)
+            try:
+                # Attempt to call the original method
+                result = original_method(*args, **kwargs)
+                span.set_status(StatusCode.OK)
+                return result
+            except Exception as e:
+                # Record the exception in the span
+                span.record_exception(e)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+            # finally:
+            #     # End the span
+            #     span.end()
     return traced_method
