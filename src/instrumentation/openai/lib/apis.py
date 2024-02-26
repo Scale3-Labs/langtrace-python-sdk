@@ -1,14 +1,16 @@
+from langtrace.trace_attributes import OpenAIMethods
+
 APIS = {
     "CHAT_COMPLETION": {
-        "METHOD": "openai.chat.completion.create",
+        "METHOD": OpenAIMethods.CHAT_COMPLETION.value,
         "ENDPOINT": "/chat/completions",
     },
     "IMAGES_GENERATION": {
-        "METHOD": "openai.images.generation.create",
+        "METHOD": OpenAIMethods.IMAGES_GENERATION.value,
         "ENDPOINT": "/images/generations",
     },
     "EMBEDDINGS_CREATE": {
-        "METHOD": "openai.embeddings.create",
+        "METHOD": OpenAIMethods.EMBEDDINGS_CREATE.value,
         "ENDPOINT": "/embeddings",
     },
 }

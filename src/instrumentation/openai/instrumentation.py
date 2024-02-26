@@ -33,13 +33,5 @@ class OpenAIInstrumentation(BaseInstrumentor):
             embeddings_create(openai.embeddings.create, tracer)
         )
 
-        # # simple implementation
-        # def trace_openai_create(wrapped, instance, args, kwargs):
-        #     with tracer.start_as_current_span("OpenAI Chat Completions Create"):
-        #         return wrapped(*args, **kwargs)
-
-        # # Applying the wrapper
-        # wrap_function_wrapper('openai.resources.chat.completions', 'Completions.create', trace_openai_create)
-
     def _uninstrument(self, **kwargs):
         print(kwargs)

@@ -30,5 +30,3 @@ def basic():
     index.upsert(vectors=[data_to_upsert])
 
     resp = index.query(vector=embedding, top_k=1)
-
-    print(resp)
