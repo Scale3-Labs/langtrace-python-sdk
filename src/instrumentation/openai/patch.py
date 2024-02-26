@@ -44,9 +44,7 @@ def images_generate(original_method, tracer):
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
-            # finally:
-            #     # End the span
-            #     span.end()
+
     return traced_method
 
 def chat_completions_create(original_method, tracer):
@@ -138,9 +136,6 @@ def chat_completions_create(original_method, tracer):
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
-            # finally:
-            #     # End the span
-            #     span.end()
 
     # return the wrapped method
     return traced_method
@@ -182,7 +177,5 @@ def embeddings_create(original_method, tracer):
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
-            # finally:
-            #     # End the span
-            #     span.end()
+
     return traced_method
