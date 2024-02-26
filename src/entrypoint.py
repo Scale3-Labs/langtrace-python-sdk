@@ -1,3 +1,4 @@
-from examples.openai.embeddings_create import embeddings_create
+# from examples.openai.embeddings_create import embeddings_create
+from examples.pinecone_example.basic import basic
 
-embeddings_create()
+basic()

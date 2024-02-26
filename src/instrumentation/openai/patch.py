@@ -79,8 +79,6 @@ def chat_completions_create(original_method, tracer):
         if kwargs.get('user') is not None:
             attributes["llm.user"] = kwargs.get('user')
 
-        # current_span = trace.get_current_span()
-
         with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
@@ -171,9 +169,10 @@ def embeddings_create(original_method, tracer):
         }
 
         attributes = OpenAISpanAttributes(**span_attributes)
+        kwargs.get('encoding_format')
 
         if kwargs.get('encoding_format') is not None:
-            attributes["llm.encoding.format"] = kwargs.get('encoding_format')
+            attributes.llm_encoding_format = kwargs.get('encoding_format')
         if kwargs.get('dimensions') is not None:
             attributes["llm.dimensions"] = kwargs.get('dimensions')
         if kwargs.get('user') is not None:
