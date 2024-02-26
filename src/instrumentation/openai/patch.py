@@ -10,10 +10,12 @@ from instrumentation.openai.lib.apis import APIS
 
 def images_generate(original_method, tracer):
     def traced_method(wrapped, instance, args, kwargs):
+        base_url = str(instance._client._base_url) if hasattr(
+            instance, '_client') and hasattr(instance._client, '_base_url') else ""
         service_provider = SERVICE_PROVIDERS['OPENAI']
         span_attributes = {
             "service.provider": service_provider,
-            "url.full": APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            "url.full": base_url,
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
             "llm.stream": kwargs.get('stream'),
@@ -56,10 +58,12 @@ def images_generate(original_method, tracer):
 
 def chat_completions_create(original_method, tracer):
     def traced_method(wrapped, instance, args, kwargs):
+        base_url = str(instance._client._base_url) if hasattr(
+            instance, '_client') and hasattr(instance._client, '_base_url') else ""
         service_provider = SERVICE_PROVIDERS['OPENAI']
         span_attributes = {
             "service.provider": service_provider,
-            "url.full": APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
             "llm.prompts": json.dumps(kwargs.get('messages', [])),
@@ -154,12 +158,16 @@ def chat_completions_create(original_method, tracer):
 
 def embeddings_create(original_method, tracer):
     def traced_method(wrapped, instance, args, kwargs):
+        base_url = str(instance._client._base_url) if hasattr(
+            instance, '_client') and hasattr(instance._client, '_base_url') else ""
+
         service_provider = SERVICE_PROVIDERS['OPENAI']
         span_attributes = {
             "service.provider": service_provider,
-            "url.full": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
+            "llm.prompts": "",
         }
 
         attributes = OpenAISpanAttributes(**span_attributes)

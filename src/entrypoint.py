@@ -1,3 +1,3 @@
-from examples.openai.images_generate import images_generate
+from examples.openai.embeddings_create import embeddings_create
 
-images_generate()
+embeddings_create()
