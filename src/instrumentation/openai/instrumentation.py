@@ -5,7 +5,8 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from instrumentation.openai.patch import chat_completions_create
+from instrumentation.openai.patch import (chat_completions_create,
+                                          embeddings_create, images_generate)
 
 
 class OpenAIInstrumentation(BaseInstrumentor):
@@ -20,6 +21,16 @@ class OpenAIInstrumentation(BaseInstrumentor):
             'openai.resources.chat.completions',
             'Completions.create',
             chat_completions_create(openai.chat.completions.create, tracer)
+        )
+        wrap_function_wrapper(
+            'openai.resources.images.generate',
+            'Images.generate',
+            images_generate(openai.images.generate, tracer)
+        )
+        wrap_function_wrapper(
+            'openai.resources.embeddings',
+            'Embeddings.create',
+            embeddings_create(openai.embeddings.create, tracer)
         )
 
         # # simple implementation
