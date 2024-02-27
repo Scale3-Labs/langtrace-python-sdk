@@ -1,7 +1,7 @@
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
-from examples.openai.setup import setup_instrumentation
+from instrumentation.setup import setup_instrumentation
 from instrumentation.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())

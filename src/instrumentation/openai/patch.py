@@ -73,11 +73,11 @@ def chat_completions_create(original_method, tracer):
         attributes = OpenAISpanAttributes(**span_attributes)
 
         if kwargs.get('temperature') is not None:
-            attributes["llm.temperature"] = kwargs.get('temperature')
+            attributes.llm_temperature = kwargs.get('temperature')
         if kwargs.get('top_p') is not None:
-            attributes["llm.top_p"] = kwargs.get('top_p')
+            attributes.llm_top_p = kwargs.get('top_p')
         if kwargs.get('user') is not None:
-            attributes["llm.user"] = kwargs.get('user')
+            attributes.llm_user = kwargs.get('user')
 
         with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
