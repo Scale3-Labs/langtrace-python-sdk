@@ -4,6 +4,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (ConsoleSpanExporter,
                                             SimpleSpanProcessor)
 
+from instrumentation.chroma.instrumentation import ChromaInstrumentation
 from instrumentation.llamaindex.instrumentation import \
     LlamaindexInstrumentation
 from instrumentation.openai.instrumentation import OpenAIInstrumentation
@@ -27,10 +28,12 @@ def setup_instrumentation():
     openai_instrumentation = OpenAIInstrumentation()
     pinecone_instrumentation = PineconeInstrumentation()
     llamaindex_instrumentation = LlamaindexInstrumentation()
+    chroma_instrumentation = ChromaInstrumentation()
 
     # Call the instrument method with some arguments
-    # openai_instrumentation.instrument()
-    # pinecone_instrumentation.instrument()
+    openai_instrumentation.instrument()
+    pinecone_instrumentation.instrument()
     llamaindex_instrumentation.instrument()
+    chroma_instrumentation.instrument()
 
     print("setup complete")
