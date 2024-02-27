@@ -8,10 +8,10 @@ TRACE_NAMESPACES = {
 }
 
 SERVICE_PROVIDERS = {
-  "OPENAI": "OpenAI",
-  "AZURE": "Azure",
-  "LANGCHAIN": "Langchain",
-  "PINECONE": "Pinecone",
-  "LLAMAINDEX": "LlamaIndex",
-  "CHROMA": "Chroma",
+    "OPENAI": "OpenAI",
+    "AZURE": "Azure",
+    "LANGCHAIN": "Langchain",
+    "PINECONE": "Pinecone",
+    "LLAMAINDEX": "LlamaIndex",
+    "CHROMA": "Chroma",
 }
