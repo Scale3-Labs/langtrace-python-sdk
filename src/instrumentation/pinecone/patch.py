@@ -8,12 +8,15 @@ from constants import SERVICE_PROVIDERS
 from instrumentation.pinecone.lib.apis import APIS
 
 
-def generic_patch(original_method, method, tracer):
+def generic_patch(original_method, method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS['PINECONE']
         span_attributes = {
-            "service.provider": service_provider,
+            'langtrace.service.name': service_provider,
+            'langtrace.service.type': 'vectordb',
+            'langtrace.service.version': version,
+            'langtrace.version': '1.0.0',
             "db.system": "pinecone",
             "db.operation": api['OPERATION'],
         }

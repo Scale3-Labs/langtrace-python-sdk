@@ -1,3 +1,3 @@
-from examples.openai.chat_completion import chat_completion
+from examples.pinecone_example.basic import basic
 
-chat_completion()
+basic()

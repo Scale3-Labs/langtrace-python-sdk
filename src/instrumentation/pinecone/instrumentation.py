@@ -25,7 +25,7 @@ class PineconeInstrumentation(BaseInstrumentor):
                 method = pinecone.Index.upsert
             elif method_ref is PineconeMethods.QUERY.value:
                 method = pinecone.Index.query
-            elif method_ref is PineconeMethods.DELETE_ONE.value or method_ref is PineconeMethods.DELETE_MANY.value or method_ref is PineconeMethods.DELETE_ALL.value:
+            elif method_ref is PineconeMethods.DELETE.value:
                 method = pinecone.Index.delete
             operation = details["OPERATION"]
 
@@ -33,7 +33,8 @@ class PineconeInstrumentation(BaseInstrumentor):
             wrap_function_wrapper(
                 'pinecone.data.index',
                 f'Index.{operation}',
-                generic_patch(method, operation_name, tracer)
+                generic_patch(method, operation_name,
+                              pinecone.__version__, tracer)
             )
 
     def _uninstrument(self, **kwargs):
