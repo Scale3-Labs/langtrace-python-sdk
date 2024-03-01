@@ -41,7 +41,7 @@ class LlamaindexInstrumentation(BaseInstrumentor):
             'llama_index.core.extractors.interface',
             'BaseExtractor.aextract',
             generic_patch(
-                LlamaIndexMethods.BASEEXTRACTOR_EXTRACT.value, tracer)
+                LlamaIndexMethods.BASEEXTRACTOR_AEXTRACT.value, tracer)
         )
         wrap_function_wrapper(
             'llama_index.core.readers.file.base',
@@ -53,7 +53,13 @@ class LlamaindexInstrumentation(BaseInstrumentor):
             'llama_index.core.chat_engine.types',
             'BaseChatEngine.chat',
             generic_patch(
-                LlamaIndexMethods.CHATENGINE_EXTRACT.value, tracer)
+                LlamaIndexMethods.CHATENGINE_CHAT.value, tracer)
+        )
+        wrap_function_wrapper(
+            'llama_index.core.chat_engine.types',
+            'BaseChatEngine.achat',
+            generic_patch(
+                LlamaIndexMethods.CHATENGINE_ACHAT.value, tracer)
         )
 
     def _instrument_module(self, module_name):
