@@ -20,17 +20,19 @@ class OpenAIInstrumentation(BaseInstrumentor):
         wrap_function_wrapper(
             'openai.resources.chat.completions',
             'Completions.create',
-            chat_completions_create(openai.chat.completions.create, tracer)
+            chat_completions_create(
+                openai.chat.completions.create, openai.__version__, tracer)
         )
         wrap_function_wrapper(
             'openai.resources.images',
             'Images.generate',
-            images_generate(openai.images.generate, tracer)
+            images_generate(openai.images.generate, openai.__version__, tracer)
         )
         wrap_function_wrapper(
             'openai.resources.embeddings',
             'Embeddings.create',
-            embeddings_create(openai.embeddings.create, tracer)
+            embeddings_create(openai.embeddings.create,
+                              openai.__version__, tracer)
         )
 
     def _uninstrument(self, **kwargs):

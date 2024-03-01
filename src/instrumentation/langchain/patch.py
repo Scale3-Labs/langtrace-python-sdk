@@ -16,7 +16,7 @@ def generic_patch(tracer, method_name, task):
         }
 
         if len(args) > 0:
-            span_attributes[f'{task}.input'] = to_json_string(args)
+            span_attributes[f'langchain.{task}.inputs'] = to_json_string(args)
 
         # attributes = DatabaseSpanAttributes(**span_attributes)
 
@@ -27,7 +27,8 @@ def generic_patch(tracer, method_name, task):
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                span.set_attribute(f'{task}.output', to_json_string(result))
+                span.set_attribute(
+                    f'langchain.{task}.outputs', to_json_string(result))
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -62,7 +63,7 @@ def runnable_patch(tracer, method_name, task):
         for field, value in instance.steps.items() if hasattr(instance, "steps") else {}:
             inputs[field] = value.__class__.__name__
 
-        span_attributes[f'{task}.input'] = to_json_string(inputs)
+        span_attributes[f'langchain.{task}.inputs'] = to_json_string(inputs)
 
         # attributes = DatabaseSpanAttributes(**span_attributes)
 
@@ -84,10 +85,11 @@ def runnable_patch(tracer, method_name, task):
                                     outputs[field] = item.__class__.__name__
                         if isinstance(value, str):
                             outputs[field] = value
-                span.set_attribute(f'{task}.output', to_json_string(outputs))
+                span.set_attribute(
+                    f'langchain.{task}.outputs', to_json_string(outputs))
                 if isinstance(result, str):
                     span.set_attribute(
-                        f'{task}.output', result)
+                        f'langchain.{task}.outputs', result)
 
                 span.set_status(StatusCode.OK)
                 return result

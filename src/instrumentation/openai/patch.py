@@ -1,6 +1,6 @@
 import json
 
-from langtrace.trace_attributes import Event, OpenAISpanAttributes
+from langtrace.trace_attributes import Event, LLMSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -8,13 +8,16 @@ from constants import SERVICE_PROVIDERS
 from instrumentation.openai.lib.apis import APIS
 
 
-def images_generate(original_method, tracer):
+def images_generate(original_method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         base_url = str(instance._client._base_url) if hasattr(
             instance, '_client') and hasattr(instance._client, '_base_url') else ""
         service_provider = SERVICE_PROVIDERS['OPENAI']
         span_attributes = {
-            "service.provider": service_provider,
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
@@ -22,7 +25,7 @@ def images_generate(original_method, tracer):
             "llm.prompts": json.dumps([kwargs.get('prompt', [])]),
         }
 
-        attributes = OpenAISpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
@@ -56,13 +59,16 @@ def images_generate(original_method, tracer):
     return traced_method
 
 
-def chat_completions_create(original_method, tracer):
+def chat_completions_create(original_method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         base_url = str(instance._client._base_url) if hasattr(
             instance, '_client') and hasattr(instance._client, '_base_url') else ""
         service_provider = SERVICE_PROVIDERS['OPENAI']
         span_attributes = {
-            "service.provider": service_provider,
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
@@ -70,7 +76,7 @@ def chat_completions_create(original_method, tracer):
             "llm.stream": kwargs.get('stream'),
         }
 
-        attributes = OpenAISpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**span_attributes)
 
         if kwargs.get('temperature') is not None:
             attributes.llm_temperature = kwargs.get('temperature')
@@ -154,21 +160,24 @@ def chat_completions_create(original_method, tracer):
     return traced_method
 
 
-def embeddings_create(original_method, tracer):
+def embeddings_create(original_method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         base_url = str(instance._client._base_url) if hasattr(
             instance, '_client') and hasattr(instance._client, '_base_url') else ""
 
         service_provider = SERVICE_PROVIDERS['OPENAI']
         span_attributes = {
-            "service.provider": service_provider,
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
             "llm.prompts": "",
         }
 
-        attributes = OpenAISpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**span_attributes)
         kwargs.get('encoding_format')
 
         if kwargs.get('encoding_format') is not None:

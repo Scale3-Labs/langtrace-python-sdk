@@ -1,4 +1,3 @@
-# from examples.openai.embeddings_create import embeddings_create
-from examples.langchain_example.basic import rag
+from examples.openai.chat_completion import chat_completion
 
-rag()
+chat_completion()
