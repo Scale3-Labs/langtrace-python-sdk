@@ -36,4 +36,4 @@ class OpenAIInstrumentation(BaseInstrumentor):
         )
 
     def _uninstrument(self, **kwargs):
-        print(kwargs)
+        pass
