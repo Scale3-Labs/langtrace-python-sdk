@@ -1,19 +1,25 @@
-from langtrace.trace_attributes import DatabaseSpanAttributes
+from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
 from constants import SERVICE_PROVIDERS
 
 
-def generic_patch(name, tracer):
+def generic_patch(method, task, tracer, version):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS['LLAMAINDEX']
         span_attributes = {
-            "service.provider": service_provider
+            'langtrace.service.name': service_provider,
+            'langtrace.service.type': 'framework',
+            'langtrace.service.version': version,
+            'langtrace.version': '1.0.0',
+            'llamaindex.task.name': task,
         }
 
-        with tracer.start_as_current_span(name, kind=SpanKind.CLIENT) as span:
-            for field, value in span_attributes.items():
+        attributes = FrameworkSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
+            for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
             try:
