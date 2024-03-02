@@ -6,18 +6,21 @@ from constants import SERVICE_PROVIDERS
 from instrumentation.chroma.lib.apis import APIS
 
 
-def collection_patch(method, tracer):
+def collection_patch(method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS['CHROMA']
         span_attributes = {
-            "service.provider": service_provider,
+            'langtrace.service.name': service_provider,
+            'langtrace.service.type': 'vectordb',
+            'langtrace.service.version': version,
+            'langtrace.version': '1.0.0',
             "db.system": "chromadb",
             "db.operation": api['OPERATION'],
         }
 
-        if hasattr(instance, 'name') and instance.get('name') is not None:
-            span_attributes["db.chromadb.collection"] = str(instance.name)
+        if hasattr(instance, 'name') and instance.name is not None:
+            span_attributes["db.collection.name"] = instance.name
 
         attributes = DatabaseSpanAttributes(**span_attributes)
 

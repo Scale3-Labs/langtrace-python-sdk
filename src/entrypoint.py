@@ -1,3 +1,3 @@
-from examples.llamaindex_example.basic import basic
+from examples.chroma_example.basic import basic
 
 basic()

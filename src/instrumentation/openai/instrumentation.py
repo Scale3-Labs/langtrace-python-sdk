@@ -1,3 +1,4 @@
+import importlib.metadata
 from typing import Collection
 
 import openai
@@ -17,22 +18,23 @@ class OpenAIInstrumentation(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
+        version = importlib.metadata.version('openai')
         wrap_function_wrapper(
             'openai.resources.chat.completions',
             'Completions.create',
             chat_completions_create(
-                openai.chat.completions.create, openai.__version__, tracer)
+                openai.chat.completions.create, version, tracer)
         )
         wrap_function_wrapper(
             'openai.resources.images',
             'Images.generate',
-            images_generate(openai.images.generate, openai.__version__, tracer)
+            images_generate(openai.images.generate, version, tracer)
         )
         wrap_function_wrapper(
             'openai.resources.embeddings',
             'Embeddings.create',
             embeddings_create(openai.embeddings.create,
-                              openai.__version__, tracer)
+                              version, tracer)
         )
 
     def _uninstrument(self, **kwargs):

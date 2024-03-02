@@ -5,6 +5,10 @@ APIS = {
         "METHOD": ChromaDBMethods.ADD.value,
         "OPERATION": "add",
     },
+    "GET": {
+        "METHOD": ChromaDBMethods.GET.value,
+        "OPERATION": "get",
+    },
     "QUERY": {
         "METHOD": ChromaDBMethods.QUERY.value,
         "OPERATION": "query",
@@ -20,6 +24,10 @@ APIS = {
     "UPDATE": {
         "METHOD": ChromaDBMethods.UPDATE.value,
         "OPERATION": "update",
+    },
+    "UPSERT": {
+        "METHOD": ChromaDBMethods.UPSERT.value,
+        "OPERATION": "upsert",
     },
     "MODIFY": {
         "METHOD": ChromaDBMethods.MODIFY.value,
