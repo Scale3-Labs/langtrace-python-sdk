@@ -1,7 +1,6 @@
 import importlib.metadata
 from typing import Collection
 
-from langtrace.trace_attributes import ChromaDBMethods
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper

@@ -1,3 +1,4 @@
+import importlib.metadata
 from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -15,20 +16,21 @@ class LangchainInstrumentation(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
+        version = importlib.metadata.version('chromadb')
 
         # Retriever
         wrap_function_wrapper(
             'langchain_core.retrievers',
             'BaseRetriever.get_relevant_documents',
             generic_patch(
-                tracer, 'BaseRetriever.get_relevant_documents', 'retriever')
+                'BaseRetriever.get_relevant_documents', 'retriever', tracer, version)
         )
 
         wrap_function_wrapper(
             'langchain_core.retrievers',
             'BaseRetriever.aget_relevant_documents',
             generic_patch(
-                tracer, 'BaseRetriever.aget_relevant_documents', 'retriever')
+                'BaseRetriever.aget_relevant_documents', 'retriever', tracer, version)
         )
 
         # Prompt
@@ -36,7 +38,7 @@ class LangchainInstrumentation(BaseInstrumentor):
             'langchain_core.prompts.chat',
             'ChatPromptTemplate.from_template',
             generic_patch(
-                tracer, 'ChatPromptTemplate.from_template', 'chatprompt')
+                'ChatPromptTemplate.from_template', 'chatprompt', tracer, version)
         )
 
         # Runnable
@@ -44,14 +46,14 @@ class LangchainInstrumentation(BaseInstrumentor):
             'langchain_core.runnables.base',
             'RunnableParallel.invoke',
             runnable_patch(
-                tracer, 'RunnableParallel.invoke', 'runnableparallel')
+                'RunnableParallel.invoke', 'runnableparallel', tracer, version)
         )
 
         wrap_function_wrapper(
             'langchain_core.runnables.passthrough',
             'RunnablePassthrough.invoke',
             runnable_patch(
-                tracer, 'RunnablePassthrough.invoke', 'runnablepassthrough')
+                'RunnablePassthrough.invoke', 'runnablepassthrough', tracer, version)
         )
 
         # Output Parsers
@@ -59,28 +61,28 @@ class LangchainInstrumentation(BaseInstrumentor):
             'langchain_core.output_parsers.string',
             'StrOutputParser.parse',
             runnable_patch(
-                tracer, 'StrOutputParser.parse', 'stroutputparser')
+                'StrOutputParser.parse', 'stroutputparser', tracer, version)
         )
 
         wrap_function_wrapper(
             'langchain_core.output_parsers.json',
             'JsonOutputParser.parse',
             runnable_patch(
-                tracer, 'JsonOutputParser.parse', 'jsonoutputparser')
+                'JsonOutputParser.parse', 'jsonoutputparser', tracer, version)
         )
 
         wrap_function_wrapper(
             'langchain_core.output_parsers.list',
             'ListOutputParser.parse',
             runnable_patch(
-                tracer, 'ListOutputParser.parse', 'listoutputparser')
+                'ListOutputParser.parse', 'listoutputparser', tracer, version)
         )
 
         wrap_function_wrapper(
             'langchain_core.output_parsers.xml',
             'XMLOutputParser.parse',
             runnable_patch(
-                tracer, 'XMLOutputParser.parse', 'xmloutputparser')
+                'XMLOutputParser.parse', 'xmloutputparser', tracer, version)
         )
 
     def _uninstrument(self, **kwargs):

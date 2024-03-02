@@ -1,6 +1,6 @@
 import json
 
-from langtrace.trace_attributes import DatabaseSpanAttributes
+from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -8,27 +8,31 @@ from constants import SERVICE_PROVIDERS
 from instrumentation.pinecone.lib.apis import APIS
 
 
-def generic_patch(tracer, method_name, task):
+def generic_patch(method_name, task, tracer, version):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS['LANGCHAIN']
         span_attributes = {
-            "service.provider": service_provider,
+            'langtrace.service.name': service_provider,
+            'langtrace.service.type': 'framework',
+            'langtrace.service.version': version,
+            'langtrace.version': '1.0.0',
+            'langchain.task.name': task,
         }
 
         if len(args) > 0:
-            span_attributes[f'langchain.{task}.inputs'] = to_json_string(args)
+            span_attributes['langchain.inputs'] = to_json_string(args)
 
-        # attributes = DatabaseSpanAttributes(**span_attributes)
+        attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(method_name, kind=SpanKind.CLIENT) as span:
-            for field, value in span_attributes.items():
+            for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 span.set_attribute(
-                    f'langchain.{task}.outputs', to_json_string(result))
+                    'langchain.outputs', to_json_string(result))
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -45,11 +49,15 @@ def generic_patch(tracer, method_name, task):
     return traced_method
 
 
-def runnable_patch(tracer, method_name, task):
+def runnable_patch(method_name, task, tracer, version):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS['LANGCHAIN']
         span_attributes = {
-            "service.provider": service_provider,
+            'langtrace.service.name': service_provider,
+            'langtrace.service.type': 'framework',
+            'langtrace.service.version': version,
+            'langtrace.version': '1.0.0',
+            'langchain.task.name': task,
         }
 
         inputs = {}
@@ -63,12 +71,12 @@ def runnable_patch(tracer, method_name, task):
         for field, value in instance.steps.items() if hasattr(instance, "steps") else {}:
             inputs[field] = value.__class__.__name__
 
-        span_attributes[f'langchain.{task}.inputs'] = to_json_string(inputs)
+        span_attributes['langchain.inputs'] = to_json_string(inputs)
 
-        # attributes = DatabaseSpanAttributes(**span_attributes)
+        attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(method_name, kind=SpanKind.CLIENT) as span:
-            for field, value in span_attributes.items():
+            for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
             try:
@@ -86,10 +94,10 @@ def runnable_patch(tracer, method_name, task):
                         if isinstance(value, str):
                             outputs[field] = value
                 span.set_attribute(
-                    f'langchain.{task}.outputs', to_json_string(outputs))
+                    'langchain.outputs', to_json_string(outputs))
                 if isinstance(result, str):
                     span.set_attribute(
-                        f'langchain.{task}.outputs', result)
+                        'langchain.outputs', result)
 
                 span.set_status(StatusCode.OK)
                 return result
