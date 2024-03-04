@@ -91,7 +91,8 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
                         args_list.append(value)
             inputs['args'] = args_list
 
-            for field, value in instance.steps.items() if hasattr(instance, "steps") and isinstance(instance.steps, dict) else {}:
+            for field, value in instance.steps.items() if hasattr(instance, "steps") and \
+                    isinstance(instance.steps, dict) else {}:
                 inputs[field] = value.__class__.__name__
 
             span_attributes['langchain.inputs'] = to_json_string(inputs)
