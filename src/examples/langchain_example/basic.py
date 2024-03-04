@@ -1,4 +1,6 @@
 from dotenv import find_dotenv, load_dotenv
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts.chat import ChatPromptTemplate
@@ -13,7 +15,7 @@ _ = load_dotenv(find_dotenv())
 setup_instrumentation()
 
 
-# @with_langtrace_root_span()
+@with_langtrace_root_span()
 def basic():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages([
@@ -50,3 +52,14 @@ def rag():
 
     res = chain.invoke("where did harrison work?")
     # print(res)
+
+
+@with_langtrace_root_span()
+def load_and_split():
+    url = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
+    loader = PyPDFLoader(url)
+    data = loader.load()
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500, chunk_overlap=0)
+    docs = text_splitter.split_documents(data)
+    # print(docs)

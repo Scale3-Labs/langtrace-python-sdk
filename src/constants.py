@@ -11,6 +11,7 @@ SERVICE_PROVIDERS = {
     "OPENAI": "OpenAI",
     "AZURE": "Azure",
     "LANGCHAIN": "Langchain",
+    "LANGCHAIN_COMMUNITY": "Langchain Community",
     "PINECONE": "Pinecone",
     "LLAMAINDEX": "LlamaIndex",
     "CHROMA": "Chroma",

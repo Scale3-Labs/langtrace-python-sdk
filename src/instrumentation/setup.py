@@ -6,6 +6,10 @@ from opentelemetry.sdk.trace.export import (ConsoleSpanExporter,
 
 from instrumentation.chroma.instrumentation import ChromaInstrumentation
 from instrumentation.langchain.instrumentation import LangchainInstrumentation
+from instrumentation.langchain_community.instrumentation import \
+    LangchainCommunityInstrumentation
+from instrumentation.langchain_core.instrumentation import \
+    LangchainCoreInstrumentation
 from instrumentation.llamaindex.instrumentation import \
     LlamaindexInstrumentation
 from instrumentation.openai.instrumentation import OpenAIInstrumentation
@@ -31,6 +35,8 @@ def setup_instrumentation():
     llamaindex_instrumentation = LlamaindexInstrumentation()
     chroma_instrumentation = ChromaInstrumentation()
     langchain_instrumentation = LangchainInstrumentation()
+    langchain_core_instrumentation = LangchainCoreInstrumentation()
+    langchain_community_instrumentation = LangchainCommunityInstrumentation()
 
     # Call the instrument method with some arguments
     openai_instrumentation.instrument()
@@ -38,5 +44,7 @@ def setup_instrumentation():
     llamaindex_instrumentation.instrument()
     chroma_instrumentation.instrument()
     langchain_instrumentation.instrument()
+    langchain_core_instrumentation.instrument()
+    langchain_community_instrumentation.instrument()
 
     print("setup complete")

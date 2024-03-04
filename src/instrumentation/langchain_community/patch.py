@@ -5,12 +5,11 @@ from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
 from constants import SERVICE_PROVIDERS
-from instrumentation.pinecone.lib.apis import APIS
 
 
 def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS['LANGCHAIN_COMMUNITY']
         span_attributes = {
             'langtrace.service.name': service_provider,
             'langtrace.service.type': 'framework',
@@ -19,7 +18,7 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
             'langchain.task.name': task,
         }
 
-        if len(args) > 0 and trace_input:
+        if trace_input and len(args) > 0:
             span_attributes['langchain.inputs'] = to_json_string(args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)

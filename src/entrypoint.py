@@ -1,3 +1,5 @@
-from examples.langchain_example.basic import rag
+from examples.langchain_example.basic import basic, load_and_split, rag
 
-rag()
+# load_and_split()
+# rag()
+basic()
