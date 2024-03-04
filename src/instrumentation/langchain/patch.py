@@ -1,14 +1,19 @@
+"""
+This module contains the patching logic for the langchain package.
+"""
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
-from opentelemetry.trace.status import Status, StatusCode
+from opentelemetry.trace.status import Status
 
 from constants import SERVICE_PROVIDERS
-from instrumentation.pinecone.lib.apis import APIS
 
 
 def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
+    """
+    patch method for generic methods.
+    """
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS['LANGCHAIN']
         span_attributes = {
