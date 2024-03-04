@@ -22,7 +22,7 @@ def images_generate(original_method, version, tracer):
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get('model'),
             "llm.stream": kwargs.get('stream'),
-            "llm.prompts": json.dumps([kwargs.get('prompt', [])]),
+            "llm.prompts": json.dumps([kwargs.get('prompt', [])])
         }
 
         attributes = LLMSpanAttributes(**span_attributes)

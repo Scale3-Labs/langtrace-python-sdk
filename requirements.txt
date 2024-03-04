@@ -50,6 +50,7 @@ langchain==0.1.9
 langchain-community==0.0.24
 langchain-core==0.1.27
 langchain-openai==0.0.7
+langchainhub==0.1.14
 langsmith==0.1.9
 llama-index==0.10.13.post1
 llama-index-agent-openai==0.1.5
@@ -78,6 +79,7 @@ mypy-extensions==1.0.0
 nest-asyncio==1.6.0
 networkx==3.2.1
 nltk==3.8.1
+numexpr==2.9.0
 numpy==1.26.4
 oauthlib==3.2.2
 onnxruntime==1.17.1
