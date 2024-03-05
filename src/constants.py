@@ -1,12 +1,6 @@
-
-TRACE_NAMESPACES = {
-    "OPENAI": "Langtrace OpenAI SDK",
-    "LANGCHAIN": "Langtrace Langchain SDK",
-    "PINECONE": "Langtrace Pinecone SDK",
-    "LLAMAINDEX": "Langtrace LlamaIndex SDK",
-    "CHROMA": "Langtrace Chroma SDK",
-}
-
+"""
+This file contains the constants used in the project.
+"""
 SERVICE_PROVIDERS = {
     "OPENAI": "OpenAI",
     "AZURE": "Azure",
