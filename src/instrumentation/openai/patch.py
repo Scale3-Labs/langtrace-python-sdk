@@ -7,7 +7,9 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from constants import SERVICE_PROVIDERS
-from instrumentation.openai.lib.apis import APIS
+from instrumentation.openai.apis import APIS
+from instrumentation.openai.token_estimation import (calculate_prompt_tokens,
+                                                     estimate_tokens)
 
 
 def images_generate(original_method, version, tracer):
@@ -96,6 +98,7 @@ def chat_completions_create(original_method, version, tracer):
             attributes.llm_function_prompts = json.dumps(
                 kwargs.get('functions'))
 
+        # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
@@ -144,7 +147,9 @@ def chat_completions_create(original_method, version, tracer):
                 span.end()
                 return result
             else:
-                return handle_streaming_response(result, span,
+                prompt_tokens = calculate_prompt_tokens(json.dumps(
+                    kwargs.get('messages', {})[0]), kwargs.get('model'))
+                return handle_streaming_response(result, span, prompt_tokens,
                                                  function_call=kwargs.get(
                                                      'functions')
                                                  is not None)
@@ -157,13 +162,20 @@ def chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    def handle_streaming_response(result, span, function_call=False):
+    def handle_streaming_response(result, span, prompt_tokens, function_call=False):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
+        completion_tokens = 0
         try:
             for chunk in result:
                 if hasattr(chunk, 'choices') and chunk.choices is not None:
+                    token_counts = [
+                        estimate_tokens(choice.delta.content) if choice.delta and choice.delta.content else estimate_tokens(choice.delta.function_call.arguments) if choice.delta.function_call and
+                        choice.delta.function_call.arguments else 0
+                        for choice in chunk.choices
+                    ]
+                    completion_tokens += sum(token_counts)
                     content = [
                         choice.delta.content if choice.delta and choice.delta.content else choice.delta.function_call.arguments if choice.delta.function_call and
                         choice.delta.function_call.arguments else ""
@@ -181,6 +193,11 @@ def chat_completions_create(original_method, version, tracer):
 
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
+            span.set_attribute("llm.token.counts", json.dumps({
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "total_tokens": prompt_tokens + completion_tokens
+            }))
             if function_call is False:
                 span.set_attribute("llm.responses", json.dumps(
                     {"message": {"role": "assistant", "content": "".join(result_content)}}))
