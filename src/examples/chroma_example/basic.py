@@ -2,7 +2,7 @@ import chromadb
 from chromadb.utils import embedding_functions
 from dotenv import find_dotenv, load_dotenv
 
-from instrumentation.setup import setup_instrumentation
+from examples.setup import setup_instrumentation
 from instrumentation.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())

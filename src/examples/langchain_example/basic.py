@@ -7,7 +7,7 @@ from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from instrumentation.setup import setup_instrumentation
+from examples.setup import setup_instrumentation
 from instrumentation.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())

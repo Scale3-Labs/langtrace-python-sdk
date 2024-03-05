@@ -6,7 +6,7 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import Tool
 from langchain_openai import ChatOpenAI
 
-from instrumentation.setup import setup_instrumentation
+from examples.setup import setup_instrumentation
 from instrumentation.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
