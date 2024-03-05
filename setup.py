@@ -8,7 +8,7 @@ setup(
     description='LangTrace - Python SDK',
     long_description="LangTrace - Python SDK",
     long_description_content_type='text/markdown',
-    url='https://github.com/Scale3-Labs/langtrace-trace-attributes',  # Project home page
+    url='https://github.com/Scale3-Labs/langtrace-python-sdk',  # Project home page
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     install_requires=[
