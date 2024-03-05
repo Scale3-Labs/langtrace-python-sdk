@@ -22,7 +22,7 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS['LANGCHAIN_CORE']
         span_attributes = {
             'langtrace.service.name': service_provider,
             'langtrace.service.type': 'framework',
@@ -32,10 +32,18 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
         }
 
         if len(args) > 0 and trace_input:
+            inputs = {}
             for arg in args:
-                if isinstance(arg, dict) and arg.get('input') is not None:
-                    span_attributes['langchain.inputs'] = json.dumps(
-                        {'input': arg.get('input')})
+                if isinstance(arg, dict):
+                    for key, value in arg.items():
+                        if isinstance(value, list):
+                            for item in value:
+                                inputs[key] = item.__class__.__name__
+                        elif isinstance(value, str):
+                            inputs[key] = value
+                elif isinstance(arg, str):
+                    inputs['input'] = arg
+            span_attributes['langchain.inputs'] = to_json_string(inputs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -76,7 +84,7 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
     trace_input: Whether to trace the input of the patched methods.
     """
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS['LANGCHAIN_CORE']
         span_attributes = {
             'langtrace.service.name': service_provider,
             'langtrace.service.type': 'framework',
@@ -85,16 +93,19 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
             'langchain.task.name': task,
         }
 
-        if hasattr(instance, "steps"):
-            print(instance.steps)
-            print("\n\n")
-
         if trace_input:
             inputs = {}
             if len(args) > 0:
                 for arg in args:
-                    if isinstance(arg, dict) and arg.get('input') is not None:
-                        inputs['input'] = arg.get('input')
+                    if isinstance(arg, dict):
+                        for key, value in arg.items():
+                            if isinstance(value, list):
+                                for item in value:
+                                    inputs[key] = item.__class__.__name__
+                            elif isinstance(value, str):
+                                inputs[key] = value
+                    elif isinstance(arg, str):
+                        inputs['input'] = arg
 
             for field, value in instance.steps.items() if hasattr(instance, "steps") and \
                     isinstance(instance.steps, dict) else {}:
