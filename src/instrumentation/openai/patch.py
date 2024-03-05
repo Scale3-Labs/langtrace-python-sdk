@@ -4,7 +4,7 @@ from langtrace.trace_attributes import Event, LLMSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
-from constants import SERVICE_PROVIDERS
+from instrumentation.constants import SERVICE_PROVIDERS
 from instrumentation.openai.lib.apis import APIS
 
 
