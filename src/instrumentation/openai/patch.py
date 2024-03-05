@@ -171,13 +171,17 @@ def chat_completions_create(original_method, version, tracer):
             for chunk in result:
                 if hasattr(chunk, 'choices') and chunk.choices is not None:
                     token_counts = [
-                        estimate_tokens(choice.delta.content) if choice.delta and choice.delta.content else estimate_tokens(choice.delta.function_call.arguments) if choice.delta.function_call and
+                        estimate_tokens(choice.delta.content) if choice.delta
+                        and choice.delta.content
+                        else estimate_tokens(choice.delta.function_call.arguments)
+                        if choice.delta.function_call and
                         choice.delta.function_call.arguments else 0
                         for choice in chunk.choices
                     ]
                     completion_tokens += sum(token_counts)
                     content = [
-                        choice.delta.content if choice.delta and choice.delta.content else choice.delta.function_call.arguments if choice.delta.function_call and
+                        choice.delta.content if choice.delta and choice.delta.content
+                        else choice.delta.function_call.arguments if choice.delta.function_call and
                         choice.delta.function_call.arguments else ""
                         for choice in chunk.choices
                     ]
