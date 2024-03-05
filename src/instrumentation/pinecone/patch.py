@@ -1,14 +1,16 @@
-import json
-
+"""
+This module contains the patching logic for the Pinecone client."""
 from langtrace.trace_attributes import DatabaseSpanAttributes
-from opentelemetry.trace import SpanKind, StatusCode
+from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from instrumentation.constants import SERVICE_PROVIDERS
-from instrumentation.pinecone.lib.apis import APIS
+from instrumentation.pinecone.apis import APIS
 
 
 def generic_patch(original_method, method, version, tracer):
+    """
+    A generic patch method that wraps a function with a span"""
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS['PINECONE']

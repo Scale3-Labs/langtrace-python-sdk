@@ -1,3 +1,7 @@
+"""
+Pinecone instrumentation
+"""
+
 import importlib.metadata
 from typing import Collection
 
@@ -7,11 +11,13 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from instrumentation.pinecone.lib.apis import APIS
+from instrumentation.pinecone.apis import APIS
 from instrumentation.pinecone.patch import generic_patch
 
 
 class PineconeInstrumentation(BaseInstrumentor):
+    """
+    The PineconeInstrumentation class represents the Pinecone instrumentation"""
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["pinecone-client >= 3.1.0"]
@@ -40,4 +46,4 @@ class PineconeInstrumentation(BaseInstrumentor):
             )
 
     def _uninstrument(self, **kwargs):
-        print(kwargs)
+        pass

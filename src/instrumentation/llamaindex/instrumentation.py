@@ -1,3 +1,6 @@
+"""
+The LlamaindexInstrumentation class represents the LlamaIndex instrumentation
+"""
 import importlib.metadata
 from typing import Collection
 
@@ -8,12 +11,11 @@ from wrapt import wrap_function_wrapper
 
 from instrumentation.llamaindex.patch import generic_patch
 
-MODULES = [
-    "llama_index.core.query_pipeline.query",
-]
-
 
 class LlamaindexInstrumentation(BaseInstrumentor):
+    """
+    The LlamaindexInstrumentation class represents the LlamaIndex instrumentation
+    """
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["llama-index >= 0.10.0"]
