@@ -32,7 +32,10 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
         }
 
         if len(args) > 0 and trace_input:
-            span_attributes['langchain.inputs'] = to_json_string(args)
+            for arg in args:
+                if isinstance(arg, dict) and arg.get('input') is not None:
+                    span_attributes['langchain.inputs'] = json.dumps(
+                        {'input': arg.get('input')})
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -82,14 +85,16 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
             'langchain.task.name': task,
         }
 
+        if hasattr(instance, "steps"):
+            print(instance.steps)
+            print("\n\n")
+
         if trace_input:
             inputs = {}
-            args_list = []
             if len(args) > 0:
-                for value in args:
-                    if isinstance(value, str):
-                        args_list.append(value)
-            inputs['args'] = args_list
+                for arg in args:
+                    if isinstance(arg, dict) and arg.get('input') is not None:
+                        inputs['input'] = arg.get('input')
 
             for field, value in instance.steps.items() if hasattr(instance, "steps") and \
                     isinstance(instance.steps, dict) else {}:

@@ -18,6 +18,7 @@ def chat_completion():
         messages=[{"role": "user", "content": "Say this is a test three times"}],
         stream=False,
     )
+    print(stream)
     # stream = client.chat.completions.create(
     #     model="gpt-4",
     #     messages=[{"role": "user", "content": "Say this is a test three times"}, {"role": "assistant", "content": "This is a test. This is a test. This is a test"},

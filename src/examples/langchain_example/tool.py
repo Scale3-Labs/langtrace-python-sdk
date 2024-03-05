@@ -45,7 +45,7 @@ async def aget_prime(n: int, primes: dict = primes) -> str:
     return str(primes.get(int(n)))
 
 
-# @with_langtrace_root_span()
+@with_langtrace_root_span()
 def tool_example():
 
     tools = [
