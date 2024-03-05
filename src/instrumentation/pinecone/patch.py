@@ -4,7 +4,7 @@ from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
-from constants import SERVICE_PROVIDERS
+from instrumentation.constants import SERVICE_PROVIDERS
 from instrumentation.pinecone.lib.apis import APIS
 
 

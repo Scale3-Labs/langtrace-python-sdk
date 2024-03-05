@@ -2,7 +2,7 @@ from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status, StatusCode
 
-from constants import SERVICE_PROVIDERS
+from instrumentation.constants import SERVICE_PROVIDERS
 
 
 def generic_patch(method, task, tracer, version):
