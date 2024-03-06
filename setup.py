@@ -5,7 +5,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='langtrace-python-sdk',  # Choose a unique name for PyPI
-    version='1.0.13',
+    version='1.0.16',
     author='Scale3 Labs',
     license="AGPL-3.0-or-later",
     author_email='engineering@scale3labs.com',
