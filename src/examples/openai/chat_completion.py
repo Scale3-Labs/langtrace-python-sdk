@@ -6,7 +6,7 @@ from src.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-init()
+init(batch=False, log_spans_to_console=True, write_to_remote_url=False)
 
 client = OpenAI()
 
@@ -28,10 +28,10 @@ def chat_completion():
 
     result = []
     for chunk in response:
-        if chunk.choices[0].delta.function_call is not None:
+        if chunk.choices[0].delta.content is not None:
             content = [
-                choice.delta.function_call.arguments if choice.delta.function_call and
-                choice.delta.function_call.arguments else ""
+                choice.delta.content if choice.delta and
+                choice.delta.content else ""
                 for choice in chunk.choices]
             result.append(
                 content[0] if len(content) > 0 else "")
