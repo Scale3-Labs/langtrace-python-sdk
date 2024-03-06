@@ -1,12 +1,13 @@
 from setuptools import find_packages, setup
+
 with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setup(
     name='langtrace-python-sdk',  # Choose a unique name for PyPI
-    version='1.0.12',
+    version='1.0.13',
     author='Scale3 Labs',
-    license= "AGPL-3.0-or-later",
+    license="AGPL-3.0-or-later",
     author_email='ali@scale3labs.com',
     maintainer=['Karthik Kalyanaraman', 'Ali Waleed', 'Rohit Kadhe'],
     description='Python SDK for LangTrace',
