@@ -7,12 +7,13 @@ from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
-from src.init import init
+from src import langtrace
 from src.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(batch=True, log_spans_to_console=True,
+               write_to_remote_url=False)
 
 
 @with_langtrace_root_span()
