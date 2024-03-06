@@ -5,12 +5,13 @@ from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
 
-from src.init import init
+from src import langtrace
 from src.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(batch=True, log_spans_to_console=True,
+               write_to_remote_url=False)
 
 client = OpenAI()
 pinecone = Pinecone()
