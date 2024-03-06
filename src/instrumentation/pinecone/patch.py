@@ -4,8 +4,8 @@ from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from instrumentation.constants import SERVICE_PROVIDERS
-from instrumentation.pinecone.apis import APIS
+from constants.instrumentation.common import SERVICE_PROVIDERS
+from constants.instrumentation.pinecone import APIS
 
 
 def generic_patch(original_method, method, version, tracer):

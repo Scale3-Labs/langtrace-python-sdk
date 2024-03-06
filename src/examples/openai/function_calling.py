@@ -1,14 +1,15 @@
 import json
 
 from dotenv import find_dotenv, load_dotenv
+from init import init
 from openai import OpenAI
 
-from examples.setup import setup_instrumentation
-from instrumentation.with_root_span import with_langtrace_root_span
+from utils.with_root_span import with_langtrace_root_span
+
 
 _ = load_dotenv(find_dotenv())
 
-setup_instrumentation()
+init()
 
 client = OpenAI()
 
