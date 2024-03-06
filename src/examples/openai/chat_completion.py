@@ -26,14 +26,14 @@ def chat_completion():
     #     stream=False,
     # )
 
-    result = []
-    for chunk in response:
-        if chunk.choices[0].delta.content is not None:
-            content = [
-                choice.delta.content if choice.delta and
-                choice.delta.content else ""
-                for choice in chunk.choices]
-            result.append(
-                content[0] if len(content) > 0 else "")
+    # result = []
+    # for chunk in response:
+    #     if chunk.choices[0].delta.content is not None:
+    #         content = [
+    #             choice.delta.content if choice.delta and
+    #             choice.delta.content else ""
+    #             for choice in chunk.choices]
+    #         result.append(
+    #             content[0] if len(content) > 0 else "")
 
-    print("".join(result))
+    # print("".join(result))
