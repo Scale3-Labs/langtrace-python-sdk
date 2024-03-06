@@ -22,7 +22,7 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS['LANGCHAIN_CORE']
         span_attributes = {
             'langtrace.service.name': service_provider,
             'langtrace.service.type': 'framework',
@@ -32,7 +32,18 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
         }
 
         if len(args) > 0 and trace_input:
-            span_attributes['langchain.inputs'] = to_json_string(args)
+            inputs = {}
+            for arg in args:
+                if isinstance(arg, dict):
+                    for key, value in arg.items():
+                        if isinstance(value, list):
+                            for item in value:
+                                inputs[key] = item.__class__.__name__
+                        elif isinstance(value, str):
+                            inputs[key] = value
+                elif isinstance(arg, str):
+                    inputs['input'] = arg
+            span_attributes['langchain.inputs'] = to_json_string(inputs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -73,7 +84,7 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
     trace_input: Whether to trace the input of the patched methods.
     """
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS['LANGCHAIN_CORE']
         span_attributes = {
             'langtrace.service.name': service_provider,
             'langtrace.service.type': 'framework',
@@ -84,12 +95,17 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
 
         if trace_input:
             inputs = {}
-            args_list = []
             if len(args) > 0:
-                for value in args:
-                    if isinstance(value, str):
-                        args_list.append(value)
-            inputs['args'] = args_list
+                for arg in args:
+                    if isinstance(arg, dict):
+                        for key, value in arg.items():
+                            if isinstance(value, list):
+                                for item in value:
+                                    inputs[key] = item.__class__.__name__
+                            elif isinstance(value, str):
+                                inputs[key] = value
+                    elif isinstance(arg, str):
+                        inputs['input'] = arg
 
             for field, value in instance.steps.items() if hasattr(instance, "steps") and \
                     isinstance(instance.steps, dict) else {}:

@@ -1,11 +1,16 @@
+"""
+This module contains a generic patch method that wraps a function with a span.
+"""
 from langtrace.trace_attributes import FrameworkSpanAttributes
-from opentelemetry.trace import SpanKind, StatusCode
+from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from instrumentation.constants import SERVICE_PROVIDERS
 
 
 def generic_patch(method, task, tracer, version):
+    """
+    A generic patch method that wraps a function with a span"""
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS['LLAMAINDEX']
         span_attributes = {

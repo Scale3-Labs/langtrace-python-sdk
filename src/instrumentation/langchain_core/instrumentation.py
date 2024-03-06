@@ -71,15 +71,21 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
         version = importlib.metadata.version('langchain-core')
 
         exclude_methods = ['get_name', 'get_output_schema',
-                           'get_input_schema', 'get_graph', 'to_json']
-        exclude_classes = ['BaseChatPromptTemplate']
+                           'get_input_schema', 'get_graph', 'to_json',
+                           'to_json_not_implemented', 'bind',  'dict',
+                           'format', 'format_messages', 'format_prompt']
+        exclude_classes = ['BaseChatPromptTemplate', 'Runnable', 'RunnableBinding',
+                           'RunnableBindingBase', 'RunnableEach', 'RunnableEachBase',
+                           'RunnableGenerator', 'RunnablePick', 'RunnableMap',
+                           'RunnableSerializable']
+
         modules_to_patch = [
             ('langchain_core.retrievers', 'retriever',
              generic_patch, True, True),
-            ('langchain_core.prompts.chat', 'chatprompt',
-             generic_patch, True, False),
+            ('langchain_core.prompts.chat', 'prompt',
+             generic_patch, True, True),
             ('langchain_core.runnables.base',
-             'runnableparallel', runnable_patch, True, True),
+             'runnable', runnable_patch, True, True),
             ('langchain_core.runnables.passthrough',
              'runnablepassthrough', runnable_patch, True, True),
             ('langchain_core.output_parsers.string',

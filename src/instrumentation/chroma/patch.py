@@ -1,12 +1,18 @@
+"""
+This module contains the patching logic for the Chroma client.
+"""
 from langtrace.trace_attributes import DatabaseSpanAttributes
-from opentelemetry.trace import SpanKind, StatusCode
+from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
+from instrumentation.chroma.apis import APIS
 from instrumentation.constants import SERVICE_PROVIDERS
-from instrumentation.chroma.lib.apis import APIS
 
 
 def collection_patch(method, version, tracer):
+    """
+    A generic patch method that wraps a function with a span
+    """
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS['CHROMA']

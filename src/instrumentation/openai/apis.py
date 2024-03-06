@@ -1,3 +1,6 @@
+"""
+APIs to instrument OpenAI.
+"""
 from langtrace.trace_attributes import OpenAIMethods
 
 APIS = {
