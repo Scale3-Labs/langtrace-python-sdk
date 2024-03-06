@@ -6,7 +6,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from src.langtrace_python_sdk.instrumentation.openai.patch import (
+from langtrace_python_sdk.instrumentation.openai.patch import (
     chat_completions_create, embeddings_create, images_generate)
 
 

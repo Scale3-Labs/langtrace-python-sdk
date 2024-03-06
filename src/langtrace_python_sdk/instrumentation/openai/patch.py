@@ -6,11 +6,11 @@ from langtrace.trace_attributes import Event, LLMSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from src.langtrace_python_sdk.constants.instrumentation.common import \
+from langtrace_python_sdk.constants.instrumentation.common import \
     SERVICE_PROVIDERS
-from src.langtrace_python_sdk.constants.instrumentation.openai import APIS
-from src.langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
-                                                estimate_tokens)
+from langtrace_python_sdk.constants.instrumentation.openai import APIS
+from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
+                                            estimate_tokens)
 
 
 def images_generate(original_method, version, tracer):

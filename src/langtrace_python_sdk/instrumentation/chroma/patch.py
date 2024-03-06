@@ -5,8 +5,8 @@ from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from src.langtrace_python_sdk.constants.instrumentation.chroma import APIS
-from src.langtrace_python_sdk.constants.instrumentation.common import \
+from langtrace_python_sdk.constants.instrumentation.chroma import APIS
+from langtrace_python_sdk.constants.instrumentation.common import \
     SERVICE_PROVIDERS
 
 

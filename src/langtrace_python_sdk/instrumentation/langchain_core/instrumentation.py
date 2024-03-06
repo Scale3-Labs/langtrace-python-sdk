@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from src.langtrace_python_sdk.instrumentation.langchain_core.patch import (
+from langtrace_python_sdk.instrumentation.langchain_core.patch import (
     generic_patch, runnable_patch)
 
 
