@@ -49,7 +49,7 @@ class LlamaindexInstrumentation(BaseInstrumentor):
                         )
 
     def _instrument_module(self, module_name):
-        print(module_name)
+        pass
 
     def _uninstrument(self, **kwargs):
-        print(kwargs)
+        pass
