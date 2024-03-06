@@ -2,9 +2,9 @@
 The LlamaindexInstrumentation class represents the LlamaIndex instrumentation
 """
 import importlib.metadata
+import inspect
 from typing import Collection
 
-from langtrace.trace_attributes import LlamaIndexMethods
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
@@ -25,48 +25,28 @@ class LlamaindexInstrumentation(BaseInstrumentor):
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version('llama-index')
 
-        wrap_function_wrapper(
-            'llama_index.core.base.base_query_engine',
-            'BaseQueryEngine.query',
-            generic_patch(LlamaIndexMethods.QUERYENGINE_QUERY.value,
-                          'query', tracer, version)
-        )
-        wrap_function_wrapper(
-            'llama_index.core.base.base_retriever',
-            'BaseRetriever.retrieve',
-            generic_patch(LlamaIndexMethods.RETRIEVER_RETRIEVE.value,
-                          'retrieve', tracer, version)
-        )
-        wrap_function_wrapper(
-            'llama_index.core.extractors.interface',
-            'BaseExtractor.extract',
-            generic_patch(
-                LlamaIndexMethods.BASEEXTRACTOR_EXTRACT.value, 'extract', tracer, version)
-        )
-        wrap_function_wrapper(
-            'llama_index.core.extractors.interface',
-            'BaseExtractor.aextract',
-            generic_patch(
-                LlamaIndexMethods.BASEEXTRACTOR_AEXTRACT.value, 'extract', tracer, version)
-        )
-        wrap_function_wrapper(
-            'llama_index.core.readers.file.base',
-            'SimpleDirectoryReader.load_data',
-            generic_patch(
-                LlamaIndexMethods.BASEREADER_LOADDATA.value, 'loaddata', tracer, version)
-        )
-        wrap_function_wrapper(
-            'llama_index.core.chat_engine.types',
-            'BaseChatEngine.chat',
-            generic_patch(
-                LlamaIndexMethods.CHATENGINE_CHAT.value, 'chat', tracer, version)
-        )
-        wrap_function_wrapper(
-            'llama_index.core.chat_engine.types',
-            'BaseChatEngine.achat',
-            generic_patch(
-                LlamaIndexMethods.CHATENGINE_ACHAT.value, 'chat', tracer, version)
-        )
+        modules_to_patch = [
+            ('llama_index.core.query_engine', 'query', 'query'),
+            ('llama_index.core.retrievers', 'retrieve', 'retrieve_data'),
+            ('llama_index.core.extractors', 'extract', 'extract_data'),
+            ('llama_index.core.extractors', 'aextract', 'extract_data'),
+            ('llama_index.core.readers', 'load_data', 'load_data'),
+            ('llama_index.core.chat_engine', 'chat', 'chat'),
+            ('llama_index.core.chat_engine', 'achat', 'chat'),
+        ]
+
+        for module_name, method, task in modules_to_patch:
+            module = importlib.import_module(module_name)
+            for name, obj in inspect.getmembers(module, lambda member: inspect.isclass(member) and
+                                                member.__module__.startswith(module_name)):
+                for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
+                    if method_name == method:
+                        wrap_function_wrapper(
+                            module_name,
+                            '.'.join([name, method_name]),
+                            generic_patch(
+                                f'llamaindex.{name}.{method_name}', task, tracer, version)
+                        )
 
     def _instrument_module(self, module_name):
         print(module_name)
