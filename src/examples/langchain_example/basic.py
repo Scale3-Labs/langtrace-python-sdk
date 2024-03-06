@@ -1,5 +1,4 @@
 from dotenv import find_dotenv, load_dotenv
-from init.init import init
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores.faiss import FAISS
@@ -7,12 +6,14 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from utils.with_root_span import with_langtrace_root_span
 
+from src.init import init
+from src.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
 init()
+
 
 @with_langtrace_root_span()
 def basic():

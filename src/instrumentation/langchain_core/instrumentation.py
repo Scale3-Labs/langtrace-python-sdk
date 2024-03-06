@@ -9,7 +9,8 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from instrumentation.langchain_core.patch import generic_patch, runnable_patch
+from src.instrumentation.langchain_core.patch import (generic_patch,
+                                                      runnable_patch)
 
 
 # pylint: disable=dangerous-default-value

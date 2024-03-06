@@ -11,8 +11,8 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from constants.instrumentation.pinecone import APIS
-from instrumentation.pinecone.patch import generic_patch
+from src.constants.instrumentation.pinecone import APIS
+from src.instrumentation.pinecone.patch import generic_patch
 
 
 class PineconeInstrumentation(BaseInstrumentor):

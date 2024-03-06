@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from instrumentation.llamaindex.patch import generic_patch
+from src.instrumentation.llamaindex.patch import generic_patch
 
 
 class LlamaindexInstrumentation(BaseInstrumentor):

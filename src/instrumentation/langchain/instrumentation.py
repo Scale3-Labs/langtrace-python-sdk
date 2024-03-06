@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from instrumentation.langchain.patch import generic_patch
+from src.instrumentation.langchain.patch import generic_patch
 
 
 def patch_module_classes(module_name, tracer, version, task, trace_output=True, trace_input=True):

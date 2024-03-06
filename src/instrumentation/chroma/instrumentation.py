@@ -8,8 +8,8 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from constants.instrumentation.chroma import APIS
-from instrumentation.chroma.patch import collection_patch
+from src.constants.instrumentation.chroma import APIS
+from src.instrumentation.chroma.patch import collection_patch
 
 
 class ChromaInstrumentation(BaseInstrumentor):
