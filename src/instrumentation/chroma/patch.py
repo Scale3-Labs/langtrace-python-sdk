@@ -5,8 +5,8 @@ from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from instrumentation.chroma.apis import APIS
-from instrumentation.constants import SERVICE_PROVIDERS
+from constants.instrumentation.chroma import APIS
+from constants.instrumentation.common import SERVICE_PROVIDERS
 
 
 def collection_patch(method, version, tracer):

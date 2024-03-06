@@ -4,9 +4,8 @@ to calculate the price of a model based on its usage.
 """
 
 from tiktoken import get_encoding
-
-from instrumentation.openai.constants import (OPENAI_COST_TABLE,
-                                              TIKTOKEN_MODEL_MAPPING)
+from constants.instrumentation.openai import OPENAI_COST_TABLE
+from constants.instrumentation.common import TIKTOKEN_MODEL_MAPPING
 
 
 def estimate_tokens(prompt):

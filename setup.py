@@ -4,15 +4,17 @@ with open('requirements.txt') as f:
 
 setup(
     name='langtrace-python-sdk',  # Choose a unique name for PyPI
-    version='1.0.9',
-    author='Ali Waleed',
+    version='1.0.12',
+    author='Scale3 Labs',
+    license= "AGPL-3.0-or-later",
     author_email='ali@scale3labs.com',
-    description='LangTrace - Python SDK',
+    maintainer=['Karthik Kalyanaraman', 'Ali Waleed', 'Rohit Kadhe'],
+    description='Python SDK for LangTrace',
     long_description="LangTrace - Python SDK",
     long_description_content_type='text/markdown',
     url='https://github.com/Scale3-Labs/langtrace-python-sdk',  # Project home page
     package_dir={'': 'src'},
-    packages=find_packages(where='src', exclude=['examples*']),
+    packages=find_packages(where='src'),
     install_requires=required,
     python_requires='>=3.6',
     classifiers=[

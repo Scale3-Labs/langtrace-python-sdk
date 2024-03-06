@@ -6,8 +6,8 @@ from langtrace.trace_attributes import Event, LLMSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from instrumentation.constants import SERVICE_PROVIDERS
-from instrumentation.openai.apis import APIS
+from constants.instrumentation.common import SERVICE_PROVIDERS
+from constants.instrumentation.openai import APIS
 from instrumentation.openai.token_estimation import (calculate_prompt_tokens,
                                                      estimate_tokens)
 
@@ -94,9 +94,9 @@ def chat_completions_create(original_method, version, tracer):
             attributes.llm_top_p = kwargs.get('top_p')
         if kwargs.get('user') is not None:
             attributes.llm_user = kwargs.get('user')
-        if kwargs.get('functions') is not None:
-            attributes.llm_function_prompts = json.dumps(
-                kwargs.get('functions'))
+        # if kwargs.get('functions') is not None:
+        #     attributes.llm_function_prompts = json.dumps(
+        #         kwargs.get('functions'))
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
