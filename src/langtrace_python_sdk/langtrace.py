@@ -4,18 +4,21 @@ from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
                                             ConsoleSpanExporter,
                                             SimpleSpanProcessor)
 
-from src.extensions.langtrace_exporter import LangTraceExporter
-from src.instrumentation.chroma.instrumentation import ChromaInstrumentation
-from src.instrumentation.langchain.instrumentation import \
+from src.langtrace_python_sdk.extensions.langtrace_exporter import \
+    LangTraceExporter
+from src.langtrace_python_sdk.instrumentation.chroma.instrumentation import \
+    ChromaInstrumentation
+from src.langtrace_python_sdk.instrumentation.langchain.instrumentation import \
     LangchainInstrumentation
-from src.instrumentation.langchain_community.instrumentation import \
+from src.langtrace_python_sdk.instrumentation.langchain_community.instrumentation import \
     LangchainCommunityInstrumentation
-from src.instrumentation.langchain_core.instrumentation import \
+from src.langtrace_python_sdk.instrumentation.langchain_core.instrumentation import \
     LangchainCoreInstrumentation
-from src.instrumentation.llamaindex.instrumentation import \
+from src.langtrace_python_sdk.instrumentation.llamaindex.instrumentation import \
     LlamaindexInstrumentation
-from src.instrumentation.openai.instrumentation import OpenAIInstrumentation
-from src.instrumentation.pinecone.instrumentation import \
+from src.langtrace_python_sdk.instrumentation.openai.instrumentation import \
+    OpenAIInstrumentation
+from src.langtrace_python_sdk.instrumentation.pinecone.instrumentation import \
     PineconeInstrumentation
 
 

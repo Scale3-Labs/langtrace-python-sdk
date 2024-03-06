@@ -1,5 +1,5 @@
 """
-Instrumentation for langchain-community.
+Instrumentation for langchain.
 """
 import importlib.metadata
 import inspect
@@ -9,7 +9,8 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from src.instrumentation.langchain_community.patch import generic_patch
+from src.langtrace_python_sdk.instrumentation.langchain.patch import \
+    generic_patch
 
 
 def patch_module_classes(module_name, tracer, version, task, trace_output=True, trace_input=True):
@@ -21,7 +22,7 @@ def patch_module_classes(module_name, tracer, version, task, trace_output=True, 
     - module_name: The name of the module, used in the prefix for `wrap_function_wrapper`.
     - tracer: The tracer object used in `generic_patch`.
     - version: The version parameter used in `generic_patch`.
-    - task: The name used to identify the type of patch in `generic_patch`.
+    - task: The name used to identify the type of task in `generic_patch`.
     - exclude_private: Whether to exclude private methods (those starting with '_').
     - trace_output: Whether to trace the output of the patched methods.
     - trace_input: Whether to trace the input of the patched methods.
@@ -49,46 +50,21 @@ def patch_module_classes(module_name, tracer, version, task, trace_output=True, 
                 pass
 
 
-class LangchainCommunityInstrumentation(BaseInstrumentor):
+class LangchainInstrumentation(BaseInstrumentor):
     """
-    Instrumentor for langchain-community.
+    Instrumentor for langchain.
     """
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["langchain-community >= 0.0.24"]
+        return ["langchain >= 0.1.9"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = importlib.metadata.version('langchain-community')
+        version = importlib.metadata.version('langchain')
 
-        # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
-            ('langchain_community.document_loaders.pdf', 'load_pdf', True, True),
-            ('langchain_community.vectorstores.faiss', 'vector_store', False, False),
-            ('langchain_community.vectorstores.pgvector',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.pinecone',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.mongodb_atlas',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.azuresearch',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.azure_cosmos_db',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.cassandra',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.chroma', 'vector_store', False, False),
-            ('langchain_community.vectorstores.clickhouse',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.elasticsearch',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.supabase',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.weaviate',
-             'vector_store', False, False),
-            ('langchain_community.vectorstores.vectara',
-             'vector_store', False, False),
+            ('langchain.text_splitter', 'split_text', True, True),
         ]
 
         for module_name, task, trace_output, trace_input in modules_to_patch:

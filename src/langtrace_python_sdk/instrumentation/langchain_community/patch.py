@@ -1,21 +1,16 @@
-"""
-This module contains the patching logic for the langchain package.
-"""
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
-from opentelemetry.trace import SpanKind, StatusCode
-from opentelemetry.trace.status import Status
+from opentelemetry.trace import SpanKind
+from opentelemetry.trace.status import Status, StatusCode
 
-from src.constants.instrumentation.common import SERVICE_PROVIDERS
+from src.langtrace_python_sdk.constants.instrumentation.common import \
+    SERVICE_PROVIDERS
 
 
 def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
-    """
-    patch method for generic methods.
-    """
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS['LANGCHAIN_COMMUNITY']
         span_attributes = {
             'langtrace.service.name': service_provider,
             'langtrace.service.type': 'framework',
@@ -24,7 +19,7 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
             'langchain.task.name': task,
         }
 
-        if len(args) > 0 and trace_input:
+        if trace_input and len(args) > 0:
             span_attributes['langchain.inputs'] = to_json_string(args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)

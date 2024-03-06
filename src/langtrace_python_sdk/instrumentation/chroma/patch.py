@@ -1,29 +1,37 @@
 """
-This module contains a generic patch method that wraps a function with a span.
+This module contains the patching logic for the Chroma client.
 """
-from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from src.constants.instrumentation.common import SERVICE_PROVIDERS
+from src.langtrace_python_sdk.constants.instrumentation.chroma import APIS
+from src.langtrace_python_sdk.constants.instrumentation.common import \
+    SERVICE_PROVIDERS
 
 
-def generic_patch(method, task, tracer, version):
+def collection_patch(method, version, tracer):
     """
-    A generic patch method that wraps a function with a span"""
+    A generic patch method that wraps a function with a span
+    """
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LLAMAINDEX']
+        api = APIS[method]
+        service_provider = SERVICE_PROVIDERS['CHROMA']
         span_attributes = {
             'langtrace.service.name': service_provider,
-            'langtrace.service.type': 'framework',
+            'langtrace.service.type': 'vectordb',
             'langtrace.service.version': version,
             'langtrace.version': '1.0.0',
-            'llamaindex.task.name': task,
+            "db.system": "chromadb",
+            "db.operation": api['OPERATION'],
         }
 
-        attributes = FrameworkSpanAttributes(**span_attributes)
+        if hasattr(instance, 'name') and instance.name is not None:
+            span_attributes["db.collection.name"] = instance.name
 
-        with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
+        attributes = DatabaseSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
