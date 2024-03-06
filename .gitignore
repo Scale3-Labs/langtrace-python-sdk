@@ -1,4 +1,5 @@
 # Byte-compiled / optimized / DLL files
+pysdk/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -10,11 +11,10 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+dist/*
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
