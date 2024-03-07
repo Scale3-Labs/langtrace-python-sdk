@@ -6,7 +6,7 @@ import requests
 from opentelemetry.sdk.trace.export import (ReadableSpan, SpanExporter,
                                             SpanExportResult)
 
-
+from opentelemetry.trace.span import format_trace_id
 class LangTraceExporter(SpanExporter):
     api_key: str
     url: str
@@ -37,7 +37,7 @@ class LangTraceExporter(SpanExporter):
 
         data = [
             {
-                'traceId': span.get_span_context().trace_id,
+                'traceId': format_trace_id(span.get_span_context().trace_id),
                 'instrumentationLibrary': span.instrumentation_info.__repr__(),
                 'droppedEventsCount': span.dropped_events,
                 'droppedAttributesCount': span.dropped_attributes,
