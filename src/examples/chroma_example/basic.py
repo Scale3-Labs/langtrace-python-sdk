@@ -2,11 +2,13 @@ import chromadb
 from chromadb.utils import embedding_functions
 from dotenv import find_dotenv, load_dotenv
 
-from utils.with_root_span import with_langtrace_root_span
-from init import init
+from langtrace_python_sdk import langtrace
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
+
 _ = load_dotenv(find_dotenv())
 
-init()
+langtrace.init(batch=False, log_spans_to_console=True,
+               write_to_remote_url=False)
 
 
 @with_langtrace_root_span()

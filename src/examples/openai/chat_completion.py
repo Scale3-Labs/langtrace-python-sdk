@@ -1,13 +1,13 @@
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
-from init.init import init
-from utils.with_root_span import with_langtrace_root_span
-
+from langtrace_python_sdk import langtrace
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-init()
+langtrace.init(batch=False, log_spans_to_console=True,
+               write_to_remote_url=False)
 
 client = OpenAI()
 
@@ -27,14 +27,14 @@ def chat_completion():
     #     stream=False,
     # )
 
-    result = []
-    for chunk in response:
-        if chunk.choices[0].delta.function_call is not None:
-            content = [
-                choice.delta.function_call.arguments if choice.delta.function_call and
-                choice.delta.function_call.arguments else ""
-                for choice in chunk.choices]
-            result.append(
-                content[0] if len(content) > 0 else "")
+    # result = []
+    # for chunk in response:
+    #     if chunk.choices[0].delta.content is not None:
+    #         content = [
+    #             choice.delta.content if choice.delta and
+    #             choice.delta.content else ""
+    #             for choice in chunk.choices]
+    #         result.append(
+    #             content[0] if len(content) > 0 else "")
 
-    print("".join(result))
+    # print("".join(result))
