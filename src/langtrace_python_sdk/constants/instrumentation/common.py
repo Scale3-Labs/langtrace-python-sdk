@@ -7,12 +7,13 @@ TIKTOKEN_MODEL_MAPPING = {
 }
 
 SERVICE_PROVIDERS = {
-    "OPENAI": "OpenAI",
+    "ANTHROPIC": "Anthropic",
     "AZURE": "Azure",
-    "LANGCHAIN": "Langchain",
-    "LANGCHAIN_CORE": "Langchain Core",
-    "LANGCHAIN_COMMUNITY": "Langchain Community",
-    "PINECONE": "Pinecone",
-    "LLAMAINDEX": "LlamaIndex",
     "CHROMA": "Chroma",
+    "LANGCHAIN": "Langchain",
+    "LANGCHAIN_COMMUNITY": "Langchain Community",
+    "LANGCHAIN_CORE": "Langchain Core",
+    "LLAMAINDEX": "LlamaIndex",
+    "OPENAI": "OpenAI",
+    "PINECONE": "Pinecone",
 }
