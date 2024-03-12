@@ -1,43 +1,65 @@
-# langtrace-python-sdk
+<h1 align="center">LangTrace</h1>
 
-export PYTHONPATH="/Users/karthikkalyanaraman/work/langtrace/python-sdk:$PYTHONPATH"
+Looking for the Typescript version? Check out [langtrace-typescript](https://github.com/Scale3-Labs/langtrace-typescript-sdk).
 
-## Steps to run
+LangTrace is a set of extensions built on top of [OpenTelemetry](https://opentelemetry.io/) that gives you complete observability over your LLM application. Because it uses OpenTelemetry under the hood.
 
-1. From your root directory, create a virtualenv for installing your dependencies
-    ```
-    python -m venv pysdk
-    ```
-2. Activate the virtualenv
-    ```
-    source pysdk/bin/activate
-    ```
-3. Install the dependencies
-   ```
-    pip install -r requirements.txt
-    ```
-4. Run the example and see the traces on the terminal
-   ```
-   python src/run_example.py
-   ```
 
-## How to build and publish a new package
+The repo contains standard OpenTelemetry instrumentations for LLM providers and Vector DBs, while still outputting standard OpenTelemetry data that can be connected to your observability stack.
+If you already have OpenTelemetry instrumented, you can just add any of our instrumentations directly.
 
-1. Remove the build/ and dist/ folders from the root
-   ```
-   rm -rf dist/
-   rm -rf build/
-   ```
-2. Bump the version in setup.py
+## 🚀 Getting Started
 
-3. Build the package
-   ```
-   python3 setup.py sdist bdist_wheel
-   ```
+The easiest way to get started is to use our SDK.
 
-4. Upload the package
-   ```
-   twine upload dist/*
-   ```
+Install the SDK:
 
-Note: For API Key, reach out to Karthik/Ali
+```bash
+pip install langtrace-python-sdk
+```
+
+Then, to start instrumenting your code, just add this line to your code:
+
+```python
+from langtrace_python_sdk import langtrace
+
+langtrace.init()
+```
+
+That's it. You're now tracing your code with LangTrace!
+If you want to see the traces you can enable logging
+
+```python
+langtrace.init(log_spans_to_console=True)
+```
+
+If you want to export traces to an external endpoint, you will need to add ```LANGTRACE_URL``` to ```.env``` file.
+```python
+langtrace.init(write_to_remote_url=True)
+```
+
+
+
+## 🪗 What do we instrument?
+
+OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone, Qdrant or Weaviate.
+
+### LLM Providers
+
+- ✅ OpenAI / Azure OpenAI
+
+
+
+### Vector DBs
+
+- ✅ Chroma
+- ✅ Pinecone
+
+### Frameworks
+
+- ✅ LangChain
+- ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
+
+
+
+
