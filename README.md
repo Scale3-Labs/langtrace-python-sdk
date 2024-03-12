@@ -10,20 +10,20 @@ LangTrace is a Python package designed to instrument traces of various Language 
 <li><b>Compatibility:</b> LangTrace is compatible with various LLMS products, including OpenAI and Anthropic, as well as vector databases like Pinecone and Chroma which adhere to <a href="https://opentelemetry.io/">OpenTelemetry</a> standards</li>
 
 <h3>
-<p>Install the SDK</p>
+Install the SDK
+</h3>
 
 ```bash
 pip install langtrace-python-sdk
 ```
 
-<p>Usage</p>
+<h3>Usage</h3>
 
 ```python
 from langtrace_python_sdk import langtrace
 
 langtrace.init()
 ```
-</h3>
 
 <p>Voila! now you're all set.</p>
 
