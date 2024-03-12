@@ -42,7 +42,7 @@ langtrace.init(write_to_remote_url=True)
 
 ## 🪗 What do we instrument?
 
-OpenLLMetry can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone, Qdrant or Weaviate.
+LangTrace can instrument everything that [OpenTelemetry already instruments](https://github.com/open-telemetry/opentelemetry-python-contrib/tree/main/instrumentation) - so things like your DB, API calls, and more. On top of that, we built a set of custom extensions that instrument things like your calls to OpenAI or Anthropic, or your Vector DB like Chroma, Pinecone
 
 ### LLM Providers
 
@@ -60,7 +60,7 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 ### Frameworks
 
 - ✅ LangChain
-- ✅ [LlamaIndex](https://docs.llamaindex.ai/en/stable/module_guides/observability/observability.html#openllmetry)
+- ✅ LlamaIndex
 
 
 
