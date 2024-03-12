@@ -4,7 +4,7 @@ def readme():
         return f.read()
 setup(
     name='langtrace-python-sdk',  # Choose a unique name for PyPI
-    version='1.1.3',
+    version='{{VERSION_PLACEHOLDER}}',
     author='Scale3 Labs',
     license="AGPL-3.0-or-later",
     author_email='engineering@scale3labs.com',
