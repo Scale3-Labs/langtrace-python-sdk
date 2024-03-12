@@ -47,6 +47,8 @@ OpenLLMetry can instrument everything that [OpenTelemetry already instruments](h
 ### LLM Providers
 
 - ✅ OpenAI / Azure OpenAI
+- ✅ Anthropic
+
 
 
 
