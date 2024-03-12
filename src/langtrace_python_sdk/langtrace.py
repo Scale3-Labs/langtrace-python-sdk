@@ -6,6 +6,8 @@ from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
 
 from langtrace_python_sdk.extensions.langtrace_exporter import \
     LangTraceExporter
+from langtrace_python_sdk.instrumentation.anthropic.instrumentation import \
+    AnthropicInstrumentation
 from langtrace_python_sdk.instrumentation.chroma.instrumentation import \
     ChromaInstrumentation
 from langtrace_python_sdk.instrumentation.langchain.instrumentation import \
@@ -61,6 +63,7 @@ def init(
     langchain_instrumentation = LangchainInstrumentation()
     langchain_core_instrumentation = LangchainCoreInstrumentation()
     langchain_community_instrumentation = LangchainCommunityInstrumentation()
+    anthropic_instrumentation = AnthropicInstrumentation()
 
     # Call the instrument method with some arguments
     openai_instrumentation.instrument()
@@ -70,3 +73,4 @@ def init(
     langchain_instrumentation.instrument()
     langchain_core_instrumentation.instrument()
     langchain_community_instrumentation.instrument()
+    anthropic_instrumentation.instrument()
