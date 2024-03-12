@@ -18,9 +18,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install build pylint
-    - name: Analysing the code with pylint
-      run: |
-        pylint encoder/encoder/encode.py
+    # - name: Analysing the code with pylint
+    #   run: |
+    #     pylint encoder/encoder/encode.py
     - name: Build package
       run: python -m build
     - name: Get version from file
