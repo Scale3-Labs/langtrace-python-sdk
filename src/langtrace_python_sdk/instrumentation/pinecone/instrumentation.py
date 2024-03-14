@@ -25,7 +25,7 @@ class PineconeInstrumentation(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = importlib.metadata.version('pinecone-client')
+        version = importlib.metadata.version("pinecone-client")
         for operation_name, details in APIS.items():
             method_ref = details["METHOD"]
             method = None
@@ -39,10 +39,9 @@ class PineconeInstrumentation(BaseInstrumentor):
 
             # Dynamically creating the patching call
             wrap_function_wrapper(
-                'pinecone.data.index',
-                f'Index.{operation}',
-                generic_patch(method, operation_name,
-                              version, tracer)
+                "pinecone.data.index",
+                f"Index.{operation}",
+                generic_patch(method, operation_name, version, tracer),
             )
 
     def _uninstrument(self, **kwargs):

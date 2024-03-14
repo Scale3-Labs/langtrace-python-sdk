@@ -1,17 +1,19 @@
 """
 This module contains the patching functions for the langchain_core package.
 """
+
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status
 
-from langtrace_python_sdk.constants.instrumentation.common import \
-    SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 
 
-def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
+def generic_patch(
+    method_name, task, tracer, version, trace_output=True, trace_input=True
+):
     """
     Wrapper function to trace a generic method.
     method_name: The name of the method to trace.
@@ -23,13 +25,13 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN_CORE']
+        service_provider = SERVICE_PROVIDERS["LANGCHAIN_CORE"]
         span_attributes = {
-            'langtrace.service.name': service_provider,
-            'langtrace.service.type': 'framework',
-            'langtrace.service.version': version,
-            'langtrace.version': '1.0.0',
-            'langchain.task.name': task,
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "framework",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "langchain.task.name": task,
         }
 
         if len(args) > 0 and trace_input:
@@ -43,8 +45,8 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
                         elif isinstance(value, str):
                             inputs[key] = value
                 elif isinstance(arg, str):
-                    inputs['input'] = arg
-            span_attributes['langchain.inputs'] = to_json_string(inputs)
+                    inputs["input"] = arg
+            span_attributes["langchain.inputs"] = to_json_string(inputs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -56,8 +58,7 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 if trace_output:
-                    span.set_attribute(
-                        'langchain.outputs', to_json_string(result))
+                    span.set_attribute("langchain.outputs", to_json_string(result))
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -74,7 +75,9 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
     return traced_method
 
 
-def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
+def runnable_patch(
+    method_name, task, tracer, version, trace_output=True, trace_input=True
+):
     """
     Wrapper function to trace a runnable
     method_name: The name of the method to trace.
@@ -84,14 +87,15 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
     trace_output: Whether to trace the output of the patched methods.
     trace_input: Whether to trace the input of the patched methods.
     """
+
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN_CORE']
+        service_provider = SERVICE_PROVIDERS["LANGCHAIN_CORE"]
         span_attributes = {
-            'langtrace.service.name': service_provider,
-            'langtrace.service.type': 'framework',
-            'langtrace.service.version': version,
-            'langtrace.version': '1.0.0',
-            'langchain.task.name': task,
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "framework",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "langchain.task.name": task,
         }
 
         if trace_input:
@@ -106,13 +110,16 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
                             elif isinstance(value, str):
                                 inputs[key] = value
                     elif isinstance(arg, str):
-                        inputs['input'] = arg
+                        inputs["input"] = arg
 
-            for field, value in instance.steps.items() if hasattr(instance, "steps") and \
-                    isinstance(instance.steps, dict) else {}:
+            for field, value in (
+                instance.steps.items()
+                if hasattr(instance, "steps") and isinstance(instance.steps, dict)
+                else {}
+            ):
                 inputs[field] = value.__class__.__name__
 
-            span_attributes['langchain.inputs'] = to_json_string(inputs)
+            span_attributes["langchain.inputs"] = to_json_string(inputs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -126,7 +133,9 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
                 if trace_output:
                     outputs = {}
                     if isinstance(result, dict):
-                        for field, value in result.items() if hasattr(result, "items") else {}:
+                        for field, value in (
+                            result.items() if hasattr(result, "items") else {}
+                        ):
                             if isinstance(value, list):
                                 for item in value:
                                     if item.__class__.__name__ == "Document":
@@ -135,11 +144,9 @@ def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_
                                         outputs[field] = item.__class__.__name__
                             if isinstance(value, str):
                                 outputs[field] = value
-                    span.set_attribute(
-                        'langchain.outputs', to_json_string(outputs))
+                    span.set_attribute("langchain.outputs", to_json_string(outputs))
                     if isinstance(result, str):
-                        span.set_attribute(
-                            'langchain.outputs', result)
+                        span.set_attribute("langchain.outputs", result)
 
                 span.set_status(StatusCode.OK)
                 return result

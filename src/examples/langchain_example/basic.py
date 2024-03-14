@@ -12,17 +12,18 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=True, log_spans_to_console=True,
-               write_to_remote_url=False)
+langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
 
 
 @with_langtrace_root_span()
 def basic():
     llm = ChatOpenAI()
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are world class technical documentation writer."),
-        ("user", "{input}")
-    ])
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are world class technical documentation writer."),
+            ("user", "{input}"),
+        ]
+    )
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
     res = chain.invoke({"input": "how can langsmith help with testing?"})
@@ -57,10 +58,9 @@ def rag():
 
 @with_langtrace_root_span()
 def load_and_split():
-    url = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'
+    url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
     loader = PyPDFLoader(url)
     data = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500, chunk_overlap=0)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     docs = text_splitter.split_documents(data)
     # print(docs)

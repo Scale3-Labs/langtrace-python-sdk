@@ -15,5 +15,5 @@ APIS = {
         "METHOD": PineconeMethods.DELETE,
         "ENDPOINT": "/vectors/delete",
         "OPERATION": "delete",
-    }
+    },
 }
