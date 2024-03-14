@@ -5,10 +5,8 @@ to calculate the price of a model based on its usage.
 
 from tiktoken import get_encoding
 
-from langtrace_python_sdk.constants.instrumentation.common import \
-    TIKTOKEN_MODEL_MAPPING
-from langtrace_python_sdk.constants.instrumentation.openai import \
-    OPENAI_COST_TABLE
+from langtrace_python_sdk.constants.instrumentation.common import TIKTOKEN_MODEL_MAPPING
+from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
 
 
 def estimate_tokens(prompt):
@@ -30,7 +28,8 @@ def estimate_tokens_using_tiktoken(prompt, model):
 
 def calculate_prompt_tokens(prompt_content, model):
     """
-    Calculate the number of tokens in a prompt. If the model is supported by tiktoken, use it for the estimation."""
+    Calculate the number of tokens in a prompt. If the model is supported by tiktoken, use it for the estimation.
+    """
     try:
         tiktoken_model = TIKTOKEN_MODEL_MAPPING[model]
         return estimate_tokens_using_tiktoken(prompt_content, tiktoken_model)
@@ -44,7 +43,7 @@ def calculate_price_from_usage(model, usage):
     cost_table = OPENAI_COST_TABLE.get(model)
     if cost_table:
         return (
-            (cost_table['input'] * usage['prompt_tokens'] +
-             cost_table['output'] * usage['completion_tokens']) / 1000
-        )
+            cost_table["input"] * usage["prompt_tokens"]
+            + cost_table["output"] * usage["completion_tokens"]
+        ) / 1000
     return 0

@@ -45,5 +45,3 @@ APIS = {
         "ENDPOINT": "/embeddings",
     },
 }
-
-

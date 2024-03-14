@@ -1,32 +1,33 @@
 """
 This module contains the patching logic for the Chroma client.
 """
+
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.chroma import APIS
-from langtrace_python_sdk.constants.instrumentation.common import \
-    SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 
 
 def collection_patch(method, version, tracer):
     """
     A generic patch method that wraps a function with a span
     """
+
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
-        service_provider = SERVICE_PROVIDERS['CHROMA']
+        service_provider = SERVICE_PROVIDERS["CHROMA"]
         span_attributes = {
-            'langtrace.service.name': service_provider,
-            'langtrace.service.type': 'vectordb',
-            'langtrace.service.version': version,
-            'langtrace.version': '1.0.0',
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "vectordb",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
             "db.system": "chromadb",
-            "db.operation": api['OPERATION'],
+            "db.operation": api["OPERATION"],
         }
 
-        if hasattr(instance, 'name') and instance.name is not None:
+        if hasattr(instance, "name") and instance.name is not None:
             span_attributes["db.collection.name"] = instance.name
 
         attributes = DatabaseSpanAttributes(**span_attributes)

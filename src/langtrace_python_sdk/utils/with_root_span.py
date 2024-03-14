@@ -25,4 +25,5 @@ def with_langtrace_root_span(name="LangtraceRootSpan", kind=SpanKind.INTERNAL):
             return async_wrapper
         else:
             return sync_wrapper
+
     return decorator
