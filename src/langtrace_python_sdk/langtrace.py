@@ -36,7 +36,7 @@ from langtrace_python_sdk.instrumentation.pinecone.instrumentation import (
 def init(
     api_key: str = None,
     remote_url: str = None,
-    batch: bool = False,
+    batch: bool = True,
     log_spans_to_console: bool = False,
     write_to_remote_url: bool = True,
 ):
