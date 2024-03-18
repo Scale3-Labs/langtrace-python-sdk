@@ -16,8 +16,8 @@ class LangTraceExporter(SpanExporter):
     def __init__(
         self, api_key: str = None, url: str = None, write_to_remote_url: bool = False
     ) -> None:
-        self.api_key = api_key if api_key else os.environ.get("LANGTRACE_API_KEY")
-        self.url = url if url else os.environ.get("LANGTRACE_URL")
+        self.api_key = api_key if api_key else os.environ.get("API_KEY")
+        self.url = url if url else os.environ.get("URL")
         self.write_to_remote_url = write_to_remote_url
 
         if not self.api_key:

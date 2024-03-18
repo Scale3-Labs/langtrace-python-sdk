@@ -1,76 +1,49 @@
-<h1>LangTrace</h1>
+# What is Langtrace?
 
-<p>
-LangTrace is a Python package designed to instrument traces of various Language Model as a Service (LLMS) products, such as OpenAI and Anthropic, as well as vector databases like Pinecone. This package provides functionalities to capture and analyze traces, allowing users to gain insights into the behavior and performance of these systems.
-</p>
+Langtrace stands as a developer-centric, open-source solution, fully compatible with OpenTelemetry. It enables developers to effortlessly trace, monitor, and debug their LLM applications, offering robust support for automatic instrumentation.
 
-<h3>Features</h3>
-<li><b>Trace Instrumentation:</b> LangTrace enables the instrumentation of LLMS products and vector databases to capture detailed traces of their operations.</li>
+## Supported LLM Modules
 
-<li><b>Compatibility:</b> LangTrace is compatible with various LLMS products, including OpenAI and Anthropic, as well as vector databases like Pinecone and Chroma which adhere to <a href="https://opentelemetry.io/">OpenTelemetry</a> standards</li>
+Langtrace supports a comprehensive range of LLMs, VectorDBs, and frameworks, ensuring wide coverage for your development needs:
 
-<h3>
-Install the SDK
-</h3>
+### LLMs
 
-```bash
-pip install langtrace-python-sdk
-```
+1. OpenAI
+2. Anthropic
+3. Azure OpenAI
 
-<h3>Usage</h3>
+### VectorDBs
 
-```python
-from langtrace_python_sdk import langtrace
+1. Pinecone
+2. Chromadb
 
-langtrace.init()
-```
+### Frameworks
 
-<p>Voila! now you're all set.</p>
+1. LangChain
+2. LlamaIndex
+3. Haystack
 
+We are actively working to extend our support to additional libraries!
 
-<h3>Examples</h3>
+## Getting Started
 
-<p>Log Traces</p>
+To begin utilizing Langtrace, follow these straightforward steps:
 
-```python
-from langtrace_python_sdk import langtrace
+1. Install the package using `pip install langtrace-python-sdk`.
+2. Incorporate Langtrace into your project with `from langtrace_python_sdk import langtrace`.
+   - This import should precede any other LLM module imports (such as OpenAI, LlamaIndex, etc.) to ensure proper functionality.
+3. Initialize Langtrace by adding `langtrace.init({ write_to_remote_url: false})` to your code.
+4. Congratulations, you've completed the basic setup! You will now begin to see traces from your LLM modules logged directly to the console.
 
-langtrace.init(log_spans_to_console=True)
-```
+## Exporting Traces to Langtrace
 
-<p>Export traces to an external endpoint.</p>
+To configure trace exporting, you have two options:
 
-Add the endpoint url inside ```.env``` as ```LANGTRACE_URL```
+You'll need both a Langtrace `api_key` and a `remote_url`, which can be acquired by logging into your Langtrace account.
 
+1. Direct Initialization: Utilize `langtrace.init(batch=True, api_key=<YOUR_API_KEY>, remote_url=<YOUR_REMOTE_URL>)`.
+2. Environment Variables: Set `API_KEY` and `URL`, then add `LangTrace.init(batch=True)` at the beginning of your file.
 
-```python
-from langtrace_python_sdk import langtrace
+## Langtrace Cloud
 
-langtrace.init(write_to_remote_url=True)
-```
-
-
-<h3>
-Support
-
-
-</h3>
-
-<li>
-OpenAI</li>
-
-<li>
-Anthropic</li>
-
-<li>
-Chroma</li>
-
-<li>
-PineCone</li>
-
-<li>
-LangChain</li>
-
-<li>
-LlamaIndex</li>
-
+Currently under development 🚧
