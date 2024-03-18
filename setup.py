@@ -33,6 +33,12 @@ setup(
         "opentelemetry-api",
         "opentelemetry-instrumentation",
         "opentelemetry-sdk",
+        "pinecone-client",
+        "anthropic",
+        "langchain-community",
+        "langchain-openai",
+        "llama-index",
+        "openai",
         "tiktoken",
     ],
     classifiers=[
