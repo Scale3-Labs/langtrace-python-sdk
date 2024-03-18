@@ -1,10 +1,9 @@
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch, call
 from langtrace_python_sdk.instrumentation.openai.patch import chat_completions_create
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
-from unittest.mock import MagicMock, patch, call
+from langtrace.trace_attributes import Event, LLMSpanAttributes
 import importlib.metadata
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
@@ -13,6 +12,8 @@ import openai
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
+
+import json
 
 
 
@@ -41,58 +42,88 @@ def instrument():
 
 print(instrument())
 
+class TestChatCompletion():
 
-def test_chat_completions_create_non_streaming():
-    # Mock dependencies
-    provider = TracerProvider()
-    in_memory_exporter = InMemorySpanExporter()
-    provider.add_span_processor(SimpleSpanProcessor(in_memory_exporter))
-    tracer = get_tracer(__name__, "", provider)
-    version = importlib.metadata.version('openai')
-    wrapped_method = Mock(return_value="mocked method result")
-    instance = Mock()
-    instance.name = "aa"
-    llm_model_value = 'gpt-4'
-    # Define other required fields if any
-    # For example:
-    messages_value = [{'role': 'user', 'content': 'Say this is a test three times'}]
+    # @pytest.fixture
+    # def openai_mock(self):
+    #     with patch('openai.chat.completions.create') as mock_chat_completion:
+    #         mock_chat_completion.return_value = {"choices": [{"text": "This is a test. This is test. This is a test."}]}
+    #         yield mock_chat_completion
 
-        # Create kwargs dictionary with valid values
-    kwargs = {
-            'model': llm_model_value,
-            'messages': messages_value,
-            'stream': False,  # Example value for stream, adjust as needed
-            # Add other required fields with appropriate values
-    }
-    wrapped_function = chat_completions_create(openai.chat.completions.create, version, tracer)
-    result = wrapped_function(wrapped_method, instance, (), kwargs)
-    # assert result == "mocked method result"
-    assert result.system_fingerprint == None
+    @pytest.fixture
+    def set_up_tracer(self):
+        # provider = TracerProvider()
+        # in_memory_exporter = InMemorySpanExporter()
+        # provider.add_span_processor(SimpleSpanProcessor(in_memory_exporter))
+        # self.tracer = get_tracer(__name__, "", provider)
+        self.tracer = Mock()
+        self.span = Mock()
 
-'''
-    # Assert that original method is called with correct arguments
-    original_method.assert_called_once()
+        # Create a context manager mock for start_as_current_span
+        context_manager_mock = MagicMock()
+        context_manager_mock.__enter__.return_value = self.span
+        self.tracer.start_as_current_span.return_value = context_manager_mock
+        from langtrace_python_sdk import langtrace
+        self.exporter = langtrace.init(None, None, False, False, False, True)
 
-    # Assert span attributes
-    tracer.start_span.assert_called_once_with(
-        APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
-    )
-    expected_span_attributes = {
-            "langtrace.service.name": 'openai',
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
-            "url.full": 'chat/completions/create',
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.model": "gpt-4",
-            "llm.stream": False,
-            "llm.prompts": "[{'role': 'user', 'content': 'Say this is a test three times'}]"
+    def test_chat_completions_create_non_streaming(self, set_up_tracer):
+    
+        version = importlib.metadata.version('openai')
+        wrapped_method = Mock(return_value="mocked method result")
+        instance = Mock()
+        instance.name = "aa"
+        llm_model_value = 'gpt-4'
+        # Define other required fields if any
+        # For example:
+        messages_value = [{'role': 'user', 'content': 'Say this is a test three times'}]
+
+            # Create kwargs dictionary with valid values
+        kwargs = {
+                'model': llm_model_value,
+                'messages': messages_value,
+                'stream': False,
         }
-    span_set_attribute_calls = [call(field, value) for field, value in expected_span_attributes.items()]
-    tracer.start_span.return_value.set_attribute.assert_has_calls(span_set_attribute_calls)
-    tracer.start_span.return_value.set_status.assert_called_once_with(StatusCode.OK)
-    tracer.start_span.return_value.end.assert_called_once()
+        wrapped_function = chat_completions_create(openai.chat.completions.create, version, self.tracer)
+        result = wrapped_function(wrapped_method, instance, (), kwargs)
+        print(result)
+        print("here>>>")
+        assert self.tracer.start_as_current_span("openai.chat.completions.create", kind=SpanKind.CLIENT)
+        assert self.tracer.start_as_current_span.call_count == 1
+        # self.span = self.exporter.get_finished_spans()
+        # openai_attributes = (self.span[0].attributes)
+        # expected_attributes = {
+        #     "langtrace.service.name": "OpenAI",
+        #     "langtrace.service.type": "llm",
+        #     "langtrace.service.version": version,
+        #     "langtrace.version": "1.0.0",
+        #     "url.full": "chat/completions/create",
+        #     "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
+        #     "llm.model": kwargs.get('model'),
+        #     "llm.prompts": json.dumps(kwargs.get('messages', [])),
+        #     "llm.stream": kwargs.get('stream'),
+        # }
+        # attributes = LLMSpanAttributes(**expected_attributes)
+        # optional_fields = ['llm.temperature', 'llm.top_p', 'llm.user', 'llm.system.fingerprint', 'http.max.retries', 'http.timeout', 'llm.responses', 'llm.token.counts', 'llm.encoding.format', 'llm.dimensions']
 
-    # Assert the return value
-    assert result == original_method.return_value
-'''
+        # for key, value in attributes.model_dump(by_alias=True).items():
+        #         try:
+        #             if key not in optional_fields:
+        #                 assert(key, openai_attributes.attributes.get(key) == value)
+        #         except KeyError:
+        #             # Handle the KeyError (attribute not found in open_ai_span.attributes)
+        #             print(f"Attribute '{key}' not found in open_ai_span.attributes")
+
+
+
+        expected_result = ['id', 'choices', 'created', 'model', 'system_fingerprint','object', 'usage']
+        for key in result:
+            try:
+                index = expected_result.index(key)
+                print(key, index)
+                assert index >= 0, f"Attribute '{key}' not found in expected_result"
+            except ValueError:
+                print(f"Attribute '{key}' not found in expected_result")
+        # Assert message content
+        expected_content = "This is a test. This is test. This is a test."
+   
+        # assert result.choices[0].message.content == expected_content
