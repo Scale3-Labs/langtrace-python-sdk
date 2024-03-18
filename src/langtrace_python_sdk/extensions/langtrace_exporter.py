@@ -56,10 +56,10 @@ class LangTraceExporter(SpanExporter):
         self.url = url if url else os.environ.get("URL")
         self.write_to_remote_url = write_to_remote_url
 
-        if not self.api_key and self.write_to_remote_url:
+        if self.write_to_remote_url and not self.api_key:
             raise ValueError("No API key provided")
 
-        if not self.url and self.write_to_remote_url:
+        if self.write_to_remote_url and not self.url:
             raise ValueError("No URL provided")
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
