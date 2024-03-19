@@ -3,19 +3,13 @@ from unittest.mock import MagicMock, Mock, patch, call
 from langtrace_python_sdk.instrumentation.openai.patch import chat_completions_create
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace import get_tracer
-from langtrace.trace_attributes import Event, LLMSpanAttributes
 import importlib.metadata
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 import openai
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 import json
-
-
 
 class TestChatCompletion():
     data = {
@@ -47,7 +41,7 @@ class TestChatCompletion():
     @pytest.fixture
     def openai_mock(self):
         with patch('openai.chat.completions.create') as mock_chat_completion:
-            mock_chat_completion.return_value = json.dumps(self.data)  # Modify this line
+            mock_chat_completion.return_value = json.dumps(self.data)  
             yield mock_chat_completion
 
     @pytest.fixture
@@ -79,6 +73,7 @@ class TestChatCompletion():
         wrapped_function = chat_completions_create(openai.chat.completions.create, version, self.tracer)
         result = wrapped_function(wrapped_method, instance, (), kwargs)
         assert self.tracer.start_as_current_span("openai.chat.completions.create", kind=SpanKind.CLIENT)
+
         # Assert span attributes     
         expected_attributes = {
             "langtrace.service.name": "OpenAI",
