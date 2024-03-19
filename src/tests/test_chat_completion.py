@@ -60,8 +60,7 @@ class TestChatCompletion():
         context_manager_mock = MagicMock()
         context_manager_mock.__enter__.return_value = self.span
         self.tracer.start_as_current_span.return_value = context_manager_mock
-        from langtrace_python_sdk import langtrace
-        self.exporter = langtrace.init(None, None, False, False, False, True)
+        
 
     def test_chat_completions_create_non_streaming(self, set_up_tracer, openai_mock):
     
