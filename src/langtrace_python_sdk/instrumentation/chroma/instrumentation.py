@@ -1,6 +1,7 @@
 """
 Instrumentation for ChromaDB
 """
+
 import importlib.metadata
 from typing import Collection
 
@@ -23,13 +24,13 @@ class ChromaInstrumentation(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = importlib.metadata.version('chromadb')
+        version = importlib.metadata.version("chromadb")
 
         for operation, _ in APIS.items():
             wrap_function_wrapper(
-                'chromadb.api.models.Collection',
-                f'Collection.{operation.lower()}',
-                collection_patch(operation, version, tracer)
+                "chromadb.api.models.Collection",
+                f"Collection.{operation.lower()}",
+                collection_patch(operation, version, tracer),
             )
 
     def _instrument_module(self, module_name):

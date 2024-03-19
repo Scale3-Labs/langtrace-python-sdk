@@ -1,32 +1,35 @@
 """
 This module contains the patching logic for the langchain package.
 """
+
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status
 
-from langtrace_python_sdk.constants.instrumentation.common import \
-    SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 
 
-def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
+def generic_patch(
+    method_name, task, tracer, version, trace_output=True, trace_input=True
+):
     """
     patch method for generic methods.
     """
+
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS['LANGCHAIN']
+        service_provider = SERVICE_PROVIDERS["LANGCHAIN"]
         span_attributes = {
-            'langtrace.service.name': service_provider,
-            'langtrace.service.type': 'framework',
-            'langtrace.service.version': version,
-            'langtrace.version': '1.0.0',
-            'langchain.task.name': task,
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "framework",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "langchain.task.name": task,
         }
 
         if len(args) > 0 and trace_input:
-            span_attributes['langchain.inputs'] = to_json_string(args)
+            span_attributes["langchain.inputs"] = to_json_string(args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -38,8 +41,7 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 if trace_output:
-                    span.set_attribute(
-                        'langchain.outputs', to_json_string(result))
+                    span.set_attribute("langchain.outputs", to_json_string(result))
 
                 span.set_status(StatusCode.OK)
                 return result

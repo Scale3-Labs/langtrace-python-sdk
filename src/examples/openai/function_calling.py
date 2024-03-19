@@ -8,42 +8,28 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=True, log_spans_to_console=True,
-               write_to_remote_url=False)
+langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
 
 client = OpenAI()
 
 
 student_custom_functions = [
     {
-        'name': 'extract_student_info',
-        'description': 'Get the student information from the body of the input text',
-        'parameters': {
-            'type': 'object',
-            'properties': {
-                'name': {
-                    'type': 'string',
-                    'description': 'Name of the person'
+        "name": "extract_student_info",
+        "description": "Get the student information from the body of the input text",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Name of the person"},
+                "major": {"type": "string", "description": "Major subject."},
+                "school": {"type": "string", "description": "The university name."},
+                "grades": {"type": "integer", "description": "GPA of the student."},
+                "club": {
+                    "type": "string",
+                    "description": "School club for extracurricular activities. ",
                 },
-                'major': {
-                    'type': 'string',
-                    'description': 'Major subject.'
-                },
-                'school': {
-                    'type': 'string',
-                    'description': 'The university name.'
-                },
-                'grades': {
-                    'type': 'integer',
-                    'description': 'GPA of the student.'
-                },
-                'club': {
-                    'type': 'string',
-                    'description': 'School club for extracurricular activities. '
-                }
-
-            }
-        }
+            },
+        },
     }
 ]
 
@@ -51,11 +37,16 @@ student_custom_functions = [
 @with_langtrace_root_span()
 def function_calling():
     response = client.chat.completions.create(
-        model='gpt-3.5-turbo',
-        messages=[{'role': 'user', 'content': "David Nguyen is a sophomore majoring in computer science at Stanford University. He is Asian American and has a 3.8 GPA. David is known for his programming skills and is an active member of the university's Robotics Club. He hopes to pursue a career in artificial intelligence after graduating."}],
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "user",
+                "content": "David Nguyen is a sophomore majoring in computer science at Stanford University. He is Asian American and has a 3.8 GPA. David is known for his programming skills and is an active member of the university's Robotics Club. He hopes to pursue a career in artificial intelligence after graduating.",
+            }
+        ],
         functions=student_custom_functions,
-        function_call='auto',
-        stream=False
+        function_call="auto",
+        stream=False,
     )
 
     # result = []
@@ -71,6 +62,5 @@ def function_calling():
     # print("".join(result))
 
     # Loading the response as a JSON object
-    json_response = json.loads(
-        response.choices[0].message.function_call.arguments)
+    json_response = json.loads(response.choices[0].message.function_call.arguments)
     print(json_response)
