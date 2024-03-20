@@ -39,10 +39,12 @@ def init(
     batch: bool = True,
     log_spans_to_console: bool = False,
     write_to_remote_url: bool = True,
+    custom_exporter = None
 ):
 
     provider = TracerProvider()
-    remote_write_exporter = LangTraceExporter(api_key, remote_url, write_to_remote_url)
+
+    remote_write_exporter = LangTraceExporter(api_key, remote_url, write_to_remote_url) if custom_exporter is None else custom_exporter
     console_exporter = ConsoleSpanExporter()
     batch_processor_remote = BatchSpanProcessor(remote_write_exporter)
     simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
