@@ -61,7 +61,7 @@ def init(
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
-            provider.add_span_processor(simple_processor_remote)
+            raise ValueError("Batching is required for remote write")
 
     # Initialize tracer
     trace.set_tracer_provider(provider)
