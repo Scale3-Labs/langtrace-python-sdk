@@ -34,8 +34,8 @@ setup(
         'opentelemetry-api',
         'opentelemetry-instrumentation',
         'opentelemetry-sdk',
+        'pinecone-client',
         'tiktoken'
-
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
