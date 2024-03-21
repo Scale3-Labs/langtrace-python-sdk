@@ -34,6 +34,7 @@ setup(
         'opentelemetry-api',
         'opentelemetry-instrumentation',
         'opentelemetry-sdk',
+        'tiktoken'
 
     ],
     classifiers=[
