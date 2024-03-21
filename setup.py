@@ -1,7 +1,5 @@
 from setuptools import find_packages, setup
 
-with open("requirements.txt") as f:
-    required = f.read().splitlines()
 
 
 def readme():
@@ -31,7 +29,13 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.6",
-    install_requires=required,
+    install_requires=[
+        'trace-attributes',
+        'opentelemetry-api',
+        'opentelemetry-instrumentation',
+        'opentelemetry-sdk',
+
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
