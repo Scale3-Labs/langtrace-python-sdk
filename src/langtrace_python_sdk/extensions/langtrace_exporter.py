@@ -76,7 +76,7 @@ class LangTraceExporter(SpanExporter):
         data = [
             {
                 "traceId": format_trace_id(span.get_span_context().trace_id),
-                "instrumentationLibrary": span.instrumentation_info.__repr__,
+                "instrumentationLibrary": span.instrumentation_info.__repr__(),
                 "droppedEventsCount": span.dropped_events,
                 "droppedAttributesCount": span.dropped_attributes,
                 "droppedLinksCount": span.dropped_links,
