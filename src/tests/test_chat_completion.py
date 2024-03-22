@@ -45,7 +45,7 @@ class TestChatCompletion():
             yield mock_chat_completion
 
     @pytest.fixture
-    def set_up_tracer(self):
+    def set_up(self):
         # Create a tracer provider
         self.tracer = Mock()
         self.span = Mock()
@@ -54,10 +54,16 @@ class TestChatCompletion():
         context_manager_mock = MagicMock()
         context_manager_mock.__enter__.return_value = self.span
         self.tracer.start_as_current_span.return_value = context_manager_mock
+
+    @pytest.fixture
+    def tear_down(self):
+        # Perform clean-up operations here, if needed
+        pass
         
 
-    def test_chat_completions_create_non_streaming(self, set_up_tracer, openai_mock):
+    def test_chat_completions_create_non_streaming(self, set_up, openai_mock, tear_down):
     
+        # Arrange
         version = importlib.metadata.version('openai')
         wrapped_method = Mock(return_value="mocked method result")
         instance = Mock()
@@ -70,9 +76,12 @@ class TestChatCompletion():
                 'messages': messages_value,
                 'stream': False,
         }
+
+        # Act
         wrapped_function = chat_completions_create(openai.chat.completions.create, version, self.tracer)
         result = wrapped_function(wrapped_method, instance, (), kwargs)
-        assert self.tracer.start_as_current_span("openai.chat.completions.create", kind=SpanKind.CLIENT)
+
+        # Assert
 
         # Assert span attributes     
         expected_attributes = {
@@ -88,17 +97,16 @@ class TestChatCompletion():
         }
         
         assert self.span.set_attribute.has_calls([call(key, value) for key, value in expected_attributes.items()], any_order=True)
+        
         # Assert span status
         assert self.span.set_status.call_count == 1
         assert self.span.set_status.has_calls([call(Status(StatusCode.OK))])
         
-        # Assert reult keys
+        # Assert result keys
         expected_result = ['id', 'choices', 'created', 'model', 'system_fingerprint','object', 'usage']
         result_keys = json.loads(result).keys()
         assert set(expected_result) == set(result_keys), "Keys mismatch"
         
         # Assert message content
         expected_content = "This is a test, this is a test, this is a test."
-   
         assert json.loads(result).get('choices')[0].get('message').get('content') == expected_content, "Content mismatch"
-
