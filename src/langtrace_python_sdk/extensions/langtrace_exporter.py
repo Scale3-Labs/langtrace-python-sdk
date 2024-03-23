@@ -3,8 +3,8 @@ import os
 import typing
 
 import requests
-from opentelemetry.sdk.trace.export import ReadableSpan, SpanExporter, SpanExportResult
-
+from opentelemetry.sdk.trace.export import (ReadableSpan, SpanExporter,
+                                            SpanExportResult)
 from opentelemetry.trace.span import format_trace_id
 
 
@@ -81,7 +81,6 @@ class LangTraceExporter(SpanExporter):
                 "droppedAttributesCount": span.dropped_attributes,
                 "droppedLinksCount": span.dropped_links,
                 "ended": span.status.is_ok,
-                "duration": span.end_time - span.start_time,
                 **json.loads(span.to_json()),
             }
             for span in spans
