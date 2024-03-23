@@ -6,13 +6,12 @@ from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import Tool
 from langchain_openai import ChatOpenAI
 
-from src import langtrace
-from src.utils.with_root_span import with_langtrace_root_span
+from langtrace_python_sdk import langtrace
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=True, log_spans_to_console=True,
-               write_to_remote_url=False)
+langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
 
 
 llm = ChatOpenAI(temperature=0, model="gpt-4")
