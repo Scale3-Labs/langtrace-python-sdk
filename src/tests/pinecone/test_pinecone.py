@@ -1,49 +1,40 @@
-import pytest
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import MagicMock, patch, call
 from langtrace_python_sdk.instrumentation.pinecone.patch import generic_patch
 from opentelemetry.trace import SpanKind
 import importlib.metadata
-import openai
 import pinecone
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
-
+import unittest
 import json
 
-class TestPinecone():
+class TestPinecone(unittest.TestCase):
     data = {
     "status": "success",
     "message": "Data upserted successfully",
     "upserted_ids": [1, 2, 3]
-  }
+    }
+    
+    def setUp(self):
+        self.openai_mock = patch('pinecone.Index.upsert')
+        self.mock_image_generate = self.openai_mock.start()
+        self.mock_image_generate.return_value = json.dumps(self.data)
 
-
-    @pytest.fixture
-    def pinecone_mock(self):
-        with patch('pinecone.Index.upsert') as mock_pinecone_upsert:
-            mock_pinecone_upsert.return_value = json.dumps(self.data)  
-            yield mock_pinecone_upsert
-        
-
-    @pytest.fixture
-    def set_up(self):
         # Create a tracer provider
-        self.tracer = Mock()
-        self.span = Mock()
+        self.tracer = MagicMock()
+        self.span = MagicMock()
 
         # Create a context manager mock for start_as_current_span
         context_manager_mock = MagicMock()
         context_manager_mock.__enter__.return_value = self.span
         self.tracer.start_as_current_span.return_value = context_manager_mock
 
-    @pytest.fixture
-    def tear_down(self):
-        # Perform clean-up operations here, if needed
-        pass  
+    def tearDown(self):
+        self.openai_mock.stop()
 
-    def test_pinecone(self, set_up, pinecone_mock, tear_down):
+    def test_pinecone(self):
     
        # Arrange
         version = importlib.metadata.version('pinecone-client')
@@ -51,13 +42,12 @@ class TestPinecone():
         vectors = [[1, 2, 3], [4, 5, 6]]
 
         # Act
-        wrapped_method = Mock(return_value="mocked method result")
-        instance = Mock()
+        
         wrapped_function = generic_patch(pinecone.Index.upsert, method, version, self.tracer)
-        result = wrapped_function(wrapped_method, instance, (vectors,), {})
+        result = wrapped_function(MagicMock(), MagicMock(), (vectors,), {})
 
         # Assert
-        assert self.tracer.start_as_current_span.called_once_with("pinecone.data.index", kind=SpanKind.CLIENT)
+        self.assertTrue(self.tracer.start_as_current_span.called_once_with("pinecone.data.index", kind=SpanKind.CLIENT))
 
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["PINECONE"]
@@ -69,9 +59,17 @@ class TestPinecone():
             "db.system": "pinecone",
             "db.operation": api["OPERATION"],
         }
-        assert self.span.set_attribute.has_calls([call(key, value) for key, value in expected_attributes.items()], any_order=True)
-        assert self.span.set_status.called_once_with(Status(StatusCode.OK))
+        self.assertTrue(
+            self.span.set_attribute.has_calls(
+                [call(key, value) for key, value in expected_attributes.items()], any_order=True
+            )
+        )      
+        self.assertEqual(self.span.set_status.call_count, 1)
+        self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
 
         expected_result = ['status', 'message', 'upserted_ids']
         result_keys = json.loads(result).keys()
-        assert set(expected_result) == set(result_keys), "Keys mismatch"
+        self.assertSetEqual(set(expected_result), set(result_keys), "Keys mismatch")
+
+if __name__ == '__main__':
+    unittest.main()

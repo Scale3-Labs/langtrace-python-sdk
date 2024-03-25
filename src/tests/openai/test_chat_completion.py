@@ -1,4 +1,4 @@
-import pytest
+import unittest
 from unittest.mock import MagicMock, Mock, patch, call
 from langtrace_python_sdk.instrumentation.openai.patch import chat_completions_create
 from opentelemetry.trace import SpanKind
@@ -6,12 +6,10 @@ from opentelemetry.trace import get_tracer
 import importlib.metadata
 import openai
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
 import json
 
-class TestChatCompletion():
+class TestChatCompletion(unittest.TestCase):
     data = {
         "id": "chatcmpl-93wIW4A2r0YjlDvx7PKvHV0VxbprP",
         "choices": [
@@ -38,52 +36,42 @@ class TestChatCompletion():
         }
     }
 
-    @pytest.fixture
-    def openai_mock(self):
-        with patch('openai.chat.completions.create') as mock_chat_completion:
-            mock_chat_completion.return_value = json.dumps(self.data)  
-            yield mock_chat_completion
+    def setUp(self):
+        self.openai_mock = patch('openai.chat.completions.create')
+        self.mock_image_generate = self.openai_mock.start()
+        self.mock_image_generate.return_value = json.dumps(self.data)
 
-    @pytest.fixture
-    def set_up(self):
         # Create a tracer provider
-        self.tracer = Mock()
-        self.span = Mock()
+        self.tracer = MagicMock()
+        self.span = MagicMock()
 
         # Create a context manager mock for start_as_current_span
         context_manager_mock = MagicMock()
         context_manager_mock.__enter__.return_value = self.span
         self.tracer.start_as_current_span.return_value = context_manager_mock
 
-    @pytest.fixture
-    def tear_down(self):
-        # Perform clean-up operations here, if needed
-        pass
-        
+    def tearDown(self):
+        self.openai_mock.stop()
 
-    def test_chat_completions_create_non_streaming(self, set_up, openai_mock, tear_down):
-    
+    def test_chat_completions_create_non_streaming(self):
         # Arrange
         version = importlib.metadata.version('openai')
-        wrapped_method = Mock(return_value="mocked method result")
-        instance = Mock()
-        instance.name = "aa"
         llm_model_value = 'gpt-4'
         messages_value = [{'role': 'user', 'content': 'Say this is a test three times'}]
 
         kwargs = {
-                'model': llm_model_value,
-                'messages': messages_value,
-                'stream': False,
+            'model': llm_model_value,
+            'messages': messages_value,
+            'stream': False,
         }
 
         # Act
         wrapped_function = chat_completions_create(openai.chat.completions.create, version, self.tracer)
-        result = wrapped_function(wrapped_method, instance, (), kwargs)
+        result = wrapped_function(MagicMock(), MagicMock(), (), kwargs)
 
         # Assert
+        self.assertTrue(self.tracer.start_as_current_span.called_once_with("openai.chat.completions.create", kind=SpanKind.CLIENT))
 
-        # Assert span attributes     
         expected_attributes = {
             "langtrace.service.name": "OpenAI",
             "langtrace.service.type": "llm",
@@ -95,18 +83,23 @@ class TestChatCompletion():
             "llm.prompts": json.dumps(kwargs.get('messages', [])),
             "llm.stream": kwargs.get('stream'),
         }
-        
-        assert self.span.set_attribute.has_calls([call(key, value) for key, value in expected_attributes.items()], any_order=True)
-        
-        # Assert span status
-        assert self.span.set_status.call_count == 1
-        assert self.span.set_status.has_calls([call(Status(StatusCode.OK))])
-        
-        # Assert result keys
-        expected_result = ['id', 'choices', 'created', 'model', 'system_fingerprint','object', 'usage']
+        self.assertTrue(
+            self.span.set_attribute.has_calls(
+                [call(key, value) for key, value in expected_attributes.items()], any_order=True
+            )
+        )
+
+        self.assertEqual(self.span.set_status.call_count, 1)
+        self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
+
+        expected_result = ['id', 'choices', 'created', 'model', 'system_fingerprint', 'object', 'usage']
         result_keys = json.loads(result).keys()
-        assert set(expected_result) == set(result_keys), "Keys mismatch"
-        
-        # Assert message content
+        self.assertSetEqual(set(expected_result), set(result_keys), "Keys mismatch")
+
         expected_content = "This is a test, this is a test, this is a test."
-        assert json.loads(result).get('choices')[0].get('message').get('content') == expected_content, "Content mismatch"
+        self.assertEqual(
+            json.loads(result).get('choices')[0].get('message').get('content'), expected_content, "Content mismatch"
+        )
+
+if __name__ == '__main__':
+    unittest.main()
