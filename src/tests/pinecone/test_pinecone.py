@@ -9,6 +9,8 @@ from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVID
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
 import unittest
 import json
+from tests.utils import common_setup
+
 
 class TestPinecone(unittest.TestCase):
     data = {
@@ -18,21 +20,11 @@ class TestPinecone(unittest.TestCase):
     }
     
     def setUp(self):
-        self.openai_mock = patch('pinecone.Index.upsert')
-        self.mock_image_generate = self.openai_mock.start()
-        self.mock_image_generate.return_value = json.dumps(self.data)
+        self.pinecone_mock, self.tracer, self.span = common_setup(self.data, 'pinecone.Index.upsert')
 
-        # Create a tracer provider
-        self.tracer = MagicMock()
-        self.span = MagicMock()
-
-        # Create a context manager mock for start_as_current_span
-        context_manager_mock = MagicMock()
-        context_manager_mock.__enter__.return_value = self.span
-        self.tracer.start_as_current_span.return_value = context_manager_mock
 
     def tearDown(self):
-        self.openai_mock.stop()
+        self.pinecone_mock.stop()
 
     def test_pinecone(self):
     
@@ -42,13 +34,11 @@ class TestPinecone(unittest.TestCase):
         vectors = [[1, 2, 3], [4, 5, 6]]
 
         # Act
-        
         wrapped_function = generic_patch(pinecone.Index.upsert, method, version, self.tracer)
         result = wrapped_function(MagicMock(), MagicMock(), (vectors,), {})
 
         # Assert
         self.assertTrue(self.tracer.start_as_current_span.called_once_with("pinecone.data.index", kind=SpanKind.CLIENT))
-
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["PINECONE"]
         expected_attributes = {

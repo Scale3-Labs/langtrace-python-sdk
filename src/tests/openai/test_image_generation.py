@@ -9,6 +9,7 @@ from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 import json
+from tests.utils import common_setup
 
 class TestImageGeneration(unittest.TestCase):
     data = {
@@ -23,18 +24,8 @@ class TestImageGeneration(unittest.TestCase):
     }
 
     def setUp(self):
-        self.openai_mock = patch('openai.images.generate')
-        self.mock_image_generate = self.openai_mock.start()
-        self.mock_image_generate.return_value = json.dumps(self.data)
+        self.openai_mock, self.tracer, self.span = common_setup(self.data, 'openai.images.generate')
 
-        # Create a tracer provider
-        self.tracer = MagicMock()
-        self.span = MagicMock()
-
-        # Create a context manager mock for start_as_current_span
-        context_manager_mock = MagicMock()
-        context_manager_mock.__enter__.return_value = self.span
-        self.tracer.start_as_current_span.return_value = context_manager_mock
 
     def tearDown(self):
         self.openai_mock.stop()
