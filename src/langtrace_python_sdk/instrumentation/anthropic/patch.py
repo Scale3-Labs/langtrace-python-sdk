@@ -9,7 +9,6 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
-from langtrace_python_sdk.utils.llm import estimate_tokens
 
 
 def messages_create(original_method, version, tracer):
