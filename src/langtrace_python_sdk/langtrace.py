@@ -35,29 +35,29 @@ from langtrace_python_sdk.instrumentation.pinecone.instrumentation import (
 
 def init(
     api_key: str = None,
-    remote_url: str = None,
     batch: bool = True,
-    log_spans_to_console: bool = False,
-    write_to_remote_url: bool = True,
-    custom_exporter = None
+    write_to_langtrace_cloud: bool = True,
+    remote_url: str = None,
+    debug_log_to_console: bool = False,
+    custom_remote_exporter = None
 ):
 
     provider = TracerProvider()
 
-    remote_write_exporter = LangTraceExporter(api_key, remote_url, write_to_remote_url) if custom_exporter is None else custom_exporter
+    remote_write_exporter = LangTraceExporter(api_key, remote_url, write_to_langtrace_cloud) if custom_remote_exporter is None else custom_remote_exporter
     console_exporter = ConsoleSpanExporter()
     batch_processor_remote = BatchSpanProcessor(remote_write_exporter)
     simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
     batch_processor_console = BatchSpanProcessor(console_exporter)
     simple_processor_console = SimpleSpanProcessor(console_exporter)
 
-    if log_spans_to_console:
+    if debug_log_to_console:
         if batch:
             provider.add_span_processor(batch_processor_console)
         else:
             provider.add_span_processor(simple_processor_console)
 
-    if write_to_remote_url:
+    if write_to_langtrace_cloud:
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
