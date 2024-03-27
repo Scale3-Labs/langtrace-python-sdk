@@ -6,7 +6,7 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=False, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
 
 client = OpenAI()
 
@@ -18,7 +18,7 @@ def chat_completion():
         messages=[{"role": "user", "content": "Say this is a test three times"}],
         stream=True,
     )
-    # print(stream)
+    print(response)
     # stream = client.chat.completions.create(
     #     model="gpt-4",
     #     messages=[{"role": "user", "content": "Say this is a test three times"}, {"role": "assistant", "content": "This is a test. This is a test. This is a test"},

@@ -96,7 +96,7 @@ class LangTraceExporter(SpanExporter):
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
             )
-            print(f"Sent To {self.url} with Body {data} ")
+            print(f"Traces sent To {self.url}")
             return SpanExportResult.SUCCESS
         except Exception as e:
             print("Error sending data to remote URL", e)
