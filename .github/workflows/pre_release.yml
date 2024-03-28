@@ -8,6 +8,8 @@ on:
 jobs:
   versioning:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -24,10 +26,11 @@ jobs:
     - name: Bump version
       run: |
         hatch version patch
-        git add src/langtrace_python_sdk/version.py
-        git commit -m "Bump version to $(hatch version)"
-        git push origin development
-
+    - name: Commit version
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Bump version to $(hatch version)"
+        commit_options: "--no-verify"
     - name: Tag release
       run: |
         git tag $(hatch version)
