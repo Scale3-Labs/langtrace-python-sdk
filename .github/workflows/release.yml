@@ -1,32 +1,43 @@
 name: Publish Python 🐍 distributions 📦 to PyPI
-
 on:
   push:
-    tags:
-      - '*'
+    branches:
+      - main
 
 jobs:
-  build-n-publish:
-    name: Build and publish Python 🐍 distributions 📦 to PyPI
+  versioning:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
 
-      - name: Install dependencies
-        run: |
-          pip install hatch
+    - name: Install dependencies
+      run: |
+        pip install hatch
 
-      - name: Build SDK
-        run: >-
-          hatch build
-          
-      - name: Publish distribution 📦 to PyPI
-        uses: pypa/gh-action-pypi-publish@master
-        with:
-          password: ${{ secrets.PYPI_TOKEN }}
+    - name: Bump version
+      run: |
+        hatch version patch
+    - name: Commit version
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Bump version"
+        commit_options: "--no-verify"
+    - name: Tag release
+      run: |
+        git tag $(hatch version)
+        git push origin --tags
+    - name: Build SDK
+      run: |
+        hatch build
+    - name: Publish distribution 📦 to PyPI
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        password: ${{ secrets.PYPI_TOKEN }}
