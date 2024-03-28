@@ -2,9 +2,11 @@ import json
 import os
 import typing
 
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
+    LANGTRACE_REMOTE_URL,
+)
 import requests
-from opentelemetry.sdk.trace.export import (ReadableSpan, SpanExporter,
-                                            SpanExportResult)
+from opentelemetry.sdk.trace.export import ReadableSpan, SpanExporter, SpanExportResult
 from opentelemetry.trace.span import format_trace_id
 
 
@@ -22,7 +24,6 @@ class LangTraceExporter(SpanExporter):
     **Attributes:**
 
     * `api_key` (str): An API key to authenticate with the LangTrace collector (required).
-    * `url` (str): The URL of the LangTrace collector endpoint (required if `write_to_remote_url` is True).
     * `write_to_remote_url` (bool): A flag indicating whether to send spans to the remote URL (defaults to False).
 
     **Methods:**
@@ -46,21 +47,14 @@ class LangTraceExporter(SpanExporter):
     """
 
     api_key: str
-    url: str
     write_to_remote_url: bool
 
-    def __init__(
-        self, api_key: str = None, url: str = None, write_to_remote_url: bool = False
-    ) -> None:
-        self.api_key = api_key if api_key else os.environ.get("API_KEY")
-        self.url = url if url else os.environ.get("URL")
+    def __init__(self, api_key: str = None, write_to_remote_url: bool = False) -> None:
+        self.api_key = api_key if api_key else os.environ.get("LANGTRACE_API_KEY")
         self.write_to_remote_url = write_to_remote_url
 
         if self.write_to_remote_url and not self.api_key:
             raise ValueError("No API key provided")
-
-        if self.write_to_remote_url and not self.url:
-            raise ValueError("No URL provided")
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         """
@@ -92,11 +86,11 @@ class LangTraceExporter(SpanExporter):
         # Send data to remote URL
         try:
             requests.post(
-                url=self.url,
+                url=LANGTRACE_REMOTE_URL,
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
             )
-            print(f"Traces sent To {self.url}")
+            print(f"Traces sent To {LANGTRACE_REMOTE_URL}")
             return SpanExportResult.SUCCESS
         except Exception as e:
             print("Error sending data to remote URL", e)
