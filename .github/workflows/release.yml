@@ -23,7 +23,7 @@ jobs:
 
     - name: Bump version
       run: |
-        hatch bump
+        hatch version patch
         git push origin development
 
     - name: Tag release
