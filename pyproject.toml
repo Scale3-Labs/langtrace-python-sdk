@@ -1,8 +1,8 @@
 # pyproject.toml
 
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 
 [project]
@@ -25,16 +25,25 @@ requires-python = ">=3.9"
 [project.urls]
 Homepage = "https://github.com/Scale3-Labs/langtrace-python-sdk"
 
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
 
-[tool.semantic_release]
-version_variable = "pyproject.toml:version" # version location
-branch = "development"                             # branch to make releases of
-changelog_file = "CHANGELOG.md"             # changelog file
-build_command = "poetry build"              # build dists
-dist_path = "dist/"                         # where to put dists
-upload_to_release = true                    # auto-create GitHub release
-upload_to_pypi = false                      # don't auto-upload to PyPI
-remove_dist = false                         # don't remove dists
-patch_without_tag = true                    # patch release by default
+[tool.hatch.version]
+path = "src/langtrace_python_sdk/version.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/langtrace_python_sdk"]
+
+# [tool.semantic_release]
+# version_variable = "pyproject.toml:version" # version location
+# branch = "development"                             # branch to make releases of
+# changelog_file = "CHANGELOG.md"             # changelog file
+# build_command = "poetry build"              # build dists
+# dist_path = "dist/"                         # where to put dists
+# upload_to_release = true                    # auto-create GitHub release
+# upload_to_pypi = false                      # don't auto-upload to PyPI
+# remove_dist = false                         # don't remove dists
+# patch_without_tag = true                    # patch release by default
