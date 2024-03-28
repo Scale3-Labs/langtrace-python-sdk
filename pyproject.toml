@@ -22,7 +22,8 @@ dependencies = [
   'opentelemetry-api',
   'opentelemetry-sdk',
   'opentelemetry-instrumentation',
-  'pinecone-client'
+  'pinecone-client',
+  'tiktoken'
 ]
 
 requires-python = ">=3.9"
