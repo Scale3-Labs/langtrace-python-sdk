@@ -17,9 +17,28 @@ classifiers=[
     "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Operating System :: OS Independent",
 ]
-dependencies = []
+dependencies = [
+  'trace-attributes',
+  'opentelemetry-api',
+  'opentelemetry-sdk',
+  'opentelemetry-instrumentation',
+  'pinecone-client'
+]
 
 requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = [
+    "openai",
+    "anthropic",
+    "python-dotenv",
+    "langchain",
+    "langchain-openai",
+    "llama-index",
+    "langchain-openai",
+    "chromadb"
+]
+
 
 
 [project.urls]
@@ -35,7 +54,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/langtrace_python_sdk"]
+packages = ["src/langtrace_python_sdk", "src/examples"]
 
 # [tool.semantic_release]
 # version_variable = "pyproject.toml:version" # version location
