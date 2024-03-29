@@ -13,7 +13,7 @@ langtrace.init()
 client = OpenAI()
 
 
-@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 22})
+@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api1():
     response = client.chat.completions.create(
         model="gpt-4",
