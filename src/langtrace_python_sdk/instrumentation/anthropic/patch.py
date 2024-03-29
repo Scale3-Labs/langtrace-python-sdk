@@ -6,10 +6,12 @@ import json
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry import baggage
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from langtrace_python_sdk.constants.instrumentation.common import \
-    SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 
 
 def messages_create(original_method, version, tracer):
@@ -31,6 +33,7 @@ def messages_create(original_method, version, tracer):
             prompts = json.dumps(
                 [{"role": "system", "content": system}] + kwargs.get("messages", [])
             )
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
             "langtrace.service.name": service_provider,
@@ -42,6 +45,7 @@ def messages_create(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.prompts": prompts,
             "llm.stream": kwargs.get("stream"),
+            **extra_attributes,
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
