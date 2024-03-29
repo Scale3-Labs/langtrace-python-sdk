@@ -2,6 +2,7 @@
 
 
 # from examples.openai.chat_completion import chat_completion
+
 # from examples.openai import images_generate
 # from examples.openai.function_calling import function_calling
 # from examples.anthropic_example.completion import messages_create
