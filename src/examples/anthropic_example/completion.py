@@ -4,12 +4,13 @@ import anthropic
 from dotenv import find_dotenv, load_dotenv
 
 from langtrace_python_sdk import langtrace
+from langtrace_python_sdk import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=False, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
 
-
+@with_langtrace_root_span("messages_create")
 def messages_create():
 
     client = anthropic.Anthropic()
@@ -20,8 +21,10 @@ def messages_create():
         temperature=0.0,
         system="Respond only in Yoda-speak.",
         messages=[{"role": "user", "content": "How are you today?"}],
-        stream=True,
+        stream=False,
     )
 
-    for response in message:
-        pass
+    print(message)
+
+    # for response in message:
+    #     pass

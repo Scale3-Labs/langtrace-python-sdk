@@ -8,8 +8,8 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
-from langtrace_python_sdk.utils.llm import estimate_tokens
+from langtrace_python_sdk.constants.instrumentation.common import \
+    SERVICE_PROVIDERS
 
 
 def messages_create(original_method, version, tracer):
@@ -22,6 +22,16 @@ def messages_create(original_method, version, tracer):
             else ""
         )
         service_provider = SERVICE_PROVIDERS["ANTHROPIC"]
+
+        # extract system from kwargs and attach as a role to the prompts
+        # we do this to keep it consistent with the openai
+        prompts = json.dumps(kwargs.get("messages", []))
+        system = kwargs.get("system")
+        if system:
+            prompts = json.dumps(
+                [{"role": "system", "content": system}] + kwargs.get("messages", [])
+            )
+
         span_attributes = {
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
@@ -30,7 +40,7 @@ def messages_create(original_method, version, tracer):
             "url.full": base_url,
             "llm.api": APIS["MESSAGES_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
+            "llm.prompts": prompts,
             "llm.stream": kwargs.get("stream"),
         }
 
