@@ -5,8 +5,13 @@ from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
+
+from opentelemetry import baggage
 
 
 def generic_patch(original_method, method, version, tracer):
@@ -16,6 +21,8 @@ def generic_patch(original_method, method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["PINECONE"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
         span_attributes = {
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
@@ -23,6 +30,7 @@ def generic_patch(original_method, method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "pinecone",
             "db.operation": api["OPERATION"],
+            **extra_attributes,
         }
 
         attributes = DatabaseSpanAttributes(**span_attributes)

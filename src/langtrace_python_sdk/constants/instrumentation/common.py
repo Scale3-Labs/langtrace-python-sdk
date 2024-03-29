@@ -17,3 +17,5 @@ SERVICE_PROVIDERS = {
     "OPENAI": "OpenAI",
     "PINECONE": "Pinecone",
 }
+
+LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

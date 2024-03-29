@@ -7,7 +7,7 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 _ = load_dotenv(find_dotenv())
 
 
-langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
 
 
 @with_langtrace_root_span()

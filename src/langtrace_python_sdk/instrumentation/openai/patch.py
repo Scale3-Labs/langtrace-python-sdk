@@ -4,12 +4,17 @@ This module contains the patching logic for the OpenAI library."""
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
+
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from opentelemetry import trace, baggage
 
 
 def images_generate(original_method, version, tracer):
@@ -24,6 +29,8 @@ def images_generate(original_method, version, tracer):
             else ""
         )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
         span_attributes = {
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
@@ -34,6 +41,7 @@ def images_generate(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
             "llm.prompts": json.dumps([kwargs.get("prompt", [])]),
+            **extra_attributes,
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -90,6 +98,8 @@ def chat_completions_create(original_method, version, tracer):
             else ""
         )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
         span_attributes = {
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
@@ -97,9 +107,9 @@ def chat_completions_create(original_method, version, tracer):
             "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
             "llm.prompts": json.dumps(kwargs.get("messages", [])),
             "llm.stream": kwargs.get("stream"),
+            **extra_attributes,
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -126,28 +136,36 @@ def chat_completions_create(original_method, version, tracer):
             # Attempt to call the original method
             result = original_method(*args, **kwargs)
             if kwargs.get("stream") is False:
+                span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
-                            "message": (
-                                choice.message.content
-                                if choice.message and choice.message.content
-                                else (
-                                    choice.message.function_call.arguments
-                                    if choice.message
-                                    and choice.message.function_call.arguments
-                                    else ""
-                                )
-                            ),
-                            **(
-                                {
-                                    "content_filter_results": choice[
-                                        "content_filter_results"
-                                    ]
-                                }
-                                if "content_filter_results" in choice
-                                else {}
-                            ),
+                            "message": {
+                                "role": (
+                                    choice.message.role
+                                    if choice.message and choice.message.role
+                                    else "assistant"
+                                ),
+                                "content": (
+                                    choice.message.content
+                                    if choice.message and choice.message.content
+                                    else (
+                                        choice.message.function_call.arguments
+                                        if choice.message
+                                        and choice.message.function_call.arguments
+                                        else ""
+                                    )
+                                ),
+                                **(
+                                    {
+                                        "content_filter_results": choice[
+                                            "content_filter_results"
+                                        ]
+                                    }
+                                    if "content_filter_results" in choice
+                                    else {}
+                                ),
+                            }
                         }
                         for choice in result.choices
                     ]
@@ -167,8 +185,8 @@ def chat_completions_create(original_method, version, tracer):
                     usage = result.usage
                     if usage is not None:
                         usage_dict = {
-                            "prompt_tokens": result.usage.prompt_tokens,
-                            "completion_tokens": usage.completion_tokens,
+                            "input_tokens": result.usage.prompt_tokens,
+                            "output_tokens": usage.completion_tokens,
                             "total_tokens": usage.total_tokens,
                         }
                         span.set_attribute("llm.token.counts", json.dumps(usage_dict))
@@ -244,8 +262,8 @@ def chat_completions_create(original_method, version, tracer):
                 "llm.token.counts",
                 json.dumps(
                     {
-                        "prompt_tokens": prompt_tokens,
-                        "completion_tokens": completion_tokens,
+                        "input_tokens": prompt_tokens,
+                        "output_tokens": completion_tokens,
                         "total_tokens": prompt_tokens + completion_tokens,
                     }
                 ),
@@ -294,6 +312,8 @@ def embeddings_create(original_method, version, tracer):
         )
 
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
         span_attributes = {
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
@@ -303,6 +323,7 @@ def embeddings_create(original_method, version, tracer):
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
+            **extra_attributes,
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -318,6 +339,9 @@ def embeddings_create(original_method, version, tracer):
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
         ) as span:
+
+            print("Inside embeddings_create", trace.get_current_span())
+
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
