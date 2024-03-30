@@ -1,14 +1,12 @@
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
-from opentelemetry import baggage
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
 def generic_patch(
@@ -24,7 +22,7 @@ def generic_patch(
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
             "langchain.task.name": task,
-            **extra_attributes,
+            **(extra_attributes if extra_attributes is not None else {})
         }
 
         if trace_input and len(args) > 0:
