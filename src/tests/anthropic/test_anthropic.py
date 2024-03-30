@@ -6,6 +6,8 @@ import importlib.metadata
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 from opentelemetry.trace.status import Status, StatusCode
 import json
+from langtrace.trace_attributes import Event, LLMSpanAttributes
+
 from tests.utils import common_setup
 
 class TestAnthropic(unittest.TestCase):
@@ -13,16 +15,14 @@ class TestAnthropic(unittest.TestCase):
     data = {
         "content" : [MagicMock(text="Some text", type="text")],
         "system_fingerprint" : "None",
-        "usage" : MagicMock(input_tokens=23, output_tokens=44)}
+        "usage" : MagicMock(input_tokens=23, output_tokens=44),
+        "chunks" : [MagicMock(delta="Some text", message="text")]}
 
 
     def setUp(self):
         
         # Mock the original method
-        self.original_method = MagicMock()
-        self.original_method.return_value = MagicMock(**self.data)
         self.anthropic_mock, self.tracer, self.span = common_setup(self.data, None)
-
 
     def tearDown(self):
         pass
@@ -38,7 +38,7 @@ class TestAnthropic(unittest.TestCase):
 
         # Act
         wrapped_function = messages_create("anthropic.messages.create", version, self.tracer)
-        result = wrapped_function(self.original_method, MagicMock(), (), kwargs)
+        result = wrapped_function(self.anthropic_mock, MagicMock(), (), kwargs)
         
 
         # Assert
@@ -66,6 +66,7 @@ class TestAnthropic(unittest.TestCase):
         expected_result_data = {"system_fingerprint": "None"  }   
 
         self.assertEqual(result.system_fingerprint, expected_result_data["system_fingerprint"])
+
 
 if __name__ == '__main__':
     unittest.main()

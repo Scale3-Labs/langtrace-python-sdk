@@ -7,8 +7,9 @@ def common_setup(data, method_to_mock=None):
         mock_method = service_mock.start()
         mock_method.return_value = json.dumps(data)
     else:
-        service_mock = None
-        mock_method = None
+        service_mock = MagicMock()
+        service_mock.return_value = MagicMock(**data)
+       
 
     tracer = MagicMock()
     span = MagicMock()

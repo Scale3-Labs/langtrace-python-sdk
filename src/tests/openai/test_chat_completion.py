@@ -35,10 +35,6 @@ class TestChatCompletion(unittest.TestCase):
 
     def setUp(self):
         self.openai_mock, self.tracer, self.span = common_setup(self.data, None)
-
-        # Mock the original method
-        self.original_method = MagicMock()
-        self.original_method.return_value = MagicMock(**self.data)
    
        
     def tearDown(self):
@@ -59,7 +55,7 @@ class TestChatCompletion(unittest.TestCase):
 
 
         # Act
-        wrapped_function = chat_completions_create(self.original_method, version, self.tracer)
+        wrapped_function = chat_completions_create(self.openai_mock, version, self.tracer)
         result = wrapped_function(MagicMock(), MagicMock(), (), kwargs)
         
 
