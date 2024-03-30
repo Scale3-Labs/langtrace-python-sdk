@@ -3,11 +3,13 @@ This module contains the patching logic for the Chroma client.
 """
 
 from langtrace.trace_attributes import DatabaseSpanAttributes
+from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.chroma import APIS
-from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
 def collection_patch(method, version, tracer):
@@ -18,6 +20,8 @@ def collection_patch(method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["CHROMA"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
         span_attributes = {
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
@@ -25,6 +29,7 @@ def collection_patch(method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "chromadb",
             "db.operation": api["OPERATION"],
+            **(extra_attributes if extra_attributes is not None else {})
         }
 
         if hasattr(instance, "name") and instance.name is not None:
