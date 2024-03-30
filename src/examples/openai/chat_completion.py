@@ -3,9 +3,7 @@ from openai import OpenAI
 
 from langtrace_python_sdk import langtrace
 from langtrace_python_sdk.utils.with_root_span import (
-    with_langtrace_root_span,
-    with_additional_attributes,
-)
+    with_additional_attributes, with_langtrace_root_span)
 
 _ = load_dotenv(find_dotenv())
 

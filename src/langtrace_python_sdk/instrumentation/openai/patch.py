@@ -4,17 +4,15 @@ This module contains the patching logic for the OpenAI library."""
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
-
+from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
-from opentelemetry import trace, baggage
+from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
+                                            estimate_tokens)
 
 
 def images_generate(original_method, version, tracer):
@@ -41,7 +39,7 @@ def images_generate(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
             "llm.prompts": json.dumps([kwargs.get("prompt", [])]),
-            **extra_attributes,
+            **(extra_attributes if extra_attributes is not None else {})
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -109,7 +107,7 @@ def chat_completions_create(original_method, version, tracer):
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(kwargs.get("messages", [])),
             "llm.stream": kwargs.get("stream"),
-            **extra_attributes,
+            **(extra_attributes if extra_attributes is not None else {})
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -323,7 +321,7 @@ def embeddings_create(original_method, version, tracer):
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
-            **extra_attributes,
+            **(extra_attributes if extra_attributes is not None else {})
         }
 
         attributes = LLMSpanAttributes(**span_attributes)

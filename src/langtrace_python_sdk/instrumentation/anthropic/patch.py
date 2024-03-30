@@ -4,14 +4,13 @@ This module contains the patching logic for the Anthropic library."""
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
+from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry import baggage
+
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
 def messages_create(original_method, version, tracer):
@@ -45,7 +44,7 @@ def messages_create(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.prompts": prompts,
             "llm.stream": kwargs.get("stream"),
-            **extra_attributes,
+            **(extra_attributes if extra_attributes is not None else {})
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
