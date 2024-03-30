@@ -8,15 +8,18 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
+from langtrace_python_sdk.utils.with_root_span import (
+    with_langtrace_root_span,
+    with_additional_attributes,
+)
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
+langtrace.init()
 
 
-@with_langtrace_root_span()
-def basic():
+@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
+def api_call_1():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -28,6 +31,27 @@ def basic():
     chain = prompt | llm | output_parser
     res = chain.invoke({"input": "how can langsmith help with testing?"})
     print(res)
+
+
+@with_additional_attributes({"user.id": "37373", "user.feedback.rating": 1})
+def api_call_2():
+    llm = ChatOpenAI()
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", "You are world class technical documentation writer."),
+            ("user", "{input}"),
+        ]
+    )
+    output_parser = StrOutputParser()
+    chain = prompt | llm | output_parser
+    res = chain.invoke({"input": "how can langsmith help with testing?"})
+    print(res)
+
+
+@with_langtrace_root_span()
+def basic():
+    api_call_1()
+    api_call_2()
 
 
 @with_langtrace_root_span()
