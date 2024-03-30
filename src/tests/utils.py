@@ -1,11 +1,14 @@
-import importlib.metadata
 from unittest.mock import MagicMock, patch
 import json
-
-def common_setup(data, method_to_mock):
-    service_mock = patch(method_to_mock)
-    mock_image_generate = service_mock.start()
-    mock_image_generate.return_value = json.dumps(data)
+   
+def common_setup(data, method_to_mock=None):
+    if method_to_mock:
+        service_mock = patch(method_to_mock)
+        mock_method = service_mock.start()
+        mock_method.return_value = json.dumps(data)
+    else:
+        service_mock = None
+        mock_method = None
 
     tracer = MagicMock()
     span = MagicMock()
