@@ -32,7 +32,7 @@ To begin utilizing Langtrace, follow these straightforward steps:
 1. Install the package using `pip install langtrace-python-sdk`.
 2. Incorporate Langtrace into your project with `from langtrace_python_sdk import langtrace`.
    - This import should precede any other LLM module imports (such as OpenAI, LlamaIndex, etc.) to ensure proper functionality.
-3. Initialize Langtrace by adding `langtrace.init({ write_to_remote_url: false})` to your code.
+3. Initialize Langtrace by adding `langtrace.init(write_to_langtrace_cloud =false)` to your code.
 4. Congratulations, you've completed the basic setup! You will now begin to see traces from your LLM modules logged directly to the console.
 
 
@@ -42,7 +42,7 @@ To configure trace exporting, you have two options:
 
 You'll need a Langtrace `api_key`, which can be acquired by logging into your Langtrace account.
 
-1. Direct Initialization: Utilize `langtrace.init({ api_key: <YOUR_API_KEY>})`.
+1. Direct Initialization: Utilize `langtrace.init(api_key=<YOUR_API_KEY>)`.
 2. Environment Variables: Set `LANGTRACE_API_KEY`, then add `langtrace.init()` at the beginning of your file.
 
 ### Additional Customization
