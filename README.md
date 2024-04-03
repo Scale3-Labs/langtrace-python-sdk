@@ -147,7 +147,7 @@ Langtrace automatically captures traces from the following vendors:
 
 ## Contributions
 
-We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our Slack workspace.
+We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our [Discord](https://discord.langtrace.ai) workspace.
 
 ---
 
