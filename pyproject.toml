@@ -11,10 +11,10 @@ dynamic = ["version"]
 description = "Python SDK for LangTrace"
 readme = "README.md"
 authors = [{ name = "Scale3 Labs", email = "engineering@scale3labs.com" }]
-license = { text = "AGPL-3.0-or-later" }
+license = "Apache-2.0"
 classifiers=[
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -22,7 +22,8 @@ dependencies = [
   'opentelemetry-api',
   'opentelemetry-sdk',
   'opentelemetry-instrumentation',
-  'pinecone-client'
+  'pinecone-client',
+  'tiktoken'
 ]
 
 requires-python = ">=3.9"

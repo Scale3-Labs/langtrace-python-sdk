@@ -54,6 +54,12 @@ class TestPinecone(unittest.TestCase):
                 [call(key, value) for key, value in expected_attributes.items()], any_order=True
             )
         )      
+
+        actual_calls = self.span.set_attribute.call_args_list
+
+        for key, value in expected_attributes.items():
+            self.assertIn(call(key, value), actual_calls)
+            
         self.assertEqual(self.span.set_status.call_count, 1)
         self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
 
