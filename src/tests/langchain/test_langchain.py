@@ -1,15 +1,15 @@
 
 import unittest
-from unittest.mock import MagicMock, Mock, patch, call
+from unittest.mock import MagicMock, call
 from langtrace_python_sdk.instrumentation.langchain.patch import generic_patch
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace import get_tracer
 import importlib.metadata
-import openai
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from opentelemetry.trace.status import Status, StatusCode
-import json
 from tests.utils import common_setup
+import json
+
 class TestGenericPatch(unittest.TestCase):
     data = {"key": "value"}
     def setUp(self):
@@ -18,11 +18,11 @@ class TestGenericPatch(unittest.TestCase):
     def tearDown(self):
         # Clean up after each test case
         pass
-
+      
     def test_generic_patch(self):
         # Arrange
         method_name = "example_method"
-        trace_output = True
+        trace_output = False
         trace_input = False  # Change as per your requirement
         args = (1, 2, 3)
         task = "split_text"
