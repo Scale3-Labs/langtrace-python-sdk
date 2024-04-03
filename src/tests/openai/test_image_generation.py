@@ -26,7 +26,7 @@ class TestImageGeneration(unittest.TestCase):
     }
 
     def setUp(self):
-        self.openai_mock, self.tracer, self.span = common_setup(self.data, 'openai.images.generate')
+        self.openai_mock, self.tracer, self.span = common_setup(self.data, "openai.images.generate")
 
 
     def tearDown(self):
