@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, Mock, patch, call
 from langtrace_python_sdk.instrumentation.openai.patch import images_generate
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace import get_tracer
+from opentelemetry import baggage
 import importlib.metadata
 import openai
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
@@ -10,6 +11,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 import json
 from tests.utils import common_setup
+
 
 class TestImageGeneration(unittest.TestCase):
     data = {
@@ -38,7 +40,8 @@ class TestImageGeneration(unittest.TestCase):
         kwargs = {
             'model': llm_model_value,
             'prompt': prompt_value,
-            'stream': False        }
+            'stream': False } 
+
 
         # Act
         wrapped_function = images_generate(openai.images.generate, version, self.tracer)
@@ -48,7 +51,7 @@ class TestImageGeneration(unittest.TestCase):
         self.assertTrue(self.tracer.start_as_current_span.called_once_with("openai.images.generate", kind=SpanKind.CLIENT))
 
         expected_attributes = {
-            "langtrace.service.name": 'OpenAI',
+            "langtrace.service.name": "OpenAI",
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
@@ -56,7 +59,7 @@ class TestImageGeneration(unittest.TestCase):
             "llm.api": "images_generation_endpoint",  
             "llm.model": kwargs.get('model'),
             "llm.stream": kwargs.get('stream'),  
-            "llm.prompts": json.dumps([kwargs.get('prompt', [])])
+            "llm.prompts": json.dumps([kwargs.get('prompt', [])]),
         }
         self.assertTrue(self.span.set_attribute.has_calls([call(key, value) for key, value in expected_attributes.items()], any_order=True))
         self.assertTrue(self.span.set_status.called_once_with(Status(StatusCode.OK)))
