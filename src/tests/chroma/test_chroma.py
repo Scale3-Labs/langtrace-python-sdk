@@ -49,6 +49,11 @@ class TestChromaPatch(unittest.TestCase):
         }
         for key, value in expected_attributes.items():
             self.span.set_attribute.assert_has_calls([call(key, value)], any_order=True)
+
+        actual_calls = self.span.set_attribute.call_args_list
+
+        for key, value in expected_attributes.items():
+            self.assertIn(call(key, value), actual_calls)
         
         # Assert the span status is set to OK
         self.span.set_status.assert_called_with(StatusCode.OK)

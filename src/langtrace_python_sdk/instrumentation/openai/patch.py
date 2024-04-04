@@ -52,7 +52,7 @@ def images_generate(original_method, version, tracer):
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
-                result = original_method(*args, **kwargs)
+                result = wrapped(*args, **kwargs)
                 if kwargs.get("stream") is False or kwargs.get("stream") is None:
                     data = (
                         result.data[0]
@@ -132,7 +132,7 @@ def chat_completions_create(original_method, version, tracer):
                 span.set_attribute(field, value)
         try:
             # Attempt to call the original method
-            result = original_method(*args, **kwargs)
+            result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False:
                 span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
@@ -345,7 +345,7 @@ def embeddings_create(original_method, version, tracer):
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
-                result = original_method(*args, **kwargs)
+                result = wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as e:
