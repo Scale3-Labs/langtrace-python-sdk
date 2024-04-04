@@ -12,6 +12,10 @@ from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.langchain.patch import generic_patch
 
+import logging
+
+logging.basicConfig(level=logging.FATAL)
+
 
 def patch_module_classes(
     module_name, tracer, version, task, trace_output=True, trace_input=True
