@@ -46,6 +46,7 @@ class TestAnthropic(unittest.TestCase):
         self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
         
         expected_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": "Anthropic",
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
