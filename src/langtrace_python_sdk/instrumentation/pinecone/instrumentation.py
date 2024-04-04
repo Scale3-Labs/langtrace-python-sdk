@@ -14,6 +14,10 @@ from wrapt import wrap_function_wrapper
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
 from langtrace_python_sdk.instrumentation.pinecone.patch import generic_patch
 
+import logging
+
+logging.basicConfig(level=logging.FATAL)
+
 
 class PineconeInstrumentation(BaseInstrumentor):
     """
