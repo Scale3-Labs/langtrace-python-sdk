@@ -133,7 +133,7 @@ def chat_completions_create(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            if kwargs.get("stream") is False:
+            if kwargs.get("stream") is False or kwargs.get("stream") is None:
                 span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
