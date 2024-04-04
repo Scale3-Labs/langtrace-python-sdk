@@ -11,6 +11,10 @@ from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
 
+import logging
+
+logging.basicConfig(level=logging.FATAL)
+
 
 class AnthropicInstrumentation(BaseInstrumentor):
     """

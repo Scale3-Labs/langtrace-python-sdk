@@ -11,6 +11,9 @@ from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.constants.instrumentation.chroma import APIS
 from langtrace_python_sdk.instrumentation.chroma.patch import collection_patch
+import logging
+
+logging.basicConfig(level=logging.FATAL)
 
 
 class ChromaInstrumentation(BaseInstrumentor):
