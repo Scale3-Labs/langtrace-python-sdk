@@ -63,6 +63,7 @@ class TestChatCompletion(unittest.TestCase):
         self.assertTrue(self.tracer.start_as_current_span.called_once_with("openai.chat.completions.create", kind=SpanKind.CLIENT))
 
         expected_attributes = {
+            'langtrace.sdk.name': 'langtrace-python-sdk',
             "langtrace.service.name": "OpenAI",
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
