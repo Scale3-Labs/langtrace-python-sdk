@@ -39,6 +39,7 @@ class TestChromaPatch(unittest.TestCase):
 
         # Verify span attributes are set as expected
         expected_attributes = {
+            'langtrace.sdk.name': 'langtrace-python-sdk',
             'langtrace.service.name': 'Chroma',
             'langtrace.service.type': 'vectordb',
             'langtrace.service.version': '1.2.3',
