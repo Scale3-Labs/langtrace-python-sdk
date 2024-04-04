@@ -42,6 +42,7 @@ class TestPinecone(unittest.TestCase):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["PINECONE"]
         expected_attributes = {
+            'langtrace.sdk.name': 'langtrace-python-sdk',
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
             "langtrace.service.version": version,

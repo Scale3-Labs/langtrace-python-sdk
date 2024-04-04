@@ -38,6 +38,7 @@ class TestGenericPatch(unittest.TestCase):
         
         service_provider = "Langchain"
         expected_attributes = {
+            'langtrace.sdk.name': 'langtrace-python-sdk',
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
