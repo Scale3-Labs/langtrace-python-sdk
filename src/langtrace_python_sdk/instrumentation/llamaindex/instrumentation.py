@@ -12,6 +12,10 @@ from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.llamaindex.patch import generic_patch
 
+import logging
+
+logging.basicConfig(level=logging.FATAL)
+
 
 class LlamaindexInstrumentation(BaseInstrumentor):
     """

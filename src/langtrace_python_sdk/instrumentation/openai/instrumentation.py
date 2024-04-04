@@ -1,7 +1,6 @@
 import importlib.metadata
 from typing import Collection
 
-import openai
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
@@ -11,6 +10,10 @@ from langtrace_python_sdk.instrumentation.openai.patch import (
     embeddings_create,
     images_generate,
 )
+
+import logging
+
+logging.basicConfig(level=logging.FATAL)
 
 
 class OpenAIInstrumentation(BaseInstrumentor):

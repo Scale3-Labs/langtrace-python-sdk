@@ -338,8 +338,6 @@ def embeddings_create(original_method, version, tracer):
             APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
         ) as span:
 
-            print("Inside embeddings_create", trace.get_current_span())
-
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
