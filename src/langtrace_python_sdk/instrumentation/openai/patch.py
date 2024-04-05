@@ -289,7 +289,7 @@ def chat_completions_create(original_method, version, tracer):
                         {
                             "message": {
                                 "role": "assistant",
-                                "function_call": "".join(result_content),
+                                "content": "".join(result_content),
                             }
                         }
                     ),
