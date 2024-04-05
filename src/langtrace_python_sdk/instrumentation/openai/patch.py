@@ -219,6 +219,8 @@ def chat_completions_create(original_method, version, tracer):
         completion_tokens = 0
         try:
             for chunk in result:
+                if hasattr(chunk, "model") and chunk.model is not None:
+                    span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
                     token_counts = [
                         (
