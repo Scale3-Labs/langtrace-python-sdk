@@ -281,30 +281,19 @@ def chat_completions_create(original_method, version, tracer):
                     }
                 ),
             )
-            if function_call is False:
-                span.set_attribute(
-                    "llm.responses",
-                    json.dumps(
+            span.set_attribute(
+                "llm.responses",
+                json.dumps(
+                    [
                         {
                             "message": {
                                 "role": "assistant",
                                 "content": "".join(result_content),
                             }
                         }
-                    ),
-                )
-            else:
-                span.set_attribute(
-                    "llm.responses",
-                    json.dumps(
-                        {
-                            "message": {
-                                "role": "assistant",
-                                "content": "".join(result_content),
-                            }
-                        }
-                    ),
-                )
+                    ]
+                ),
+            )
             span.set_status(StatusCode.OK)
             span.end()
 
