@@ -194,9 +194,20 @@ def chat_completions_create(original_method, version, tracer):
                 span.end()
                 return result
             else:
-                prompt_tokens = calculate_prompt_tokens(
-                    json.dumps(kwargs.get("messages", {})[0]), kwargs.get("model")
-                )
+                # iterate over kwargs.get("messages", {}) and calculate the prompt tokens
+                prompt_tokens = 0
+                for message in kwargs.get("messages", {}):
+                    prompt_tokens += calculate_prompt_tokens(
+                        json.dumps(message), kwargs.get("model")
+                    )
+
+                # iterate over kwargs.get("functions") and calculate the prompt tokens
+                if kwargs.get("functions") is not None:
+                    for function in kwargs.get("functions"):
+                        prompt_tokens += calculate_prompt_tokens(
+                            json.dumps(function), kwargs.get("model")
+                        )
+
                 return handle_streaming_response(
                     result,
                     span,
