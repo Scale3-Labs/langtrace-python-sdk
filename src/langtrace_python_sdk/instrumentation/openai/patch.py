@@ -285,12 +285,14 @@ def chat_completions_create(original_method, version, tracer):
                 span.set_attribute(
                     "llm.responses",
                     json.dumps(
-                        {
-                            "message": {
-                                "role": "assistant",
-                                "content": "".join(result_content),
+                        [
+                            {
+                                "message": {
+                                    "role": "assistant",
+                                    "content": "".join(result_content),
+                                }
                             }
-                        }
+                        ]
                     ),
                 )
             else:
