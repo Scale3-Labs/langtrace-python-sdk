@@ -2,10 +2,10 @@ import json
 import os
 import typing
 
+import requests
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
-import requests
 from opentelemetry.sdk.trace.export import ReadableSpan, SpanExporter, SpanExportResult
 from opentelemetry.trace.span import format_trace_id
 
@@ -91,7 +91,7 @@ class LangTraceExporter(SpanExporter):
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
             )
             return SpanExportResult.SUCCESS
-        except Exception as e:
+        except Exception:
             return SpanExportResult.FAILURE
 
     def shutdown(self) -> None:

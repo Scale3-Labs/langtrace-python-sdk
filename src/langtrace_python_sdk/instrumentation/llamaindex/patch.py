@@ -3,12 +3,13 @@ This module contains a generic patch method that wraps a function with a span.
 """
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
 def generic_patch(method, task, tracer, version):
@@ -26,7 +27,7 @@ def generic_patch(method, task, tracer, version):
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
             "llamaindex.task.name": task,
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = FrameworkSpanAttributes(**span_attributes)

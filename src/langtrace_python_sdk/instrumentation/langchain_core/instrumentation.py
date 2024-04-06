@@ -6,14 +6,13 @@ import importlib.metadata
 import inspect
 from typing import Collection
 
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
-
 from langtrace_python_sdk.instrumentation.langchain_core.patch import (
     generic_patch,
     runnable_patch,
 )
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
 
 
 # pylint: disable=dangerous-default-value
@@ -63,9 +62,7 @@ def patch_module_classes(
                 wrap_function_wrapper(
                     module_name,
                     method_path,
-                    patch_method(
-                        method_path, task, tracer, version, trace_output, trace_input
-                    ),
+                    patch_method(method_path, task, tracer, version, trace_output, trace_input),
                 )
             # pylint: disable=broad-except
             except Exception:

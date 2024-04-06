@@ -2,17 +2,15 @@
 
 import anthropic
 from dotenv import find_dotenv, load_dotenv
-
-from langtrace_python_sdk import langtrace
-from langtrace_python_sdk import with_langtrace_root_span
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
 langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
 
+
 @with_langtrace_root_span("messages_create")
 def messages_create():
-
     client = anthropic.Anthropic()
 
     message = client.messages.create(

@@ -4,22 +4,18 @@ Instrumentation for langchain.
 
 import importlib.metadata
 import inspect
+import logging
 from typing import Collection
 
+from langtrace_python_sdk.instrumentation.langchain.patch import generic_patch
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from langtrace_python_sdk.instrumentation.langchain.patch import generic_patch
-
-import logging
-
 logging.basicConfig(level=logging.FATAL)
 
 
-def patch_module_classes(
-    module_name, tracer, version, task, trace_output=True, trace_input=True
-):
+def patch_module_classes(module_name, tracer, version, task, trace_output=True, trace_input=True):
     """
     Generic function to patch all public methods of all classes in a given module.
 
@@ -50,9 +46,7 @@ def patch_module_classes(
                 wrap_function_wrapper(
                     module_name,
                     method_path,
-                    generic_patch(
-                        method_path, task, tracer, version, trace_output, trace_input
-                    ),
+                    generic_patch(method_path, task, tracer, version, trace_output, trace_input),
                 )
             # pylint: disable=broad-except
             except Exception:
@@ -77,9 +71,7 @@ class LangchainInstrumentation(BaseInstrumentor):
         ]
 
         for module_name, task, trace_output, trace_input in modules_to_patch:
-            patch_module_classes(
-                module_name, tracer, version, task, trace_output, trace_input
-            )
+            patch_module_classes(module_name, tracer, version, task, trace_output, trace_input)
 
     def _uninstrument(self, **kwargs):
         pass

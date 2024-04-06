@@ -4,15 +4,13 @@ The LlamaindexInstrumentation class represents the LlamaIndex instrumentation
 
 import importlib.metadata
 import inspect
+import logging
 from typing import Collection
 
+from langtrace_python_sdk.instrumentation.llamaindex.patch import generic_patch
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
-
-from langtrace_python_sdk.instrumentation.llamaindex.patch import generic_patch
-
-import logging
 
 logging.basicConfig(level=logging.FATAL)
 
@@ -44,12 +42,9 @@ class LlamaindexInstrumentation(BaseInstrumentor):
             module = importlib.import_module(module_name)
             for name, obj in inspect.getmembers(
                 module,
-                lambda member: inspect.isclass(member)
-                and member.__module__.startswith(module_name),
+                lambda member: inspect.isclass(member) and member.__module__.startswith(module_name),
             ):
-                for method_name, _ in inspect.getmembers(
-                    obj, predicate=inspect.isfunction
-                ):
+                for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
                     if method_name == method:
                         wrap_function_wrapper(
                             module_name,

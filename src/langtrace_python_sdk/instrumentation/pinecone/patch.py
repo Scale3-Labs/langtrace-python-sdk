@@ -2,13 +2,14 @@
 This module contains the patching logic for the Pinecone client."""
 
 from langtrace.trace_attributes import DatabaseSpanAttributes
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
+from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
-from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
 
 
 def generic_patch(original_method, method, version, tracer):
@@ -28,7 +29,7 @@ def generic_patch(original_method, method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "pinecone",
             "db.operation": api["OPERATION"],
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = DatabaseSpanAttributes(**span_attributes)

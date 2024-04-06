@@ -5,7 +5,6 @@ from langchain.chains import LLMMathChain
 from langchain_core.pydantic_v1 import BaseModel, Field
 from langchain_core.tools import Tool
 from langchain_openai import ChatOpenAI
-
 from langtrace_python_sdk import langtrace
 from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
@@ -47,7 +46,6 @@ async def aget_prime(n: int, primes: dict = primes) -> str:
 
 @with_langtrace_root_span()
 def tool_example():
-
     tools = [
         Tool(
             name="GetPrime",

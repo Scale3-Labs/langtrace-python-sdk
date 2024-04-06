@@ -3,11 +3,10 @@ This example demonstrates how to use Pinecone with Langtrace.
 """
 
 from dotenv import find_dotenv, load_dotenv
-from openai import OpenAI
-from pinecone import Pinecone
-
 from langtrace_python_sdk import langtrace
 from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
+from openai import OpenAI
+from pinecone import Pinecone
 
 _ = load_dotenv(find_dotenv())
 
@@ -33,4 +32,4 @@ def basic():
     index = pinecone.Index("test-index")
     index.upsert(vectors=[data_to_upsert])
 
-    resp = index.query(vector=embedding, top_k=1)
+    index.query(vector=embedding, top_k=1)

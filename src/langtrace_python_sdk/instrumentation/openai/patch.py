@@ -4,15 +4,15 @@ This module contains the patching logic for the OpenAI library."""
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
-from opentelemetry import baggage, trace
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
+from langtrace_python_sdk.constants.instrumentation.openai import APIS
+from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
-from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
-                                            estimate_tokens)
 
 
 def images_generate(original_method, version, tracer):
@@ -40,14 +40,12 @@ def images_generate(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
             "llm.prompts": json.dumps([kwargs.get("prompt", [])]),
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT
-        ) as span:
+        with tracer.start_as_current_span(APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
@@ -55,19 +53,11 @@ def images_generate(original_method, version, tracer):
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                    data = (
-                        result.data[0]
-                        if hasattr(result, "data") and len(result.data) > 0
-                        else {}
-                    )
+                    data = result.data[0] if hasattr(result, "data") and len(result.data) > 0 else {}
                     response = [
                         {
                             "url": data.url if hasattr(data, "url") else "",
-                            "revised_prompt": (
-                                data.revised_prompt
-                                if hasattr(data, "revised_prompt")
-                                else ""
-                            ),
+                            "revised_prompt": (data.revised_prompt if hasattr(data, "revised_prompt") else ""),
                         }
                     ]
                     span.set_attribute("llm.responses", json.dumps(response))
@@ -109,7 +99,7 @@ def chat_completions_create(original_method, version, tracer):
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(kwargs.get("messages", [])),
             "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -126,9 +116,7 @@ def chat_completions_create(original_method, version, tracer):
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
-        span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
-        )
+        span = tracer.start_span(APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT)
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
                 span.set_attribute(field, value)
@@ -142,26 +130,19 @@ def chat_completions_create(original_method, version, tracer):
                         {
                             "message": {
                                 "role": (
-                                    choice.message.role
-                                    if choice.message and choice.message.role
-                                    else "assistant"
+                                    choice.message.role if choice.message and choice.message.role else "assistant"
                                 ),
                                 "content": (
                                     choice.message.content
                                     if choice.message and choice.message.content
                                     else (
                                         choice.message.function_call.arguments
-                                        if choice.message
-                                        and choice.message.function_call.arguments
+                                        if choice.message and choice.message.function_call.arguments
                                         else ""
                                     )
                                 ),
                                 **(
-                                    {
-                                        "content_filter_results": choice[
-                                            "content_filter_results"
-                                        ]
-                                    }
+                                    {"content_filter_results": choice["content_filter_results"]}
                                     if "content_filter_results" in choice
                                     else {}
                                 ),
@@ -173,13 +154,8 @@ def chat_completions_create(original_method, version, tracer):
                 else:
                     responses = []
                     span.set_attribute("llm.responses", json.dumps(responses))
-                if (
-                    hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
-                ):
-                    span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
-                    )
+                if hasattr(result, "system_fingerprint") and result.system_fingerprint is not None:
+                    span.set_attribute("llm.system.fingerprint", result.system_fingerprint)
                 # Get the usage
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
@@ -197,16 +173,12 @@ def chat_completions_create(original_method, version, tracer):
                 # iterate over kwargs.get("messages", {}) and calculate the prompt tokens
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
-                    prompt_tokens += calculate_prompt_tokens(
-                        json.dumps(message), kwargs.get("model")
-                    )
+                    prompt_tokens += calculate_prompt_tokens(json.dumps(message), kwargs.get("model"))
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
                 if kwargs.get("functions") is not None:
                     for function in kwargs.get("functions"):
-                        prompt_tokens += calculate_prompt_tokens(
-                            json.dumps(function), kwargs.get("model")
-                        )
+                        prompt_tokens += calculate_prompt_tokens(json.dumps(function), kwargs.get("model"))
 
                 return handle_streaming_response(
                     result,
@@ -239,8 +211,7 @@ def chat_completions_create(original_method, version, tracer):
                             if choice.delta and choice.delta.content
                             else (
                                 estimate_tokens(choice.delta.function_call.arguments)
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
+                                if choice.delta.function_call and choice.delta.function_call.arguments
                                 else 0
                             )
                         )
@@ -253,8 +224,7 @@ def chat_completions_create(original_method, version, tracer):
                             if choice.delta and choice.delta.content
                             else (
                                 choice.delta.function_call.arguments
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
+                                if choice.delta.function_call and choice.delta.function_call.arguments
                                 else ""
                             )
                         )
@@ -262,13 +232,10 @@ def chat_completions_create(original_method, version, tracer):
                     ]
                 else:
                     content = []
-                span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content)}
-                )
+                span.add_event(Event.STREAM_OUTPUT.value, {"response": "".join(content)})
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
         finally:
-
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
             span.set_attribute(
@@ -326,7 +293,7 @@ def embeddings_create(original_method, version, tracer):
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -339,10 +306,7 @@ def embeddings_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes["llm.user"] = kwargs.get("user")
 
-        with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
-        ) as span:
-
+        with tracer.start_as_current_span(APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)

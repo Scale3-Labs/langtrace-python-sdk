@@ -1,17 +1,16 @@
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
-
-def generic_patch(
-    method_name, task, tracer, version, trace_output=True, trace_input=True
-):
+def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["LANGCHAIN_COMMUNITY"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
@@ -23,7 +22,7 @@ def generic_patch(
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
             "langchain.task.name": task,
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         if trace_input and len(args) > 0:
@@ -62,11 +61,7 @@ def clean_empty(d):
         return d
     if isinstance(d, list):
         return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {
-        k: v
-        for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
-    }
+    return {k: v for k, v in ((k, clean_empty(v)) for k, v in d.items()) if v is not None and v != {}}
 
 
 def custom_serializer(obj):

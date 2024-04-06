@@ -6,11 +6,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts.chat import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-
 from langtrace_python_sdk import langtrace
 from langtrace_python_sdk.utils.with_root_span import (
-    with_langtrace_root_span,
     with_additional_attributes,
+    with_langtrace_root_span,
 )
 
 _ = load_dotenv(find_dotenv())
@@ -56,9 +55,7 @@ def basic():
 
 @with_langtrace_root_span()
 def rag():
-    vectorstore = FAISS.from_texts(
-        ["harrison worked at kensho"], embedding=OpenAIEmbeddings()
-    )
+    vectorstore = FAISS.from_texts(["harrison worked at kensho"], embedding=OpenAIEmbeddings())
     retriever = vectorstore.as_retriever()
 
     template = """Answer the question based only on the following context:{context}
@@ -69,14 +66,9 @@ def rag():
 
     model = ChatOpenAI()
 
-    chain = (
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | model
-        | StrOutputParser()
-    )
+    chain = {"context": retriever, "question": RunnablePassthrough()} | prompt | model | StrOutputParser()
 
-    res = chain.invoke("where did harrison work?")
+    chain.invoke("where did harrison work?")
     # print(res)
 
 
@@ -86,5 +78,5 @@ def load_and_split():
     loader = PyPDFLoader(url)
     data = loader.load()
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
-    docs = text_splitter.split_documents(data)
+    text_splitter.split_documents(data)
     # print(docs)

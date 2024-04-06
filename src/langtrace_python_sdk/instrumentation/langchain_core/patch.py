@@ -5,17 +5,16 @@ This module contains the patching functions for the langchain_core package.
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status
 
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
-
-def generic_patch(
-    method_name, task, tracer, version, trace_output=True, trace_input=True
-):
+def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
     """
     Wrapper function to trace a generic method.
     method_name: The name of the method to trace.
@@ -37,7 +36,7 @@ def generic_patch(
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
             "langchain.task.name": task,
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         if len(args) > 0 and trace_input:
@@ -81,9 +80,7 @@ def generic_patch(
     return traced_method
 
 
-def runnable_patch(
-    method_name, task, tracer, version, trace_output=True, trace_input=True
-):
+def runnable_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
     """
     Wrapper function to trace a runnable
     method_name: The name of the method to trace.
@@ -120,9 +117,7 @@ def runnable_patch(
                         inputs["input"] = arg
 
             for field, value in (
-                instance.steps.items()
-                if hasattr(instance, "steps") and isinstance(instance.steps, dict)
-                else {}
+                instance.steps.items() if hasattr(instance, "steps") and isinstance(instance.steps, dict) else {}
             ):
                 inputs[field] = value.__class__.__name__
 
@@ -140,9 +135,7 @@ def runnable_patch(
                 if trace_output:
                     outputs = {}
                     if isinstance(result, dict):
-                        for field, value in (
-                            result.items() if hasattr(result, "items") else {}
-                        ):
+                        for field, value in result.items() if hasattr(result, "items") else {}:
                             if isinstance(value, list):
                                 for item in value:
                                     if item.__class__.__name__ == "Document":
@@ -176,11 +169,7 @@ def clean_empty(d):
         return d
     if isinstance(d, list):
         return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {
-        k: v
-        for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
-    }
+    return {k: v for k, v in ((k, clean_empty(v)) for k, v in d.items()) if v is not None and v != {}}
 
 
 def custom_serializer(obj):

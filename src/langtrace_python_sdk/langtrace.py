@@ -1,12 +1,3 @@
-
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    ConsoleSpanExporter,
-    SimpleSpanProcessor,
-)
-
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation.anthropic.instrumentation import (
     AnthropicInstrumentation,
@@ -32,6 +23,13 @@ from langtrace_python_sdk.instrumentation.openai.instrumentation import (
 from langtrace_python_sdk.instrumentation.pinecone.instrumentation import (
     PineconeInstrumentation,
 )
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
 
 
 def init(
@@ -41,7 +39,6 @@ def init(
     debug_log_to_console: bool = False,
     custom_remote_exporter=None,
 ):
-
     provider = TracerProvider()
 
     remote_write_exporter = (

@@ -3,15 +3,14 @@ Instrumentation for ChromaDB
 """
 
 import importlib.metadata
+import logging
 from typing import Collection
-
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.constants.instrumentation.chroma import APIS
 from langtrace_python_sdk.instrumentation.chroma.patch import collection_patch
-import logging
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
 
 logging.basicConfig(level=logging.FATAL)
 

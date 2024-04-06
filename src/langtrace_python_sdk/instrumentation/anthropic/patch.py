@@ -4,13 +4,14 @@ This module contains the patching logic for the Anthropic library."""
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
+from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
-from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
 def messages_create(original_method, version, tracer):
@@ -29,9 +30,7 @@ def messages_create(original_method, version, tracer):
         prompts = json.dumps(kwargs.get("messages", []))
         system = kwargs.get("system")
         if system:
-            prompts = json.dumps(
-                [{"role": "system", "content": system}] + kwargs.get("messages", [])
-            )
+            prompts = json.dumps([{"role": "system", "content": system}] + kwargs.get("messages", []))
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
@@ -45,7 +44,7 @@ def messages_create(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.prompts": prompts,
             "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -59,9 +58,7 @@ def messages_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
 
-        span = tracer.start_span(
-            APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
-        )
+        span = tracer.start_span(APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT)
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
                 span.set_attribute(field, value)
@@ -84,13 +81,8 @@ def messages_create(original_method, version, tracer):
                 else:
                     responses = []
                     span.set_attribute("llm.responses", json.dumps(responses))
-                if (
-                    hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
-                ):
-                    span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
-                    )
+                if hasattr(result, "system_fingerprint") and result.system_fingerprint is not None:
+                    span.set_attribute("llm.system.fingerprint", result.system_fingerprint)
                 # Get the usage
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
@@ -131,27 +123,20 @@ def messages_create(original_method, version, tracer):
 
                 if hasattr(chunk, "message") and hasattr(chunk.message, "usage"):
                     input_tokens += (
-                        chunk.message.usage.input_tokens
-                        if hasattr(chunk.message.usage, "input_tokens")
-                        else 0
+                        chunk.message.usage.input_tokens if hasattr(chunk.message.usage, "input_tokens") else 0
                     )
                     output_tokens += (
-                        chunk.message.usage.output_tokens
-                        if hasattr(chunk.message.usage, "output_tokens")
-                        else 0
+                        chunk.message.usage.output_tokens if hasattr(chunk.message.usage, "output_tokens") else 0
                     )
 
                 # Assuming span.add_event is part of a larger logging or event system
                 # Add event for each chunk of content
                 if content:
-                    span.add_event(
-                        Event.STREAM_OUTPUT.value, {"response": "".join(content)}
-                    )
+                    span.add_event(Event.STREAM_OUTPUT.value, {"response": "".join(content)})
 
                 # Assuming this is part of a generator, yield chunk or aggregated content
                 yield content
         finally:
-
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
             span.set_attribute(
@@ -164,9 +149,7 @@ def messages_create(original_method, version, tracer):
                     }
                 ),
             )
-            span.set_attribute(
-                "llm.responses", json.dumps([{"text": "".join(result_content)}])
-            )
+            span.set_attribute("llm.responses", json.dumps([{"text": "".join(result_content)}]))
             span.set_status(StatusCode.OK)
             span.end()
 

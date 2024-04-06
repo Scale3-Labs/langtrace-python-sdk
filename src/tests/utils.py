@@ -1,6 +1,7 @@
-from unittest.mock import MagicMock, patch
 import json
-   
+from unittest.mock import MagicMock, patch
+
+
 def common_setup(data, method_to_mock=None):
     if method_to_mock:
         service_mock = patch(method_to_mock)
@@ -9,7 +10,6 @@ def common_setup(data, method_to_mock=None):
     else:
         service_mock = MagicMock()
         service_mock.return_value = MagicMock(**data)
-       
 
     tracer = MagicMock()
     span = MagicMock()

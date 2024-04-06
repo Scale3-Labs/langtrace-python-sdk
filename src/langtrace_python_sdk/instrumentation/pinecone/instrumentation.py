@@ -3,18 +3,16 @@ Pinecone instrumentation
 """
 
 import importlib.metadata
+import logging
 from typing import Collection
 
 import pinecone
 from langtrace.trace_attributes import PineconeMethods
+from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
+from langtrace_python_sdk.instrumentation.pinecone.patch import generic_patch
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
-
-from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
-from langtrace_python_sdk.instrumentation.pinecone.patch import generic_patch
-
-import logging
 
 logging.basicConfig(level=logging.FATAL)
 

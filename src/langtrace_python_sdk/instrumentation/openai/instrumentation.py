@@ -1,23 +1,20 @@
 import importlib.metadata
+import logging
 from typing import Collection
-
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.openai.patch import (
     chat_completions_create,
     embeddings_create,
     images_generate,
 )
-
-import logging
+from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.trace import get_tracer
+from wrapt import wrap_function_wrapper
 
 logging.basicConfig(level=logging.FATAL)
 
 
 class OpenAIInstrumentation(BaseInstrumentor):
-
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["openai >= 0.27.0"]
 

@@ -12,10 +12,10 @@ description = "Python SDK for LangTrace"
 readme = "README.md"
 authors = [{ name = "Scale3 Labs", email = "engineering@scale3labs.com" }]
 license = "Apache-2.0"
-classifiers=[
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
   'trace-attributes',
@@ -23,24 +23,23 @@ dependencies = [
   'opentelemetry-sdk',
   'opentelemetry-instrumentation',
   'pinecone-client',
-  'tiktoken'
+  'tiktoken',
 ]
 
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-    "openai",
-    "anthropic",
-    "python-dotenv",
-    "langchain",
-    "langchain-openai",
-    "llama-index",
-    "langchain-openai",
-    "chromadb"
+  "openai",
+  "anthropic",
+  "python-dotenv",
+  "langchain",
+  "langchain-openai",
+  "llama-index",
+  "langchain-openai",
+  "chromadb",
+  "ruff",
 ]
-
-
 
 [project.urls]
 Homepage = "https://github.com/Scale3-Labs/langtrace-python-sdk"
@@ -50,12 +49,16 @@ Homepage = "https://github.com/Scale3-Labs/langtrace-python-sdk"
 path = "src/langtrace_python_sdk/version.py"
 
 [tool.hatch.build.targets.sdist]
-include = [
-  "/src",
-]
+include = ["/src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/langtrace_python_sdk", "src/examples"]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.lint]
+ignore = ["I001"] # Example: Ignore import order rule (I001)
 
 # [tool.semantic_release]
 # version_variable = "pyproject.toml:version" # version location
