@@ -7,7 +7,9 @@ from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
+langtrace.init(
+    batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False
+)
 
 client = OpenAI()
 
@@ -19,10 +21,19 @@ student_custom_functions = [
         "parameters": {
             "type": "object",
             "properties": {
-                "name": {"type": "string", "description": "Name of the person"},
+                "name": {
+                    "type": "string",
+                    "description": "Name of the person",
+                },
                 "major": {"type": "string", "description": "Major subject."},
-                "school": {"type": "string", "description": "The university name."},
-                "grades": {"type": "integer", "description": "GPA of the student."},
+                "school": {
+                    "type": "string",
+                    "description": "The university name.",
+                },
+                "grades": {
+                    "type": "integer",
+                    "description": "GPA of the student.",
+                },
                 "club": {
                     "type": "string",
                     "description": "School club for extracurricular activities. ",
@@ -61,5 +72,7 @@ def function_calling():
     # print("".join(result))
 
     # Loading the response as a JSON object
-    json_response = json.loads(response.choices[0].message.function_call.arguments)
+    json_response = json.loads(
+        response.choices[0].message.function_call.arguments
+    )
     print(json_response)

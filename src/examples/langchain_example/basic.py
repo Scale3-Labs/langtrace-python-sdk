@@ -55,7 +55,9 @@ def basic():
 
 @with_langtrace_root_span()
 def rag():
-    vectorstore = FAISS.from_texts(["harrison worked at kensho"], embedding=OpenAIEmbeddings())
+    vectorstore = FAISS.from_texts(
+        ["harrison worked at kensho"], embedding=OpenAIEmbeddings()
+    )
     retriever = vectorstore.as_retriever()
 
     template = """Answer the question based only on the following context:{context}
@@ -66,7 +68,12 @@ def rag():
 
     model = ChatOpenAI()
 
-    chain = {"context": retriever, "question": RunnablePassthrough()} | prompt | model | StrOutputParser()
+    chain = (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | prompt
+        | model
+        | StrOutputParser()
+    )
 
     chain.invoke("where did harrison work?")
     # print(res)
@@ -77,6 +84,8 @@ def load_and_split():
     url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
     loader = PyPDFLoader(url)
     data = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500, chunk_overlap=0
+    )
     text_splitter.split_documents(data)
     # print(docs)

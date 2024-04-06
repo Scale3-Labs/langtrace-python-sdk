@@ -23,7 +23,9 @@ class TestImageGeneration(unittest.TestCase):
     }
 
     def setUp(self):
-        self.openai_mock, self.tracer, self.span = common_setup(self.data, "openai.images.generate")
+        self.openai_mock, self.tracer, self.span = common_setup(
+            self.data, "openai.images.generate"
+        )
 
     def tearDown(self):
         self.openai_mock.stop()
@@ -33,15 +35,23 @@ class TestImageGeneration(unittest.TestCase):
         version = importlib.metadata.version("openai")
         llm_model_value = "dall-e-3"
         prompt_value = "A cute baby sea otter"
-        kwargs = {"model": llm_model_value, "prompt": prompt_value, "stream": False}
+        kwargs = {
+            "model": llm_model_value,
+            "prompt": prompt_value,
+            "stream": False,
+        }
 
         # Act
-        wrapped_function = images_generate(openai.images.generate, version, self.tracer)
+        wrapped_function = images_generate(
+            openai.images.generate, version, self.tracer
+        )
         result = wrapped_function(MagicMock(), MagicMock(), (), kwargs)
 
         # Assert
         self.assertTrue(
-            self.tracer.start_as_current_span.called_once_with("openai.images.generate", kind=SpanKind.CLIENT)
+            self.tracer.start_as_current_span.called_once_with(
+                "openai.images.generate", kind=SpanKind.CLIENT
+            )
         )
 
         expected_attributes = {
@@ -58,17 +68,29 @@ class TestImageGeneration(unittest.TestCase):
         }
         self.assertTrue(
             self.span.set_attribute.has_calls(
-                [call(key, value) for key, value in expected_attributes.items()], any_order=True
+                [
+                    call(key, value)
+                    for key, value in expected_attributes.items()
+                ],
+                any_order=True,
             )
         )
-        self.assertTrue(self.span.set_status.called_once_with(Status(StatusCode.OK)))
+        self.assertTrue(
+            self.span.set_status.called_once_with(Status(StatusCode.OK))
+        )
 
         expected_result = ["created", "data"]
         result_keys = json.loads(result).keys()
-        self.assertSetEqual(set(expected_result), set(result_keys), "Keys mismatch")
+        self.assertSetEqual(
+            set(expected_result), set(result_keys), "Keys mismatch"
+        )
 
         revised_prompt = "A charming and adorable baby sea otter. This small, fluffy creature is floating gracefully on its back, with its tiny webbed paws folded cutely over its fuzzy belly. It has big, round, innocent eyes that are brimming with youthful curiosity. As it blissfully floats on the calm, sparkling ocean surface under the glow of the golden sunset, it playfully tosses a shiny seashell from one paw to another, showcasing its playful and distinctively otter-like behavior."
-        self.assertEqual(json.loads(result).get("data")[0].get("revised_prompt"), revised_prompt, "Content mismatch")
+        self.assertEqual(
+            json.loads(result).get("data")[0].get("revised_prompt"),
+            revised_prompt,
+            "Content mismatch",
+        )
 
 
 if __name__ == "__main__":

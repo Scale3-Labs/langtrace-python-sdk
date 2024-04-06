@@ -18,7 +18,9 @@ def generic_patch(method, task, tracer, version):
 
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["LLAMAINDEX"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+        extra_attributes = baggage.get_baggage(
+            LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY
+        )
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -32,7 +34,9 @@ def generic_patch(method, task, tracer, version):
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            method, kind=SpanKind.CLIENT
+        ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)

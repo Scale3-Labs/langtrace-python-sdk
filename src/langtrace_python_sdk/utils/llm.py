@@ -3,8 +3,12 @@ This module contains functions to estimate the number of tokens in a prompt and
 to calculate the price of a model based on its usage.
 """
 
-from langtrace_python_sdk.constants.instrumentation.common import TIKTOKEN_MODEL_MAPPING
-from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
+from langtrace_python_sdk.constants.instrumentation.common import (
+    TIKTOKEN_MODEL_MAPPING,
+)
+from langtrace_python_sdk.constants.instrumentation.openai import (
+    OPENAI_COST_TABLE,
+)
 from tiktoken import get_encoding
 
 
@@ -41,5 +45,8 @@ def calculate_price_from_usage(model, usage):
     Calculate the price of a model based on its usage."""
     cost_table = OPENAI_COST_TABLE.get(model)
     if cost_table:
-        return (cost_table["input"] * usage["prompt_tokens"] + cost_table["output"] * usage["completion_tokens"]) / 1000
+        return (
+            cost_table["input"] * usage["prompt_tokens"]
+            + cost_table["output"] * usage["completion_tokens"]
+        ) / 1000
     return 0

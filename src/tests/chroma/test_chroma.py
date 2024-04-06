@@ -13,7 +13,9 @@ class TestChromaPatch(unittest.TestCase):
     }
 
     def setUp(self):
-        self.chroma_mock, self.tracer, self.span = common_setup(self.data, "chromadb.Collection.add")
+        self.chroma_mock, self.tracer, self.span = common_setup(
+            self.data, "chromadb.Collection.add"
+        )
         self.wrapped_method = MagicMock(return_value="mocked method result")
         self.instance = MagicMock()
         self.instance.name = "aa"
@@ -34,7 +36,9 @@ class TestChromaPatch(unittest.TestCase):
 
         # Assert the span is started with the correct parameters
         self.assertTrue(
-            self.tracer.start_as_current_span.called_once_with("chromadb.Collection.add", kind=SpanKind.CLIENT)
+            self.tracer.start_as_current_span.called_once_with(
+                "chromadb.Collection.add", kind=SpanKind.CLIENT
+            )
         )
 
         # Verify span attributes are set as expected
@@ -49,7 +53,9 @@ class TestChromaPatch(unittest.TestCase):
             "db.collection.name": "aa",
         }
         for key, value in expected_attributes.items():
-            self.span.set_attribute.assert_has_calls([call(key, value)], any_order=True)
+            self.span.set_attribute.assert_has_calls(
+                [call(key, value)], any_order=True
+            )
 
         actual_calls = self.span.set_attribute.call_args_list
 

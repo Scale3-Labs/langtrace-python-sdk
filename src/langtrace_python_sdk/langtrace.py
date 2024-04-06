@@ -1,4 +1,6 @@
-from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
+from langtrace_python_sdk.extensions.langtrace_exporter import (
+    LangTraceExporter,
+)
 from langtrace_python_sdk.instrumentation.anthropic.instrumentation import (
     AnthropicInstrumentation,
 )

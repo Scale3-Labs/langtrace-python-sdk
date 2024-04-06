@@ -47,13 +47,16 @@ def patch_module_classes(
     # loop through all public classes in the module
     for name, obj in inspect.getmembers(
         module,
-        lambda member: inspect.isclass(member) and member.__module__ == module.__name__,
+        lambda member: inspect.isclass(member)
+        and member.__module__ == module.__name__,
     ):
         # Skip private classes
         if name.startswith("_") or name in exclude_classes:
             continue
         # loop through all public methods of the class
-        for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
+        for method_name, _ in inspect.getmembers(
+            obj, predicate=inspect.isfunction
+        ):
             # Skip private methods
             if method_name.startswith("_") or method_name in exclude_methods:
                 continue
@@ -62,7 +65,14 @@ def patch_module_classes(
                 wrap_function_wrapper(
                     module_name,
                     method_path,
-                    patch_method(method_path, task, tracer, version, trace_output, trace_input),
+                    patch_method(
+                        method_path,
+                        task,
+                        tracer,
+                        version,
+                        trace_output,
+                        trace_input,
+                    ),
                 )
             # pylint: disable=broad-except
             except Exception:
@@ -109,9 +119,27 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
         ]
 
         modules_to_patch = [
-            ("langchain_core.retrievers", "retriever", generic_patch, True, True),
-            ("langchain_core.prompts.chat", "prompt", generic_patch, True, True),
-            ("langchain_core.runnables.base", "runnable", runnable_patch, True, True),
+            (
+                "langchain_core.retrievers",
+                "retriever",
+                generic_patch,
+                True,
+                True,
+            ),
+            (
+                "langchain_core.prompts.chat",
+                "prompt",
+                generic_patch,
+                True,
+                True,
+            ),
+            (
+                "langchain_core.runnables.base",
+                "runnable",
+                runnable_patch,
+                True,
+                True,
+            ),
             (
                 "langchain_core.runnables.passthrough",
                 "runnablepassthrough",

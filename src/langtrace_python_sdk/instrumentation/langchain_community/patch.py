@@ -10,10 +10,14 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 
-def generic_patch(method_name, task, tracer, version, trace_output=True, trace_input=True):
+def generic_patch(
+    method_name, task, tracer, version, trace_output=True, trace_input=True
+):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["LANGCHAIN_COMMUNITY"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+        extra_attributes = baggage.get_baggage(
+            LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY
+        )
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -30,7 +34,9 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(method_name, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            method_name, kind=SpanKind.CLIENT
+        ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
@@ -38,7 +44,9 @@ def generic_patch(method_name, task, tracer, version, trace_output=True, trace_i
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 if trace_output:
-                    span.set_attribute("langchain.outputs", to_json_string(result))
+                    span.set_attribute(
+                        "langchain.outputs", to_json_string(result)
+                    )
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -60,8 +68,14 @@ def clean_empty(d):
     if not isinstance(d, (dict, list)):
         return d
     if isinstance(d, list):
-        return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {k: v for k, v in ((k, clean_empty(v)) for k, v in d.items()) if v is not None and v != {}}
+        return [
+            v for v in (clean_empty(v) for v in d) if v != [] and v is not None
+        ]
+    return {
+        k: v
+        for k, v in ((k, clean_empty(v)) for k, v in d.items())
+        if v is not None and v != {}
+    }
 
 
 def custom_serializer(obj):

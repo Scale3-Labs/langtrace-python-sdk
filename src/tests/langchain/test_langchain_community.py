@@ -2,7 +2,9 @@ import importlib.metadata
 import unittest
 from unittest.mock import MagicMock, call
 
-from langtrace_python_sdk.instrumentation.langchain_community.patch import generic_patch
+from langtrace_python_sdk.instrumentation.langchain_community.patch import (
+    generic_patch,
+)
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from tests.utils import common_setup
@@ -12,7 +14,9 @@ class TestGenericPatch(unittest.TestCase):
     data = {"key": "value"}
 
     def setUp(self):
-        self.langchain_mock, self.tracer, self.span = common_setup(self.data, None)
+        self.langchain_mock, self.tracer, self.span = common_setup(
+            self.data, None
+        )
 
     def tearDown(self):
         # Clean up after each test case
@@ -30,12 +34,23 @@ class TestGenericPatch(unittest.TestCase):
 
         # Act
         wrapped_function = generic_patch(
-            "langchain_community.vectorstores.faiss", task, self.tracer, version, trace_output, trace_input
+            "langchain_community.vectorstores.faiss",
+            task,
+            self.tracer,
+            version,
+            trace_output,
+            trace_input,
         )
-        result = wrapped_function(self.langchain_mock, MagicMock(), args, kwargs)
+        result = wrapped_function(
+            self.langchain_mock, MagicMock(), args, kwargs
+        )
 
         # Assert
-        self.assertTrue(self.tracer.start_as_current_span.called_once_with(method_name, kind=SpanKind.CLIENT))
+        self.assertTrue(
+            self.tracer.start_as_current_span.called_once_with(
+                method_name, kind=SpanKind.CLIENT
+            )
+        )
 
         service_provider = "Langchain Community"
         expected_attributes = {
@@ -49,7 +64,11 @@ class TestGenericPatch(unittest.TestCase):
 
         self.assertTrue(
             self.span.set_attribute.has_calls(
-                [call(key, value) for key, value in expected_attributes.items()], any_order=True
+                [
+                    call(key, value)
+                    for key, value in expected_attributes.items()
+                ],
+                any_order=True,
             )
         )
 
@@ -59,7 +78,9 @@ class TestGenericPatch(unittest.TestCase):
             self.assertIn(call(key, value), actual_calls)
 
         self.assertEqual(self.span.set_status.call_count, 1)
-        self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
+        self.assertTrue(
+            self.span.set_status.has_calls([call(Status(StatusCode.OK))])
+        )
 
         expected_result_data = {"key": "value"}
         self.assertEqual(result.key, expected_result_data["key"])

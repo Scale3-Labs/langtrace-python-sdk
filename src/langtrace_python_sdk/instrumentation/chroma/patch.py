@@ -21,7 +21,9 @@ def collection_patch(method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["CHROMA"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+        extra_attributes = baggage.get_baggage(
+            LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY
+        )
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -39,7 +41,9 @@ def collection_patch(method, version, tracer):
 
         attributes = DatabaseSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            api["METHOD"], kind=SpanKind.CLIENT
+        ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)

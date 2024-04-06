@@ -40,13 +40,17 @@ def with_additional_attributes(attributes={}):
     def decorator(func):
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
-            new_ctx = baggage.set_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
+            new_ctx = baggage.set_baggage(
+                LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes
+            )
             context.attach(new_ctx)
             return func(*args, **kwargs)
 
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
-            new_ctx = baggage.set_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
+            new_ctx = baggage.set_baggage(
+                LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes
+            )
             context.attach(new_ctx)
             return await func(*args, **kwargs)
 

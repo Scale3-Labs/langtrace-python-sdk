@@ -6,13 +6,17 @@ import importlib.metadata
 import inspect
 from typing import Collection
 
-from langtrace_python_sdk.instrumentation.langchain_community.patch import generic_patch
+from langtrace_python_sdk.instrumentation.langchain_community.patch import (
+    generic_patch,
+)
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 
-def patch_module_classes(module_name, tracer, version, task, trace_output=True, trace_input=True):
+def patch_module_classes(
+    module_name, tracer, version, task, trace_output=True, trace_input=True
+):
     """
     Generic function to patch all public methods of all classes in a given module.
 
@@ -31,10 +35,13 @@ def patch_module_classes(module_name, tracer, version, task, trace_output=True, 
     # loop through all public classes in the module
     for name, obj in inspect.getmembers(
         module,
-        lambda member: inspect.isclass(member) and member.__module__ == module.__name__,
+        lambda member: inspect.isclass(member)
+        and member.__module__ == module.__name__,
     ):
         # loop through all public methods of the class
-        for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
+        for method_name, _ in inspect.getmembers(
+            obj, predicate=inspect.isfunction
+        ):
             # Skip private methods
             if method_name.startswith("_"):
                 continue
@@ -43,7 +50,14 @@ def patch_module_classes(module_name, tracer, version, task, trace_output=True, 
                 wrap_function_wrapper(
                     module_name,
                     method_path,
-                    generic_patch(method_path, task, tracer, version, trace_output, trace_input),
+                    generic_patch(
+                        method_path,
+                        task,
+                        tracer,
+                        version,
+                        trace_output,
+                        trace_input,
+                    ),
                 )
             # pylint: disable=broad-except
             except Exception:
@@ -65,10 +79,30 @@ class LangchainCommunityInstrumentation(BaseInstrumentor):
 
         # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
-            ("langchain_community.document_loaders.pdf", "load_pdf", True, True),
-            ("langchain_community.vectorstores.faiss", "vector_store", False, False),
-            ("langchain_community.vectorstores.pgvector", "vector_store", False, False),
-            ("langchain_community.vectorstores.pinecone", "vector_store", False, False),
+            (
+                "langchain_community.document_loaders.pdf",
+                "load_pdf",
+                True,
+                True,
+            ),
+            (
+                "langchain_community.vectorstores.faiss",
+                "vector_store",
+                False,
+                False,
+            ),
+            (
+                "langchain_community.vectorstores.pgvector",
+                "vector_store",
+                False,
+                False,
+            ),
+            (
+                "langchain_community.vectorstores.pinecone",
+                "vector_store",
+                False,
+                False,
+            ),
             (
                 "langchain_community.vectorstores.mongodb_atlas",
                 "vector_store",
@@ -93,7 +127,12 @@ class LangchainCommunityInstrumentation(BaseInstrumentor):
                 False,
                 False,
             ),
-            ("langchain_community.vectorstores.chroma", "vector_store", False, False),
+            (
+                "langchain_community.vectorstores.chroma",
+                "vector_store",
+                False,
+                False,
+            ),
             (
                 "langchain_community.vectorstores.clickhouse",
                 "vector_store",
@@ -106,13 +145,30 @@ class LangchainCommunityInstrumentation(BaseInstrumentor):
                 False,
                 False,
             ),
-            ("langchain_community.vectorstores.supabase", "vector_store", False, False),
-            ("langchain_community.vectorstores.weaviate", "vector_store", False, False),
-            ("langchain_community.vectorstores.vectara", "vector_store", False, False),
+            (
+                "langchain_community.vectorstores.supabase",
+                "vector_store",
+                False,
+                False,
+            ),
+            (
+                "langchain_community.vectorstores.weaviate",
+                "vector_store",
+                False,
+                False,
+            ),
+            (
+                "langchain_community.vectorstores.vectara",
+                "vector_store",
+                False,
+                False,
+            ),
         ]
 
         for module_name, task, trace_output, trace_input in modules_to_patch:
-            patch_module_classes(module_name, tracer, version, task, trace_output, trace_input)
+            patch_module_classes(
+                module_name, tracer, version, task, trace_output, trace_input
+            )
 
     def _uninstrument(self, **kwargs):
         pass

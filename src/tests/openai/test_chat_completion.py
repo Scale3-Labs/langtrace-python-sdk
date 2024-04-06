@@ -4,7 +4,9 @@ import unittest
 from unittest.mock import MagicMock, call
 
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.instrumentation.openai.patch import chat_completions_create
+from langtrace_python_sdk.instrumentation.openai.patch import (
+    chat_completions_create,
+)
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from tests.utils import common_setup
@@ -30,11 +32,15 @@ class TestChatCompletion(unittest.TestCase):
         "model": "gpt-4-0613",
         "object": "chat.completion",
         "system_fingerprint": None,
-        "usage": MagicMock(prompt_tokens=14, completion_tokens=15, total_tokens=29),
+        "usage": MagicMock(
+            prompt_tokens=14, completion_tokens=15, total_tokens=29
+        ),
     }
 
     def setUp(self):
-        self.openai_mock, self.tracer, self.span = common_setup(self.data, None)
+        self.openai_mock, self.tracer, self.span = common_setup(
+            self.data, None
+        )
 
     def tearDown(self):
         pass
@@ -43,7 +49,9 @@ class TestChatCompletion(unittest.TestCase):
         # Arrange
         version = importlib.metadata.version("openai")
         llm_model_value = "gpt-4"
-        messages_value = [{"role": "user", "content": "Say this is a test three times"}]
+        messages_value = [
+            {"role": "user", "content": "Say this is a test three times"}
+        ]
 
         kwargs = {
             "model": llm_model_value,
@@ -52,12 +60,16 @@ class TestChatCompletion(unittest.TestCase):
         }
 
         # Act
-        wrapped_function = chat_completions_create(self.openai_mock, version, self.tracer)
+        wrapped_function = chat_completions_create(
+            self.openai_mock, version, self.tracer
+        )
         result = wrapped_function(MagicMock(), MagicMock(), (), kwargs)
 
         # Assert
         self.assertTrue(
-            self.tracer.start_as_current_span.called_once_with("openai.chat.completions.create", kind=SpanKind.CLIENT)
+            self.tracer.start_as_current_span.called_once_with(
+                "openai.chat.completions.create", kind=SpanKind.CLIENT
+            )
         )
 
         expected_attributes = {
@@ -74,11 +86,17 @@ class TestChatCompletion(unittest.TestCase):
         }
         self.assertTrue(
             self.span.set_attribute.has_calls(
-                [call(key, value) for key, value in expected_attributes.items()], any_order=True
+                [
+                    call(key, value)
+                    for key, value in expected_attributes.items()
+                ],
+                any_order=True,
             )
         )
 
-        self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
+        self.assertTrue(
+            self.span.set_status.has_calls([call(Status(StatusCode.OK))])
+        )
 
         expected_result_data = {"model": "gpt-4-0613"}
 

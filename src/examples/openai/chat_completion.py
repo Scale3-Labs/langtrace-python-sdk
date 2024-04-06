@@ -1,6 +1,9 @@
 from dotenv import find_dotenv, load_dotenv
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import with_additional_attributes, with_langtrace_root_span
+from langtrace_python_sdk.utils.with_root_span import (
+    with_additional_attributes,
+    with_langtrace_root_span,
+)
 from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())
@@ -13,7 +16,9 @@ client = OpenAI()
 def api1():
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": "Say this is a test three times"}],
+        messages=[
+            {"role": "user", "content": "Say this is a test three times"}
+        ],
         stream=False,
     )
     return response
@@ -23,7 +28,9 @@ def api1():
 def api2():
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": "Say this is a test three times"}],
+        messages=[
+            {"role": "user", "content": "Say this is a test three times"}
+        ],
         stream=False,
     )
     return response

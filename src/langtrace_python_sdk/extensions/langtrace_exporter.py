@@ -6,7 +6,11 @@ import requests
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
-from opentelemetry.sdk.trace.export import ReadableSpan, SpanExporter, SpanExportResult
+from opentelemetry.sdk.trace.export import (
+    ReadableSpan,
+    SpanExporter,
+    SpanExportResult,
+)
 from opentelemetry.trace.span import format_trace_id
 
 
@@ -49,8 +53,12 @@ class LangTraceExporter(SpanExporter):
     api_key: str
     write_to_remote_url: bool
 
-    def __init__(self, api_key: str = None, write_to_remote_url: bool = False) -> None:
-        self.api_key = api_key if api_key else os.environ.get("LANGTRACE_API_KEY")
+    def __init__(
+        self, api_key: str = None, write_to_remote_url: bool = False
+    ) -> None:
+        self.api_key = (
+            api_key if api_key else os.environ.get("LANGTRACE_API_KEY")
+        )
         self.write_to_remote_url = write_to_remote_url
 
         if self.write_to_remote_url and not self.api_key:
@@ -88,7 +96,10 @@ class LangTraceExporter(SpanExporter):
             requests.post(
                 url=LANGTRACE_REMOTE_URL,
                 data=json.dumps(data),
-                headers={"Content-Type": "application/json", "x-api-key": self.api_key},
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": self.api_key,
+                },
             )
             return SpanExportResult.SUCCESS
         except Exception:

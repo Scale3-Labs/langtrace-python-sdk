@@ -25,7 +25,9 @@ class OpenAIInstrumentation(BaseInstrumentor):
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
-            chat_completions_create("openai.chat.completions.create", version, tracer),
+            chat_completions_create(
+                "openai.chat.completions.create", version, tracer
+            ),
         )
         wrap_function_wrapper(
             "openai.resources.images",

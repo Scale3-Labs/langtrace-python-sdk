@@ -10,7 +10,9 @@ from pinecone import Pinecone
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
+langtrace.init(
+    batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False
+)
 
 client = OpenAI()
 pinecone = Pinecone()

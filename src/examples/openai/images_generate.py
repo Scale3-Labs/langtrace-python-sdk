@@ -5,7 +5,9 @@ from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(
+    batch=True, log_spans_to_console=True, write_to_remote_url=False
+)
 
 client = OpenAI()
 

@@ -42,9 +42,12 @@ class LlamaindexInstrumentation(BaseInstrumentor):
             module = importlib.import_module(module_name)
             for name, obj in inspect.getmembers(
                 module,
-                lambda member: inspect.isclass(member) and member.__module__.startswith(module_name),
+                lambda member: inspect.isclass(member)
+                and member.__module__.startswith(module_name),
             ):
-                for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
+                for method_name, _ in inspect.getmembers(
+                    obj, predicate=inspect.isfunction
+                ):
                     if method_name == method:
                         wrap_function_wrapper(
                             module_name,

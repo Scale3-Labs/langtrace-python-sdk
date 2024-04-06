@@ -10,7 +10,9 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(
+    batch=True, log_spans_to_console=True, write_to_remote_url=False
+)
 
 
 llm = ChatOpenAI(temperature=0, model="gpt-4")
@@ -69,7 +71,9 @@ def tool_example():
 
     agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
-    question = "What is the product of the 998th, 999th and 1000th prime numbers?"
+    question = (
+        "What is the product of the 998th, 999th and 1000th prime numbers?"
+    )
 
     for step in agent_executor.iter({"input": question}):
         if output := step.get("intermediate_step"):
