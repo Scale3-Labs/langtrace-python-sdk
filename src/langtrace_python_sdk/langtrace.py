@@ -1,3 +1,4 @@
+from typing import Optional
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
@@ -39,7 +40,7 @@ def init(
     write_to_langtrace_cloud: bool = True,
     debug_log_to_console: bool = False,
     custom_remote_exporter=None,
-    api_host: str | None = None,
+    api_host: Optional[str] = None,
 ):
     provider = TracerProvider()
 
