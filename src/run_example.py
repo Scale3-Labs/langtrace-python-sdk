@@ -11,12 +11,19 @@ from examples.openai.chat_completion import chat_completion
 # from examples.chroma_example.basic import basic
 # from examples.llamaindex_example.basic import basic
 # from examples.langchain_example.basic import basic
+from examples.cohere_example.chat import chat_comp
+from examples.cohere_example.embed_create import embed_create
+from examples.cohere_example.chat_stream import chat_stream
+
 
 # load_and_split()
 # rag()
 # basic()
-chat_completion()
+# chat_completion()
 # function_calling()
 # images_generate()
 # embeddings_create()
 # messages_create()
+chat_comp()
+# embed_create()
+# chat_stream()
