@@ -7,7 +7,7 @@ from langtrace_python_sdk.utils.with_root_span import (
 # _ = load_dotenv(find_dotenv())
 
 langtrace.init(batch=False, write_to_langtrace_cloud=False, debug_log_to_console=True)
-client = OpenAI(base_url="https://api.perplexity.ai", api_key="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")
+client = OpenAI(base_url="https://api.perplexity.ai", api_key="PPLX_API_KEY")
 
 
 @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
