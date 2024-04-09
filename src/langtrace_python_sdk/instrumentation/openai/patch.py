@@ -97,6 +97,12 @@ def chat_completions_create(original_method, version, tracer):
             else ""
         )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        # If base url contains perplexity or azure, set the service provider accordingly
+        if "perplexity" in base_url:
+            service_provider = SERVICE_PROVIDERS["PPLX"]
+        elif "azure" in base_url:
+            service_provider = SERVICE_PROVIDERS["AZURE"]
+
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
