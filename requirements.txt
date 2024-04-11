@@ -102,7 +102,7 @@ orjson==3.9.15
 overrides==7.7.0
 packaging==23.2
 pandas==2.2.1
-pillow==10.2.0
+pillow==10.3.0
 pinecone-client==3.1.0
 posthog==3.4.2
 protobuf==4.25.3
