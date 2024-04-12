@@ -16,6 +16,7 @@ SERVICE_PROVIDERS = {
     "LLAMAINDEX": "LlamaIndex",
     "OPENAI": "OpenAI",
     "PINECONE": "Pinecone",
+    "COHERE": "Cohere",
     "PPLX": "Perplexity",
 }
 

@@ -220,12 +220,10 @@ def chat_completions_create(original_method, version, tracer):
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
                 )
-        except Exception as e:
-            # Record the exception in the span
-            span.record_exception(e)
-            # Set the span status to indicate an error
-            span.set_status(Status(StatusCode.ERROR, str(e)))
-            # Reraise the exception to ensure it's not swallowed
+
+        except Exception as error:
+            span.record_exception(error)
+            span.set_status(Status(StatusCode.ERROR, str(error)))
             span.end()
             raise
 
