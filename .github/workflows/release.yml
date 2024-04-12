@@ -25,11 +25,11 @@ jobs:
     - name: Bump version
       run: |
         hatch version patch
-    - name: Commit version
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: "Bump version"
-        commit_options: "--no-verify"
+    # - name: Commit version
+    #   uses: stefanzweifel/git-auto-commit-action@v4
+    #   with:
+    #     commit_message: "Bump version"
+    #     commit_options: "--no-verify"
     - name: Tag release
       run: |
         git tag $(hatch version)
