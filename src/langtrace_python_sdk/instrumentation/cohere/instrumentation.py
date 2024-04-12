@@ -13,7 +13,7 @@ from langtrace_python_sdk.instrumentation.cohere.patch import (
     chat_create,
     chat_stream,
     embed_create
-    )
+)
 
 class CohereInstrumentation(BaseInstrumentor):
     """
@@ -21,7 +21,7 @@ class CohereInstrumentation(BaseInstrumentor):
     """
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["cohere >= 0.19.1"]
+        return ["cohere >= 5.0.0"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
