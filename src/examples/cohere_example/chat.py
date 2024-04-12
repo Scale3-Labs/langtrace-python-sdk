@@ -8,7 +8,7 @@ _ = load_dotenv(find_dotenv())
 
 langtrace.init(batch=False, debug_log_to_console=True, write_to_langtrace_cloud=False)
 
-co = cohere.Client('bGFkbVRVgNGI0T4Y24AVo6F6sR8KsMej4vYHOmdz')
+co = cohere.Client()
 
 
 # @with_langtrace_root_span("chat_create")

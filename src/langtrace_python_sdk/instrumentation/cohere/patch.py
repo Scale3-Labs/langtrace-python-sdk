@@ -10,6 +10,8 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
+                                            estimate_tokens)
 
 
 def embed_create(original_method, version, tracer):
@@ -235,14 +237,40 @@ def chat_stream(original_method, version, tracer):
     """Wrap the `messages_stream` method."""
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["COHERE"]
+
+        message = kwargs.get("message", "")
+        prompt_tokens = estimate_tokens(message)
+        prompts = json.dumps([
+            {
+                "role": "USER",
+                "content": message
+            }
+        ])
+        preamble = kwargs.get("preamble")
+        if preamble:
+            prompts = json.dumps(
+                [{"role": "system", "content": preamble}] + [{"role": "USER", "content": message}]
+            )
+
+        chat_history = kwargs.get("chat_history")
+        if chat_history:
+            history = [
+                {
+                    "message": {
+                        "role": (
+                            item.get("role") if item.get("role") is not None else "USER"
+                        ),
+                        "content": (
+                            item.get("message") if item.get("message") is not None else ""
+                        )
+                    }
+                }
+                for item in chat_history
+            ]
+            prompts = prompts + json.dumps(history)
+
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-        prompts = json.dumps(kwargs.get("message", ""))
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -250,11 +278,11 @@ def chat_stream(original_method, version, tracer):
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
-            "url.full": base_url,
+            "url.full": APIS["CHAT_STREAM"]["URL"],
             "llm.api": APIS["CHAT_STREAM"]["ENDPOINT"],
-            "llm.model": "",
+            "llm.model": kwargs.get("model") if kwargs.get("model") is not None else "command-r",
+            "llm.stream": False,
             "llm.prompts": prompts,
-            "llm.stream": True,
             **(extra_attributes if extra_attributes is not None else {})
         }
 
@@ -262,15 +290,36 @@ def chat_stream(original_method, version, tracer):
 
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
-            attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("top_k") is not None:
-            attributes.llm_top_p = kwargs.get("top_k")
+        if kwargs.get("max_tokens") is not None:
+            attributes.max_tokens = kwargs.get("max_tokens")
+        if kwargs.get("max_input_tokens") is not None:
+            attributes.max_input_tokens = kwargs.get("max_input_tokens")
+        if kwargs.get("p") is not None:
+            attributes.llm_top_p = kwargs.get("p")
+        if kwargs.get("k") is not None:
+            attributes.llm_top_p = kwargs.get("k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
+        if kwargs.get("conversation_id") is not None:
+            attributes.conversation_id = kwargs.get("conversation_id")
+        if kwargs.get("seed") is not None:
+            attributes.seed = kwargs.get("seed")
+        if kwargs.get("frequency_penalty") is not None:
+            attributes.frequency_penalty = kwargs.get("frequency_penalty")
+        if kwargs.get("presence_penalty") is not None:
+            attributes.presence_penalty = kwargs.get("presence_penalty")
+        if kwargs.get("connectors") is not None:
+            # stringify the list of objects
+            attributes.llm_connectors = json.dumps(kwargs.get("connectors"))
+        if kwargs.get("tools") is not None:
+            # stringify the list of objects
+            attributes.llm_tools = json.dumps(kwargs.get("tools"))
+        if kwargs.get("tool_results") is not None:
+            # stringify the list of objects
+            attributes.llm_tool_results = json.dumps(kwargs.get("tool_results"))
 
         span = tracer.start_span(
-            APIS["CHAT_STREAM"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["CHAT_CREATE"]["METHOD"], kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
@@ -279,35 +328,55 @@ def chat_stream(original_method, version, tracer):
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
 
+            result_content = []
             span.add_event(Event.STREAM_START.value)
-            for chunk in result:
-                if(hasattr(chunk, "event_type") and chunk.event_type is not None and chunk.event_type == "stream-end"):
-                    if hasattr(chunk, "response") and chunk.response is not None:
-                        span.set_attribute("llm.responses", json.dumps(chunk.response.text))
-                        if(hasattr(chunk.response, "meta") and chunk.response.meta is not None):
-                            usage = chunk.response.meta['tokens']
-                            if usage is not None:
-                                usage_dict = {
-                                    "input_tokens": usage['input_tokens'],
-                                    "output_tokens": usage['output_tokens'],
-                                    "total_tokens":  usage['input_tokens'] + usage['output_tokens'],
-                                }
-                                span.set_attribute("llm.token.counts", json.dumps(usage_dict))
+            completion_tokens = 0
+            try:
+                for event in result:
+                    if hasattr(event, "text") and event.text is not None:
+                        completion_tokens += estimate_tokens(event.text)
+                        content = event.text
+                    else:
+                        content = ""
+                    span.add_event(
+                        Event.STREAM_OUTPUT.value, {"response": "".join(content)}
+                    )
+                    result_content.append(content)
+                    yield event
+            finally:
 
-            span.add_event(Event.STREAM_END.value)
-            span.set_status(StatusCode.OK)
-            span.end()
-            return result
-        
-            # return handle_streaming_response(result, span)
-        except Exception as e:
-            # Record the exception in the span
-            span.record_exception(e)
-            # Set the span status to indicate an error
-            span.set_status(Status(StatusCode.ERROR, str(e)))
-            # Reraise the exception to ensure it's not swallowed
+                # Finalize span after processing all chunks
+                span.add_event(Event.STREAM_END.value)
+                span.set_attribute(
+                    "llm.token.counts",
+                    json.dumps(
+                        {
+                            "input_tokens": prompt_tokens,
+                            "output_tokens": completion_tokens,
+                            "total_tokens": prompt_tokens + completion_tokens,
+                        }
+                    ),
+                )
+                span.set_attribute(
+                    "llm.responses",
+                    json.dumps(
+                        [
+                            {
+                                "message": {
+                                    "role": "CHATBOT",
+                                    "content": "".join(result_content),
+                                }
+                            }
+                        ]
+                    ),
+                )
+                span.set_status(StatusCode.OK)
+                span.end()
+
+        except Exception as error:
+            span.record_exception(error)
+            span.set_status(Status(StatusCode.ERROR, str(error)))
             span.end()
             raise
 
-    # return the wrapped method
     return traced_method
