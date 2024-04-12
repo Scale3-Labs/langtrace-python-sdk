@@ -10,19 +10,13 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
-from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
-                                            estimate_tokens)
+from langtrace_python_sdk.utils.llm import estimate_tokens
 
 
 def embed_create(original_method, version, tracer):
     """Wrap the `embed_create` method."""
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["COHERE"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
@@ -32,21 +26,18 @@ def embed_create(original_method, version, tracer):
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
-            "url.full": base_url,
+            "url.full": APIS["EMBED_CREATE"]["URL"],
             "llm.api": APIS["EMBED_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
+            "llm.embedding_dataset_id": kwargs.get("dataset_id"),
+            "llm.embedding_input_type": kwargs.get("input_type"),
+            "llm.embedding_job_name": kwargs.get("name"),
             **(extra_attributes if extra_attributes is not None else {})
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        if kwargs.get("temperature") is not None:
-            attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("p") is not None:
-            attributes.llm_top_p = kwargs.get("p")
-        if kwargs.get("k") is not None:
-            attributes.llm_top_p = kwargs.get("k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
 
@@ -64,11 +55,8 @@ def embed_create(original_method, version, tracer):
             return result
 
         except Exception as error:
-            # Record the exception in the span
             span.record_exception(error)
-            # Set the span status to indicate an error
             span.set_status(Status(StatusCode.ERROR, str(error)))
-            # Reraise the exception to ensure it's not swallowed
             span.end()
             raise
     return traced_method
