@@ -2,12 +2,11 @@ import json
 import os
 import typing
 
-from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL,
-)
 import requests
 from opentelemetry.sdk.trace.export import ReadableSpan, SpanExporter, SpanExportResult
 from opentelemetry.trace.span import format_trace_id
+
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import LANGTRACE_REMOTE_URL
 
 
 class LangTraceExporter(SpanExporter):
@@ -49,9 +48,10 @@ class LangTraceExporter(SpanExporter):
     api_key: str
     write_to_remote_url: bool
 
-    def __init__(self, api_key: str = None, write_to_remote_url: bool = False) -> None:
-        self.api_key = api_key if api_key else os.environ.get("LANGTRACE_API_KEY")
+    def __init__(self, api_key: str = None, write_to_remote_url: bool = False, api_host: typing.Optional[str] = None) -> None:
+        self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
         self.write_to_remote_url = write_to_remote_url
+        self.api_host: str = api_host or LANGTRACE_REMOTE_URL
 
         if self.write_to_remote_url and not self.api_key:
             raise ValueError("No API key provided")
@@ -66,7 +66,6 @@ class LangTraceExporter(SpanExporter):
         Returns:
             The result of the export SUCCESS or FAILURE
         """
-
         data = [
             {
                 "traceId": format_trace_id(span.get_span_context().trace_id),
@@ -86,7 +85,7 @@ class LangTraceExporter(SpanExporter):
         # Send data to remote URL
         try:
             requests.post(
-                url=LANGTRACE_REMOTE_URL,
+                url=f"{self.api_host}/api/trace",
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
             )
