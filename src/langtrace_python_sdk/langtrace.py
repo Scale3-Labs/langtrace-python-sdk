@@ -32,6 +32,9 @@ from langtrace_python_sdk.instrumentation.openai.instrumentation import (
 from langtrace_python_sdk.instrumentation.pinecone.instrumentation import (
     PineconeInstrumentation,
 )
+from langtrace_python_sdk.instrumentation.cohere.instrumentation import (
+    CohereInstrumentation,
+)
 
 
 def init(
@@ -77,6 +80,7 @@ def init(
     langchain_core_instrumentation = LangchainCoreInstrumentation()
     langchain_community_instrumentation = LangchainCommunityInstrumentation()
     anthropic_instrumentation = AnthropicInstrumentation()
+    cohere_instrumentation = CohereInstrumentation()
 
     # Call the instrument method with some arguments
     openai_instrumentation.instrument()
@@ -87,3 +91,4 @@ def init(
     langchain_core_instrumentation.instrument()
     langchain_community_instrumentation.instrument()
     anthropic_instrumentation.instrument()
+    cohere_instrumentation.instrument()
