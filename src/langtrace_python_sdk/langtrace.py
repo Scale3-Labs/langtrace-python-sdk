@@ -41,7 +41,6 @@ def init(
     api_key: str = None,
     batch: bool = True,
     write_to_langtrace_cloud: bool = True,
-    debug_log_to_console: bool = False,
     custom_remote_exporter=None,
     api_host: Optional[str] = None,
 ):
@@ -54,20 +53,24 @@ def init(
     )
     console_exporter = ConsoleSpanExporter()
     batch_processor_remote = BatchSpanProcessor(remote_write_exporter)
+    simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
     batch_processor_console = BatchSpanProcessor(console_exporter)
     simple_processor_console = SimpleSpanProcessor(console_exporter)
 
-    if debug_log_to_console:
+    if write_to_langtrace_cloud:
+        provider.add_span_processor(batch_processor_remote)
+    elif custom_remote_exporter is not None:
+        if batch:
+            provider.add_span_processor(batch_processor_remote)
+        else:
+            provider.add_span_processor(simple_processor_remote)
+    else:
         if batch:
             provider.add_span_processor(batch_processor_console)
         else:
             provider.add_span_processor(simple_processor_console)
 
-    if write_to_langtrace_cloud:
-        if batch:
-            provider.add_span_processor(batch_processor_remote)
-        else:
-            raise ValueError("Batching is required for remote write")
+
 
     # Initialize tracer
     trace.set_tracer_provider(provider)
