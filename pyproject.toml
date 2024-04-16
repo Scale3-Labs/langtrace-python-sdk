@@ -37,7 +37,8 @@ dev = [
     "langchain-openai",
     "llama-index",
     "langchain-openai",
-    "chromadb"
+    "chromadb",
+    "cohere"
 ]
 
 
