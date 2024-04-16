@@ -8,7 +8,6 @@ load_dotenv()
 langtrace.init(
     write_to_langtrace_cloud=False,
     api_host="http://localhost:3000",
-    api_key="d134ad619428e03476f1a42abf991d871a2a560a49a520e6331a4c3704228c78",
 )
 
 client = OpenAI()
