@@ -88,6 +88,78 @@ def images_generate(original_method, version, tracer):
     return traced_method
 
 
+def async_images_generate(original_method, version, tracer):
+    """
+    Wrap the `generate` method of the `Images` class to trace it.
+    """
+
+    async def traced_method(wrapped, instance, args, kwargs):
+        base_url = (
+            str(instance._client._base_url)
+            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
+            else ""
+        )
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "url.full": base_url,
+            "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            "llm.model": kwargs.get("model"),
+            "llm.stream": kwargs.get("stream"),
+            "llm.prompts": json.dumps([kwargs.get("prompt", [])]),
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(
+            APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT
+        ) as span:
+            async for field, value in attributes.model_dump(by_alias=True).items():
+                if value is not None:
+                    span.set_attribute(field, value)
+            try:
+                # Attempt to call the original method
+                result = await wrapped(*args, **kwargs)
+                if kwargs.get("stream") is False or kwargs.get("stream") is None:
+                    data = (
+                        result.data[0]
+                        if hasattr(result, "data") and len(result.data) > 0
+                        else {}
+                    )
+                    response = [
+                        {
+                            "url": data.url if hasattr(data, "url") else "",
+                            "revised_prompt": (
+                                data.revised_prompt
+                                if hasattr(data, "revised_prompt")
+                                else ""
+                            ),
+                        }
+                    ]
+                    span.set_attribute("llm.responses", json.dumps(response))
+
+                span.set_status(StatusCode.OK)
+                return result
+            except Exception as e:
+                # Record the exception in the span
+                span.record_exception(e)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+
+    return traced_method
+
+
 def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
@@ -308,69 +380,6 @@ def chat_completions_create(original_method, version, tracer):
     return traced_method
 
 
-def embeddings_create(original_method, version, tracer):
-    """
-    Wrap the `create` method of the `Embeddings` class to trace it.
-    """
-
-    def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
-
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
-        span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
-            "url.full": base_url,
-            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": "",
-            **(extra_attributes if extra_attributes is not None else {}),
-        }
-
-        attributes = LLMSpanAttributes(**span_attributes)
-        kwargs.get("encoding_format")
-
-        if kwargs.get("encoding_format") is not None:
-            attributes.llm_encoding_format = kwargs.get("encoding_format")
-        if kwargs.get("dimensions") is not None:
-            attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None:
-            attributes["llm.user"] = kwargs.get("user")
-
-        with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
-        ) as span:
-
-            for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
-            try:
-                # Attempt to call the original method
-                result = wrapped(*args, **kwargs)
-                span.set_status(StatusCode.OK)
-                return result
-            except Exception as e:
-                # Record the exception in the span
-                span.record_exception(e)
-
-                # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
-
-                # Reraise the exception to ensure it's not swallowed
-                raise
-
-    return traced_method
-
-
 def async_chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
@@ -588,4 +597,130 @@ def async_chat_completions_create(original_method, version, tracer):
             span.end()
 
     # return the wrapped method
+    return traced_method
+
+
+def embeddings_create(original_method, version, tracer):
+    """
+    Wrap the `create` method of the `Embeddings` class to trace it.
+    """
+
+    def traced_method(wrapped, instance, args, kwargs):
+        base_url = (
+            str(instance._client._base_url)
+            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
+            else ""
+        )
+
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "url.full": base_url,
+            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            "llm.model": kwargs.get("model"),
+            "llm.prompts": "",
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+        kwargs.get("encoding_format")
+
+        if kwargs.get("encoding_format") is not None:
+            attributes.llm_encoding_format = kwargs.get("encoding_format")
+        if kwargs.get("dimensions") is not None:
+            attributes["llm.dimensions"] = kwargs.get("dimensions")
+        if kwargs.get("user") is not None:
+            attributes["llm.user"] = kwargs.get("user")
+
+        with tracer.start_as_current_span(
+            APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+        ) as span:
+
+            for field, value in attributes.model_dump(by_alias=True).items():
+                if value is not None:
+                    span.set_attribute(field, value)
+            try:
+                # Attempt to call the original method
+                result = wrapped(*args, **kwargs)
+                span.set_status(StatusCode.OK)
+                return result
+            except Exception as e:
+                # Record the exception in the span
+                span.record_exception(e)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+
+    return traced_method
+
+
+def async_embeddings_create(original_method, version, tracer):
+    """
+    Wrap the `create` method of the `Embeddings` class to trace it.
+    """
+
+    async def traced_method(wrapped, instance, args, kwargs):
+        base_url = (
+            str(instance._client._base_url)
+            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
+            else ""
+        )
+
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "url.full": base_url,
+            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            "llm.model": kwargs.get("model"),
+            "llm.prompts": "",
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+        kwargs.get("encoding_format")
+
+        if kwargs.get("encoding_format") is not None:
+            attributes.llm_encoding_format = kwargs.get("encoding_format")
+        if kwargs.get("dimensions") is not None:
+            attributes["llm.dimensions"] = kwargs.get("dimensions")
+        if kwargs.get("user") is not None:
+            attributes["llm.user"] = kwargs.get("user")
+
+        with tracer.start_as_current_span(
+            APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+        ) as span:
+
+            async for field, value in attributes.model_dump(by_alias=True).items():
+                if value is not None:
+                    span.set_attribute(field, value)
+            try:
+                # Attempt to call the original method
+                result = await wrapped(*args, **kwargs)
+                span.set_status(StatusCode.OK)
+                return result
+            except Exception as e:
+                # Record the exception in the span
+                span.record_exception(e)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(e)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+
     return traced_method
