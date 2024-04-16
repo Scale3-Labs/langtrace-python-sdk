@@ -116,7 +116,7 @@ pip install langtrace-python-sdk
 
 ``` python
 from langtrace_python_sdk import langtrace # Must precede any llm module imports
-langtrace.init(write_to_langtrace_cloud=False, batch=False)
+langtrace.init(write_to_langtrace_cloud=False)
 ```
 
 ## Langtrace self hosted custom exporter

@@ -6,7 +6,7 @@ from langtrace_python_sdk.utils.with_root_span import (
 
 # _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=False, write_to_langtrace_cloud=False, debug_log_to_console=True)
+langtrace.init(write_to_langtrace_cloud=False)
 client = OpenAI(base_url="https://api.perplexity.ai", api_key="PPLX_API_KEY")
 
 

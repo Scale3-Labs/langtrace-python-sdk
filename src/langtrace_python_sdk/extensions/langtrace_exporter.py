@@ -89,6 +89,7 @@ class LangTraceExporter(SpanExporter):
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
             )
+            print(f"sent to {self.api_host}/api/trace with {len(data)} spans")
             return SpanExportResult.SUCCESS
         except Exception as e:
             return SpanExportResult.FAILURE
