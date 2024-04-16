@@ -19,6 +19,10 @@ import logging
 
 logging.basicConfig(level=logging.FATAL)
 
+import logging
+
+logging.basicConfig(level=logging.FATAL)
+
 
 class LlamaindexInstrumentation(BaseInstrumentor):
     """

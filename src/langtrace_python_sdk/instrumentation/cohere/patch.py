@@ -60,7 +60,6 @@ def embed_create(original_method, version, tracer):
             span.set_status(Status(StatusCode.ERROR, str(error)))
             span.end()
             raise
-
     return traced_method
 
 
@@ -164,18 +163,9 @@ def chat_create(original_method, version, tracer):
             ):
                 span.set_attribute("llm.generation_id", result.generation_id)
             if (hasattr(result, "response_id")) and (result.response_id is not None):
-                span.set_attribute("llm.response_id", result.response_id)
             if (hasattr(result, "is_search_required")) and (
                 result.is_search_required is not None
             ):
-                span.set_attribute("llm.is_search_required", result.is_search_required)
-
-            if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                if hasattr(result, "text") and result.text is not None:
-                    if (
-                        hasattr(result, "chat_history")
-                        and result.chat_history is not None
-                    ):
                         responses = [
                             {
                                 "message": {
@@ -246,7 +236,6 @@ def chat_create(original_method, version, tracer):
             span.set_status(Status(StatusCode.ERROR, str(error)))
             span.end()
             raise
-
     return traced_method
 
 
