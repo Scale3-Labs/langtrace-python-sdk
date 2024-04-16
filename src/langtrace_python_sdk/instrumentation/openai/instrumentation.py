@@ -9,6 +9,7 @@ from langtrace_python_sdk.instrumentation.openai.patch import (
     chat_completions_create,
     embeddings_create,
     images_generate,
+    async_chat_completions_create,
 )
 
 import logging
@@ -25,11 +26,21 @@ class OpenAIInstrumentation(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("openai")
+        print("instrumenting openai")
         wrap_function_wrapper(
             "openai.resources.chat.completions",
             "Completions.create",
             chat_completions_create("openai.chat.completions.create", version, tracer),
         )
+
+        wrap_function_wrapper(
+            "openai.resources.chat.completions",
+            "AsyncCompletions.create",
+            async_chat_completions_create(
+                "openai.chat.completions.create_stream", version, tracer
+            ),
+        )
+
         wrap_function_wrapper(
             "openai.resources.images",
             "Images.generate",

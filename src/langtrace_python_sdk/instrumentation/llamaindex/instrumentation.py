@@ -10,7 +10,10 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from langtrace_python_sdk.instrumentation.llamaindex.patch import generic_patch
+from langtrace_python_sdk.instrumentation.llamaindex.patch import (
+    generic_patch,
+    async_generic_patch,
+)
 
 import logging
 
@@ -55,6 +58,17 @@ class LlamaindexInstrumentation(BaseInstrumentor):
                             module_name,
                             ".".join([name, method_name]),
                             generic_patch(
+                                f"llamaindex.{name}.{method_name}",
+                                task,
+                                tracer,
+                                version,
+                            ),
+                        )
+
+                        wrap_function_wrapper(
+                            module_name,
+                            ".".join([name, method_name]),
+                            async_generic_patch(
                                 f"llamaindex.{name}.{method_name}",
                                 task,
                                 tracer,
