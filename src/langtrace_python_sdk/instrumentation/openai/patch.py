@@ -531,13 +531,12 @@ def async_chat_completions_create(original_method, version, tracer):
                             json.dumps(function), kwargs.get("model")
                         )
 
-                sr = ahandle_streaming_response(
+                return ahandle_streaming_response(
                     result,
                     span,
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
                 )
-                return sr
 
         except Exception as error:
             span.record_exception(error)
