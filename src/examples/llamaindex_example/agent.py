@@ -12,7 +12,8 @@ import nest_asyncio
 
 nest_asyncio.apply()
 
-langtrace.init(write_to_langtrace_cloud=False, debug_log_to_console=True, batch=False)
+langtrace.init(write_to_langtrace_cloud=False)
+
 
 def multiply(a: int, b: int) -> int:
     """Multiple two integers and returns the result integer"""
@@ -47,9 +48,7 @@ class YourOpenAIAgent:
     def chat(self, message: str) -> str:
         chat_history = self._chat_history
         chat_history.append(ChatMessage(role="user", content=message))
-        tools = [
-            tool.metadata.to_openai_tool() for _, tool in self._tools.items()
-        ]
+        tools = [tool.metadata.to_openai_tool() for _, tool in self._tools.items()]
 
         ai_message = self._llm.chat(chat_history, tools=tools).message
         additional_kwargs = ai_message.additional_kwargs
@@ -66,9 +65,7 @@ class YourOpenAIAgent:
 
         return ai_message.content
 
-    def _call_function(
-        self, tool_call: ChatCompletionMessageToolCall
-    ) -> ChatMessage:
+    def _call_function(self, tool_call: ChatCompletionMessageToolCall) -> ChatMessage:
         id_ = tool_call.id
         function_call = tool_call.function
         tool = self._tools[function_call.name]
@@ -86,6 +83,4 @@ class YourOpenAIAgent:
 
 # agent = YourOpenAIAgent(tools=[multiply_tool, add_tool])
 llm = OpenAI(model="gpt-3.5-turbo-0613")
-agent = OpenAIAgent.from_tools(
-    [multiply_tool, add_tool], llm=llm, verbose=True
-)
+agent = OpenAIAgent.from_tools([multiply_tool, add_tool], llm=llm, verbose=True)
