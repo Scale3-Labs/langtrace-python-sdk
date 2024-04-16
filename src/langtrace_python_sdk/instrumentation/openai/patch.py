@@ -178,6 +178,29 @@ def chat_completions_create(original_method, version, tracer):
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
+        # handle tool calls in the kwargs
+        llm_prompts = []
+        for item in kwargs.get("messages", []):
+            if "tool_calls" in item:
+                tool_calls = []
+                for tool_call in item["tool_calls"]:
+                    tool_call_dict = {
+                        "id": tool_call.id if hasattr(tool_call, "id") else "",
+                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                    }
+                    if hasattr(tool_call, "function"):
+                        tool_call_dict["function"] = {
+                            "name": tool_call.function.name
+                            if hasattr(tool_call.function, "name")
+                            else "",
+                            "arguments": tool_call.function.arguments
+                            if hasattr(tool_call.function, "arguments")
+                            else "",
+                        }
+                    tool_calls.append(tool_call_dict)
+                item["tool_calls"] = tool_calls
+            llm_prompts.append(item)
+
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": service_provider,
