@@ -55,7 +55,7 @@ def generic_patch(method, task, tracer, version):
     return traced_method
 
 
-async def async_generic_patch(method, task, tracer, version):
+def async_generic_patch(method, task, tracer, version):
     """
     A generic patch method that wraps a function with a span"""
 
@@ -75,7 +75,7 @@ async def async_generic_patch(method, task, tracer, version):
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        async with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
             async for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
