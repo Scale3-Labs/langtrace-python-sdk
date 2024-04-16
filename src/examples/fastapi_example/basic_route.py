@@ -8,14 +8,16 @@ from openai import OpenAI
 
 from langtrace_python_sdk import langtrace
 
-langtrace.init(write_to_langtrace_cloud=False, debug_log_to_console=True)
+langtrace.init(write_to_langtrace_cloud=False)
 app = FastAPI()
 client = OpenAI()
+
 
 @app.get("/")
 def root():
     vectorstore = FAISS.from_texts(
-        ["Langtrace helps you ship high quality AI Apps to production."], embedding=OpenAIEmbeddings()
+        ["Langtrace helps you ship high quality AI Apps to production."],
+        embedding=OpenAIEmbeddings(),
     )
     retriever = vectorstore.as_retriever()
 
