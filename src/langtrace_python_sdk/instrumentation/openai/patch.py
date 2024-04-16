@@ -190,12 +190,16 @@ def chat_completions_create(original_method, version, tracer):
                     }
                     if hasattr(tool_call, "function"):
                         tool_call_dict["function"] = {
-                            "name": tool_call.function.name
-                            if hasattr(tool_call.function, "name")
-                            else "",
-                            "arguments": tool_call.function.arguments
-                            if hasattr(tool_call.function, "arguments")
-                            else "",
+                            "name": (
+                                tool_call.function.name
+                                if hasattr(tool_call.function, "name")
+                                else ""
+                            ),
+                            "arguments": (
+                                tool_call.function.arguments
+                                if hasattr(tool_call.function, "arguments")
+                                else ""
+                            ),
                         }
                     tool_calls.append(tool_call_dict)
                 item["tool_calls"] = tool_calls
@@ -310,15 +314,12 @@ def chat_completions_create(original_method, version, tracer):
                             json.dumps(function), kwargs.get("model")
                         )
 
-                sr = handle_streaming_response(
+                return handle_streaming_response(
                     result,
                     span,
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
                 )
-                for chunk in sr:
-                    print(chunk)
-                return sr
 
         except Exception as error:
             span.record_exception(error)
