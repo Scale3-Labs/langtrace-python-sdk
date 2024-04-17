@@ -69,17 +69,6 @@ class LlamaindexInstrumentation(BaseInstrumentor):
                             ),
                         )
 
-                        wrap_function_wrapper(
-                            module_name,
-                            ".".join([name, method_name]),
-                            async_generic_patch(
-                                f"llamaindex.{name}.{method_name}",
-                                task,
-                                tracer,
-                                version,
-                            ),
-                        )
-
     def _instrument_module(self, module_name):
         pass
 
