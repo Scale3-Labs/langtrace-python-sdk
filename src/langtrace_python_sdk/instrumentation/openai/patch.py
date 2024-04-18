@@ -75,12 +75,12 @@ def images_generate(original_method, version, tracer):
 
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -147,12 +147,12 @@ def async_images_generate(original_method, version, tracer):
 
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -316,6 +316,7 @@ def chat_completions_create(original_method, version, tracer):
                     span,
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
+                    tool_calls=kwargs.get("tools") is not None,
                 )
 
         except Exception as error:
@@ -324,7 +325,7 @@ def chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    def handle_streaming_response(result, span, prompt_tokens, function_call=False):
+    def handle_streaming_response(result, span, prompt_tokens, function_call=False, tool_calls=False):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
@@ -334,37 +335,29 @@ def chat_completions_create(original_method, version, tracer):
                 if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
-                    token_counts = [
-                        (
-                            estimate_tokens(choice.delta.content)
-                            if choice.delta and choice.delta.content
-                            else (
-                                estimate_tokens(choice.delta.function_call.arguments)
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else 0
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
-                    completion_tokens += sum(token_counts)
-                    content = [
-                        (
-                            choice.delta.content
-                            if choice.delta and choice.delta.content
-                            else (
-                                choice.delta.function_call.arguments
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else ""
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
+                    if not function_call and not tool_calls:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.content is not None:
+                                token_counts = estimate_tokens(choice.delta.content)
+                                completion_tokens += token_counts
+                                content = [choice.delta.content]
+                    elif function_call:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.function_call and choice.delta.function_call.arguments is not None:
+                                token_counts = estimate_tokens(choice.delta.function_call.arguments)
+                                completion_tokens += token_counts
+                                content = [
+                                    choice.delta.function_call.arguments
+                                ]
+                    elif tool_calls:
+                        # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
+                        # first one are missing the function name and id though the arguments
+                        # are spread across the chunks.
+                        content = []
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content)}
+                    Event.STREAM_OUTPUT.value, {"response": "".join(content) if len(content) > 0 and content[0] is not None else ""}
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
@@ -694,12 +687,12 @@ def embeddings_create(original_method, version, tracer):
                 result = wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -757,12 +750,12 @@ def async_embeddings_create(original_method, version, tracer):
                 result = await wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
