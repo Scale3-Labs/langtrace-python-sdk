@@ -75,12 +75,12 @@ def images_generate(original_method, version, tracer):
 
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -147,12 +147,12 @@ def async_images_generate(original_method, version, tracer):
 
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -181,9 +181,9 @@ def chat_completions_create(original_method, version, tracer):
         # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if "tool_calls" in item:
+            if hasattr(item, "tool_calls") and item.tool_calls is not None:
                 tool_calls = []
-                for tool_call in item["tool_calls"]:
+                for tool_call in item.tool_calls:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
                         "type": tool_call.type if hasattr(tool_call, "type") else "",
@@ -202,8 +202,9 @@ def chat_completions_create(original_method, version, tracer):
                             ),
                         }
                     tool_calls.append(tool_call_dict)
-                item["tool_calls"] = tool_calls
-            llm_prompts.append(item)
+                llm_prompts.append(tool_calls)
+            else:
+                llm_prompts.append(item)
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -213,13 +214,14 @@ def chat_completions_create(original_method, version, tracer):
             "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
+            "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
+        tools = []
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("top_p") is not None:
@@ -227,7 +229,11 @@ def chat_completions_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
-            attributes.llm_function_prompts = json.dumps(kwargs.get("functions"))
+            tools.append(json.dumps(kwargs.get("functions")))
+        if kwargs.get("tools") is not None:
+            tools.append(json.dumps(kwargs.get("tools")))
+        if len(tools) > 0:
+            attributes.llm_tools = json.dumps(tools)
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
@@ -252,16 +258,7 @@ def chat_completions_create(original_method, version, tracer):
                                     if choice.message and choice.message.role
                                     else "assistant"
                                 ),
-                                "content": (
-                                    choice.message.content
-                                    if choice.message and choice.message.content
-                                    else (
-                                        choice.message.function_call.arguments
-                                        if choice.message
-                                        and choice.message.function_call.arguments
-                                        else ""
-                                    )
-                                ),
+                                "content": extract_content(choice),
                                 **(
                                     {
                                         "content_filter_results": choice[
@@ -319,6 +316,7 @@ def chat_completions_create(original_method, version, tracer):
                     span,
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
+                    tool_calls=kwargs.get("tools") is not None,
                 )
 
         except Exception as error:
@@ -327,7 +325,7 @@ def chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    def handle_streaming_response(result, span, prompt_tokens, function_call=False):
+    def handle_streaming_response(result, span, prompt_tokens, function_call=False, tool_calls=False):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
@@ -337,37 +335,29 @@ def chat_completions_create(original_method, version, tracer):
                 if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
-                    token_counts = [
-                        (
-                            estimate_tokens(choice.delta.content)
-                            if choice.delta and choice.delta.content
-                            else (
-                                estimate_tokens(choice.delta.function_call.arguments)
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else 0
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
-                    completion_tokens += sum(token_counts)
-                    content = [
-                        (
-                            choice.delta.content
-                            if choice.delta and choice.delta.content
-                            else (
-                                choice.delta.function_call.arguments
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else ""
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
+                    if not function_call and not tool_calls:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.content is not None:
+                                token_counts = estimate_tokens(choice.delta.content)
+                                completion_tokens += token_counts
+                                content = [choice.delta.content]
+                    elif function_call:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.function_call and choice.delta.function_call.arguments is not None:
+                                token_counts = estimate_tokens(choice.delta.function_call.arguments)
+                                completion_tokens += token_counts
+                                content = [
+                                    choice.delta.function_call.arguments
+                                ]
+                    elif tool_calls:
+                        # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
+                        # first one are missing the function name and id though the arguments
+                        # are spread across the chunks.
+                        content = []
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content)}
+                    Event.STREAM_OUTPUT.value, {"response": "".join(content) if len(content) > 0 and content[0] is not None else ""}
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
@@ -422,6 +412,34 @@ def async_chat_completions_create(original_method, version, tracer):
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
+        # handle tool calls in the kwargs
+        llm_prompts = []
+        for item in kwargs.get("messages", []):
+            if hasattr(item, "tool_calls") and item.tool_calls is not None:
+                tool_calls = []
+                for tool_call in item.tool_calls:
+                    tool_call_dict = {
+                        "id": tool_call.id if hasattr(tool_call, "id") else "",
+                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                    }
+                    if hasattr(tool_call, "function"):
+                        tool_call_dict["function"] = {
+                            "name": (
+                                tool_call.function.name
+                                if hasattr(tool_call.function, "name")
+                                else ""
+                            ),
+                            "arguments": (
+                                tool_call.function.arguments
+                                if hasattr(tool_call.function, "arguments")
+                                else ""
+                            ),
+                        }
+                    tool_calls.append(tool_call_dict)
+                llm_prompts.append(tool_calls)
+            else:
+                llm_prompts.append(item)
+
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": service_provider,
@@ -430,13 +448,14 @@ def async_chat_completions_create(original_method, version, tracer):
             "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
+            "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
+        tools = []
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("top_p") is not None:
@@ -444,7 +463,11 @@ def async_chat_completions_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
-            attributes.llm_function_prompts = json.dumps(kwargs.get("functions"))
+            tools.append(json.dumps(kwargs.get("functions")))
+        if kwargs.get("tools") is not None:
+            tools.append(json.dumps(kwargs.get("tools")))
+        if len(tools) > 0:
+            attributes.llm_tools = json.dumps(tools)
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
@@ -469,16 +492,7 @@ def async_chat_completions_create(original_method, version, tracer):
                                     if choice.message and choice.message.role
                                     else "assistant"
                                 ),
-                                "content": (
-                                    choice.message.content
-                                    if choice.message and choice.message.content
-                                    else (
-                                        choice.message.function_call.arguments
-                                        if choice.message
-                                        and choice.message.function_call.arguments
-                                        else ""
-                                    )
-                                ),
+                                "content": extract_content(choice),
                                 **(
                                     {
                                         "content_filter_results": choice[
@@ -536,6 +550,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     span,
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
+                    tool_calls=kwargs.get("tools") is not None,
                 )
 
         except Exception as error:
@@ -544,9 +559,7 @@ def async_chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    async def ahandle_streaming_response(
-        result, span, prompt_tokens, function_call=False
-    ):
+    async def ahandle_streaming_response(result, span, prompt_tokens, function_call=False, tool_calls=False):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
@@ -556,37 +569,29 @@ def async_chat_completions_create(original_method, version, tracer):
                 if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
-                    token_counts = [
-                        (
-                            estimate_tokens(choice.delta.content)
-                            if choice.delta and choice.delta.content
-                            else (
-                                estimate_tokens(choice.delta.function_call.arguments)
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else 0
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
-                    completion_tokens += sum(token_counts)
-                    content = [
-                        (
-                            choice.delta.content
-                            if choice.delta and choice.delta.content
-                            else (
-                                choice.delta.function_call.arguments
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else ""
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
+                    if not function_call and not tool_calls:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.content is not None:
+                                token_counts = estimate_tokens(choice.delta.content)
+                                completion_tokens += token_counts
+                                content = [choice.delta.content]
+                    elif function_call:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.function_call and choice.delta.function_call.arguments is not None:
+                                token_counts = estimate_tokens(choice.delta.function_call.arguments)
+                                completion_tokens += token_counts
+                                content = [
+                                    choice.delta.function_call.arguments
+                                ]
+                    elif tool_calls:
+                        # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
+                        # first one are missing the function name and id though the arguments
+                        # are spread across the chunks.
+                        content = []
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content)}
+                    Event.STREAM_OUTPUT.value, {"response": "".join(content) if len(content) > 0 and content[0] is not None else ""}
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
@@ -673,12 +678,12 @@ def embeddings_create(original_method, version, tracer):
                 result = wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -736,14 +741,45 @@ def async_embeddings_create(original_method, version, tracer):
                 result = await wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
 
     return traced_method
+
+
+def extract_content(choice):
+    # Check if choice.message exists and has a content attribute
+    if hasattr(choice, 'message') and hasattr(choice.message, 'content') and choice.message.content is not None:
+        return choice.message.content
+
+    # Check if choice.message has tool_calls and extract information accordingly
+    elif hasattr(choice, 'message') and hasattr(choice.message, 'tool_calls') and choice.message.tool_calls is not None:
+        result = [
+            {
+                "id": tool_call.id,
+                "type": tool_call.type,
+                "function": {
+                    "name": tool_call.function.name,
+                    "arguments": tool_call.function.arguments,
+                }
+            } for tool_call in choice.message.tool_calls
+        ]
+        return result
+
+    # Check if choice.message has a function_call and extract information accordingly
+    elif hasattr(choice, 'message') and hasattr(choice.message, 'function_call') and choice.message.function_call is not None:
+        return {
+            "name": choice.message.function_call.name,
+            "arguments": choice.message.function_call.arguments,
+        }
+
+    # Return an empty string if none of the above conditions are met
+    else:
+        return ""
