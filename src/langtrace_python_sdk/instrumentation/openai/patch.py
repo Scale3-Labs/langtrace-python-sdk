@@ -181,9 +181,9 @@ def chat_completions_create(original_method, version, tracer):
         # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if "tool_calls" in item:
+            if hasattr(item, "tool_calls") and item.tool_calls is not None:
                 tool_calls = []
-                for tool_call in item["tool_calls"]:
+                for tool_call in item.tool_calls:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
                         "type": tool_call.type if hasattr(tool_call, "type") else "",
@@ -202,8 +202,9 @@ def chat_completions_create(original_method, version, tracer):
                             ),
                         }
                     tool_calls.append(tool_call_dict)
-                item["tool_calls"] = tool_calls
-            llm_prompts.append(item)
+                llm_prompts.append(tool_calls)
+            else:
+                llm_prompts.append(item)
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -213,13 +214,14 @@ def chat_completions_create(original_method, version, tracer):
             "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
+            "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
+        tools = []
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("top_p") is not None:
@@ -227,7 +229,11 @@ def chat_completions_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
-            attributes.llm_function_prompts = json.dumps(kwargs.get("functions"))
+            tools.append(json.dumps(kwargs.get("functions")))
+        if kwargs.get("tools") is not None:
+            tools.append(json.dumps(kwargs.get("tools")))
+        if len(tools) > 0:
+            attributes.llm_tools = json.dumps(tools)
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
@@ -252,16 +258,7 @@ def chat_completions_create(original_method, version, tracer):
                                     if choice.message and choice.message.role
                                     else "assistant"
                                 ),
-                                "content": (
-                                    choice.message.content
-                                    if choice.message and choice.message.content
-                                    else (
-                                        choice.message.function_call.arguments
-                                        if choice.message
-                                        and choice.message.function_call.arguments
-                                        else ""
-                                    )
-                                ),
+                                "content": extract_content(choice),
                                 **(
                                     {
                                         "content_filter_results": choice[
@@ -422,6 +419,34 @@ def async_chat_completions_create(original_method, version, tracer):
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
+        # handle tool calls in the kwargs
+        llm_prompts = []
+        for item in kwargs.get("messages", []):
+            if hasattr(item, "tool_calls") and item.tool_calls is not None:
+                tool_calls = []
+                for tool_call in item.tool_calls:
+                    tool_call_dict = {
+                        "id": tool_call.id if hasattr(tool_call, "id") else "",
+                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                    }
+                    if hasattr(tool_call, "function"):
+                        tool_call_dict["function"] = {
+                            "name": (
+                                tool_call.function.name
+                                if hasattr(tool_call.function, "name")
+                                else ""
+                            ),
+                            "arguments": (
+                                tool_call.function.arguments
+                                if hasattr(tool_call.function, "arguments")
+                                else ""
+                            ),
+                        }
+                    tool_calls.append(tool_call_dict)
+                llm_prompts.append(tool_calls)
+            else:
+                llm_prompts.append(item)
+
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": service_provider,
@@ -430,13 +455,14 @@ def async_chat_completions_create(original_method, version, tracer):
             "langtrace.version": "1.0.0",
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
+            "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
+        tools = []
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("top_p") is not None:
@@ -444,7 +470,11 @@ def async_chat_completions_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
-            attributes.llm_function_prompts = json.dumps(kwargs.get("functions"))
+            tools.append(json.dumps(kwargs.get("functions")))
+        if kwargs.get("tools") is not None:
+            tools.append(json.dumps(kwargs.get("tools")))
+        if len(tools) > 0:
+            attributes.llm_tools = json.dumps(tools)
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
@@ -469,16 +499,7 @@ def async_chat_completions_create(original_method, version, tracer):
                                     if choice.message and choice.message.role
                                     else "assistant"
                                 ),
-                                "content": (
-                                    choice.message.content
-                                    if choice.message and choice.message.content
-                                    else (
-                                        choice.message.function_call.arguments
-                                        if choice.message
-                                        and choice.message.function_call.arguments
-                                        else ""
-                                    )
-                                ),
+                                "content": extract_content(choice),
                                 **(
                                     {
                                         "content_filter_results": choice[
@@ -747,3 +768,34 @@ def async_embeddings_create(original_method, version, tracer):
                 raise
 
     return traced_method
+
+
+def extract_content(choice):
+    # Check if choice.message exists and has a content attribute
+    if hasattr(choice, 'message') and hasattr(choice.message, 'content') and choice.message.content is not None:
+        return choice.message.content
+
+    # Check if choice.message has tool_calls and extract information accordingly
+    elif hasattr(choice, 'message') and hasattr(choice.message, 'tool_calls') and choice.message.tool_calls is not None:
+        result = [
+            {
+                "id": tool_call.id,
+                "type": tool_call.type,
+                "function": {
+                    "name": tool_call.function.name,
+                    "arguments": tool_call.function.arguments,
+                }
+            } for tool_call in choice.message.tool_calls
+        ]
+        return result
+
+    # Check if choice.message has a function_call and extract information accordingly
+    elif hasattr(choice, 'message') and hasattr(choice.message, 'function_call') and choice.message.function_call is not None:
+        return {
+            "name": choice.message.function_call.name,
+            "arguments": choice.message.function_call.arguments,
+        }
+
+    # Return an empty string if none of the above conditions are met
+    else:
+        return ""

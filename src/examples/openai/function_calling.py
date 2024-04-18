@@ -34,7 +34,7 @@ student_custom_functions = [
 ]
 
 
-@with_langtrace_root_span()
+# @with_langtrace_root_span()
 def function_calling():
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
