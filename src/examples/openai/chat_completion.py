@@ -7,7 +7,7 @@ from langtrace_python_sdk.utils.with_root_span import (
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(write_to_langtrace_cloud=True)
 client = OpenAI()
 
 

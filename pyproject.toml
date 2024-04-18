@@ -18,7 +18,7 @@ classifiers=[
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  'trace-attributes',
+  'trace-attributes==1.0.32',
   'opentelemetry-api',
   'opentelemetry-sdk',
   'opentelemetry-instrumentation',
@@ -37,7 +37,8 @@ dev = [
     "langchain-openai",
     "llama-index",
     "langchain-openai",
-    "chromadb"
+    "chromadb",
+    "cohere"
 ]
 
 
