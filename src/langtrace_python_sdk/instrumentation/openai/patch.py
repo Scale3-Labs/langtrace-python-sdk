@@ -550,6 +550,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     span,
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
+                    tool_calls=kwargs.get("tools") is not None,
                 )
 
         except Exception as error:
@@ -558,9 +559,7 @@ def async_chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    async def ahandle_streaming_response(
-        result, span, prompt_tokens, function_call=False
-    ):
+    async def ahandle_streaming_response(result, span, prompt_tokens, function_call=False, tool_calls=False):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
@@ -570,37 +569,29 @@ def async_chat_completions_create(original_method, version, tracer):
                 if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
-                    token_counts = [
-                        (
-                            estimate_tokens(choice.delta.content)
-                            if choice.delta and choice.delta.content
-                            else (
-                                estimate_tokens(choice.delta.function_call.arguments)
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else 0
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
-                    completion_tokens += sum(token_counts)
-                    content = [
-                        (
-                            choice.delta.content
-                            if choice.delta and choice.delta.content
-                            else (
-                                choice.delta.function_call.arguments
-                                if choice.delta.function_call
-                                and choice.delta.function_call.arguments
-                                else ""
-                            )
-                        )
-                        for choice in chunk.choices
-                    ]
+                    if not function_call and not tool_calls:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.content is not None:
+                                token_counts = estimate_tokens(choice.delta.content)
+                                completion_tokens += token_counts
+                                content = [choice.delta.content]
+                    elif function_call:
+                        for choice in chunk.choices:
+                            if choice.delta and choice.delta.function_call and choice.delta.function_call.arguments is not None:
+                                token_counts = estimate_tokens(choice.delta.function_call.arguments)
+                                completion_tokens += token_counts
+                                content = [
+                                    choice.delta.function_call.arguments
+                                ]
+                    elif tool_calls:
+                        # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
+                        # first one are missing the function name and id though the arguments
+                        # are spread across the chunks.
+                        content = []
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content)}
+                    Event.STREAM_OUTPUT.value, {"response": "".join(content) if len(content) > 0 and content[0] is not None else ""}
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
