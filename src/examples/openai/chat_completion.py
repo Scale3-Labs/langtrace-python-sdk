@@ -7,7 +7,7 @@ from langtrace_python_sdk.utils.with_root_span import (
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=True)
+langtrace.init(write_to_langtrace_cloud=False)
 client = OpenAI()
 
 
@@ -26,7 +26,7 @@ def api2():
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Say this is a test three times"}],
-        stream=False,
+        stream=True,
     )
     return response
 
@@ -35,25 +35,24 @@ def api2():
 def chat_completion():
     response = api1()
     response = api2()
-    return response
+    result = []
+    for chunk in response:
+        if chunk.choices[0].delta.content is not None:
+            content = [
+                choice.delta.content if choice.delta and
+                choice.delta.content else ""
+                for choice in chunk.choices]
+            result.append(
+                content[0] if len(content) > 0 else "")
+
+    print("".join(result))
+    # return response
 
 
-# print(response)
+# # print(response)
 # stream = client.chat.completions.create(
 #     model="gpt-4",
 #     messages=[{"role": "user", "content": "Say this is a test three times"}, {"role": "assistant", "content": "This is a test. This is a test. This is a test"},
 #               {"role": "user", "content": "Say this is a mock 4 times"}],
 #     stream=False,
 # )
-
-# result = []
-# for chunk in response:
-#     if chunk.choices[0].delta.content is not None:
-#         content = [
-#             choice.delta.content if choice.delta and
-#             choice.delta.content else ""
-#             for choice in chunk.choices]
-#         result.append(
-#             content[0] if len(content) > 0 else "")
-
-# print("".join(result))
