@@ -44,7 +44,8 @@ dev = [
 test = [
     "pytest",
     "pytest-vcr",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "tests"
 ]
 
 
