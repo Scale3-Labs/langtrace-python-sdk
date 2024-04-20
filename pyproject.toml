@@ -41,6 +41,12 @@ dev = [
     "cohere"
 ]
 
+test = [
+    "pytest",
+    "pytest-vcr",
+    "pytest-asyncio"
+]
+
 
 
 [project.urls]

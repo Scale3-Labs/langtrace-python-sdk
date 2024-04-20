@@ -121,7 +121,8 @@ def async_images_generate(original_method, version, tracer):
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT
         ) as span:
-            async for field, value in attributes.model_dump(by_alias=True).items():
+            items = attributes.model_dump(by_alias=True).items()
+            for field, value in items:
                 if value is not None:
                     span.set_attribute(field, value)
             try:
@@ -325,7 +326,9 @@ def chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    def handle_streaming_response(result, span, prompt_tokens, function_call=False, tool_calls=False):
+    def handle_streaming_response(
+        result, span, prompt_tokens, function_call=False, tool_calls=False
+    ):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
@@ -343,12 +346,16 @@ def chat_completions_create(original_method, version, tracer):
                                 content = [choice.delta.content]
                     elif function_call:
                         for choice in chunk.choices:
-                            if choice.delta and choice.delta.function_call and choice.delta.function_call.arguments is not None:
-                                token_counts = estimate_tokens(choice.delta.function_call.arguments)
-                                completion_tokens += token_counts
-                                content = [
+                            if (
+                                choice.delta
+                                and choice.delta.function_call
+                                and choice.delta.function_call.arguments is not None
+                            ):
+                                token_counts = estimate_tokens(
                                     choice.delta.function_call.arguments
-                                ]
+                                )
+                                completion_tokens += token_counts
+                                content = [choice.delta.function_call.arguments]
                     elif tool_calls:
                         # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
                         # first one are missing the function name and id though the arguments
@@ -357,7 +364,14 @@ def chat_completions_create(original_method, version, tracer):
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content) if len(content) > 0 and content[0] is not None else ""}
+                    Event.STREAM_OUTPUT.value,
+                    {
+                        "response": (
+                            "".join(content)
+                            if len(content) > 0 and content[0] is not None
+                            else ""
+                        )
+                    },
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
@@ -559,7 +573,9 @@ def async_chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    async def ahandle_streaming_response(result, span, prompt_tokens, function_call=False, tool_calls=False):
+    async def ahandle_streaming_response(
+        result, span, prompt_tokens, function_call=False, tool_calls=False
+    ):
         """Process and yield streaming response chunks."""
         result_content = []
         span.add_event(Event.STREAM_START.value)
@@ -577,12 +593,16 @@ def async_chat_completions_create(original_method, version, tracer):
                                 content = [choice.delta.content]
                     elif function_call:
                         for choice in chunk.choices:
-                            if choice.delta and choice.delta.function_call and choice.delta.function_call.arguments is not None:
-                                token_counts = estimate_tokens(choice.delta.function_call.arguments)
-                                completion_tokens += token_counts
-                                content = [
+                            if (
+                                choice.delta
+                                and choice.delta.function_call
+                                and choice.delta.function_call.arguments is not None
+                            ):
+                                token_counts = estimate_tokens(
                                     choice.delta.function_call.arguments
-                                ]
+                                )
+                                completion_tokens += token_counts
+                                content = [choice.delta.function_call.arguments]
                     elif tool_calls:
                         # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
                         # first one are missing the function name and id though the arguments
@@ -591,7 +611,14 @@ def async_chat_completions_create(original_method, version, tracer):
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value, {"response": "".join(content) if len(content) > 0 and content[0] is not None else ""}
+                    Event.STREAM_OUTPUT.value,
+                    {
+                        "response": (
+                            "".join(content)
+                            if len(content) > 0 and content[0] is not None
+                            else ""
+                        )
+                    },
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
@@ -756,11 +783,19 @@ def async_embeddings_create(original_method, version, tracer):
 
 def extract_content(choice):
     # Check if choice.message exists and has a content attribute
-    if hasattr(choice, 'message') and hasattr(choice.message, 'content') and choice.message.content is not None:
+    if (
+        hasattr(choice, "message")
+        and hasattr(choice.message, "content")
+        and choice.message.content is not None
+    ):
         return choice.message.content
 
     # Check if choice.message has tool_calls and extract information accordingly
-    elif hasattr(choice, 'message') and hasattr(choice.message, 'tool_calls') and choice.message.tool_calls is not None:
+    elif (
+        hasattr(choice, "message")
+        and hasattr(choice.message, "tool_calls")
+        and choice.message.tool_calls is not None
+    ):
         result = [
             {
                 "id": tool_call.id,
@@ -768,13 +803,18 @@ def extract_content(choice):
                 "function": {
                     "name": tool_call.function.name,
                     "arguments": tool_call.function.arguments,
-                }
-            } for tool_call in choice.message.tool_calls
+                },
+            }
+            for tool_call in choice.message.tool_calls
         ]
         return result
 
     # Check if choice.message has a function_call and extract information accordingly
-    elif hasattr(choice, 'message') and hasattr(choice.message, 'function_call') and choice.message.function_call is not None:
+    elif (
+        hasattr(choice, "message")
+        and hasattr(choice.message, "function_call")
+        and choice.message.function_call is not None
+    ):
         return {
             "name": choice.message.function_call.name,
             "arguments": choice.message.function_call.arguments,
