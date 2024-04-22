@@ -17,7 +17,7 @@ jobs:
       - name: Github Checkout
         # v4.1.1
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-        
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -30,7 +30,7 @@ jobs:
       - name: Get Version
         id: version
         run: | 
-          hatch version >> $GITHUB_ENV"
+          echo "version=$(hatch version)" >> $GITHUB_ENV
           
   publish:
     runs-on: ubuntu-latest
