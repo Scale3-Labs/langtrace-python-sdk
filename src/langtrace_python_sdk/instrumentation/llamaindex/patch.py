@@ -1,5 +1,17 @@
 """
-This module contains a generic patch method that wraps a function with a span.
+Copyright (c) 2024 Scale3 Labs
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 """
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
@@ -8,9 +20,7 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
 def generic_patch(method, task, tracer, version):
@@ -42,12 +52,12 @@ def generic_patch(method, task, tracer, version):
                 result = wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
@@ -84,12 +94,12 @@ def async_generic_patch(method, task, tracer, version):
                 result = await wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
-            except Exception as e:
+            except Exception as err:
                 # Record the exception in the span
-                span.record_exception(e)
+                span.record_exception(err)
 
                 # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(e)))
+                span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
                 raise
