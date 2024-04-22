@@ -12,29 +12,21 @@ client = OpenAI()
 
 
 @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
-def api1():
+def api():
     response = client.chat.completions.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": "Say this is a test three times"}],
-        stream=False,
-    )
-    return response
-
-
-@with_additional_attributes({"user.id": "5678", "user.feedback.rating": -1})
-def api2():
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": "Say this is a test three times"}],
+        messages=[{"role": "system", "content": "Talk like a pirate"}, {"role": "user", "content": "Tell me a story in 3 sentences or less."}],
         stream=True,
+        # stream=False,
     )
     return response
 
 
 @with_langtrace_root_span()
 def chat_completion():
-    response = api1()
-    response = api2()
+    response = api()
+    # print(response)
+    # Uncomment this for streaming
     result = []
     for chunk in response:
         if chunk.choices[0].delta.content is not None:
@@ -46,13 +38,4 @@ def chat_completion():
                 content[0] if len(content) > 0 else "")
 
     print("".join(result))
-    # return response
-
-
-# # print(response)
-# stream = client.chat.completions.create(
-#     model="gpt-4",
-#     messages=[{"role": "user", "content": "Say this is a test three times"}, {"role": "assistant", "content": "This is a test. This is a test. This is a test"},
-#               {"role": "user", "content": "Say this is a mock 4 times"}],
-#     stream=False,
-# )
+    return response

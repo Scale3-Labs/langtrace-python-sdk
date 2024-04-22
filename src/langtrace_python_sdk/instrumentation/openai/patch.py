@@ -265,25 +265,22 @@ def chat_completions_create(original_method, version, tracer):
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
-                            "message": {
-                                "role": (
-                                    choice.message.role
-                                    if choice.message and choice.message.role
-                                    else "assistant"
-                                ),
-                                "content": extract_content(choice),
-                                **(
-                                    {
-                                        "content_filter_results": choice[
-                                            "content_filter_results"
-                                        ]
-                                    }
-                                    if "content_filter_results" in choice
-                                    else {}
-                                ),
-                            }
-                        }
-                        for choice in result.choices
+                            "role": (
+                                choice.message.role
+                                if choice.message and choice.message.role
+                                else "assistant"
+                            ),
+                            "content": extract_content(choice),
+                            **(
+                                {
+                                    "content_filter_results": choice[
+                                        "content_filter_results"
+                                    ]
+                                }
+                                if "content_filter_results" in choice
+                                else {}
+                            ),
+                        } for choice in result.choices
                     ]
                     span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -405,10 +402,8 @@ def chat_completions_create(original_method, version, tracer):
                 json.dumps(
                     [
                         {
-                            "message": {
-                                "role": "assistant",
-                                "content": "".join(result_content),
-                            }
+                            "role": "assistant",
+                            "content": "".join(result_content),
                         }
                     ]
                 ),
@@ -512,25 +507,22 @@ def async_chat_completions_create(original_method, version, tracer):
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
-                            "message": {
-                                "role": (
-                                    choice.message.role
-                                    if choice.message and choice.message.role
-                                    else "assistant"
-                                ),
-                                "content": extract_content(choice),
-                                **(
-                                    {
-                                        "content_filter_results": choice[
-                                            "content_filter_results"
-                                        ]
-                                    }
-                                    if "content_filter_results" in choice
-                                    else {}
-                                ),
-                            }
-                        }
-                        for choice in result.choices
+                            "role": (
+                                choice.message.role
+                                if choice.message and choice.message.role
+                                else "assistant"
+                            ),
+                            "content": extract_content(choice),
+                            **(
+                                {
+                                    "content_filter_results": choice[
+                                        "content_filter_results"
+                                    ]
+                                }
+                                if "content_filter_results" in choice
+                                else {}
+                            ),
+                        } for choice in result.choices
                     ]
                     span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -652,10 +644,8 @@ def async_chat_completions_create(original_method, version, tracer):
                 json.dumps(
                     [
                         {
-                            "message": {
-                                "role": "assistant",
-                                "content": "".join(result_content),
-                            }
+                            "role": "assistant",
+                            "content": "".join(result_content),
                         }
                     ]
                 ),

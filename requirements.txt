@@ -104,7 +104,6 @@ langchain-core==0.1.35
 langchain-openai==0.0.7
 langchainhub==0.1.14
 langsmith==0.1.9
--e git+ssh://git@github.com/Scale3-Labs/langtrace-python-sdk.git@a6583c0595c5f1b9e8e68c12c500d16a5c37425d#egg=langtrace_python_sdk
 Levenshtein==0.25.0
 llama-index==0.10.13.post1
 llama-index-agent-openai==0.1.5
