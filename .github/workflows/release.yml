@@ -9,30 +9,27 @@ on:
       - closed
 
 jobs:
+  install-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+            python-version: '3.x'
+
+      - name: Install hatch
+        run: | 
+          pip install hatch
+
   generate-version:
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Check labels and set version increment
-        id: set_increment
-        run: |
-          labels=$(echo "${{ toJson(github.event.pull_request.labels.*.name) }}")
-          if [[ $labels == *"major"* ]]; then
-            echo "increment=major" >> $GITHUB_ENV
-          elif [[ $labels == *"minor"* ]]; then
-            echo "increment=minor" >> $GITHUB_ENV
-          else
-            echo "increment=patch" >> $GITHUB_ENV
-          fi
-      - name: Get next version
-        # 2023.10.2
-        uses: reecetech/version-increment@71036b212bbdc100b48aae069870f10953433346
+      - name: Get Version
         id: version
-        with:
-          use_api: true
-          scheme: semver
-          increment: ${{ steps.set_increment.outputs.increment }}
+        run: |
+          echo hatch version >> $GITHUB
           
   publish:
     runs-on: ubuntu-latest
@@ -52,15 +49,6 @@ jobs:
           tag: ${{ needs.generate-version.outputs.new_version }}
           generateReleaseNotes: true
           draft: false
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-            python-version: '3.x'
-
-      - name: Install hatch
-        run: | 
-          pip install hatch
 
       - name: Build SDK
         run: | 
