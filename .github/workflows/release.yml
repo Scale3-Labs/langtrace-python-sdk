@@ -30,7 +30,7 @@ jobs:
       - name: Get Version
         id: version
         run: | 
-          echo "version=$(hatch version)" >> $GITHUB_ENV
+          echo "version=$(hatch version)" >> $GITHUB_OUTPUT
           
   publish:
     runs-on: ubuntu-latest
