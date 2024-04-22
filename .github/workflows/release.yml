@@ -51,7 +51,7 @@ jobs:
         with:
           tag: ${{ needs.generate-version.outputs.new_version }}
           generateReleaseNotes: true
-          draft: true
+          draft: false
 
       - name: Set up Python
         uses: actions/setup-python@v2
