@@ -41,6 +41,12 @@ dev = [
     "cohere"
 ]
 
+test = [
+    "pytest",
+    "pytest-vcr",
+    "pytest-asyncio"
+]
+
 
 
 [project.urls]
@@ -56,7 +62,7 @@ include = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/langtrace_python_sdk", "src/examples"]
+packages = ["src/langtrace_python_sdk", "src/examples", "src/tests"]
 
 # [tool.semantic_release]
 # version_variable = "pyproject.toml:version" # version location

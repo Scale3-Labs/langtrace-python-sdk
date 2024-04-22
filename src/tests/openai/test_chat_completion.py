@@ -1,91 +1,142 @@
-import unittest
-from unittest.mock import MagicMock, Mock, patch, call
-from langtrace_python_sdk.instrumentation.openai.patch import chat_completions_create
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace import get_tracer
-import importlib.metadata
-import openai
-from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from opentelemetry.trace.status import Status, StatusCode
+import pytest
+import importlib
 import json
-from tests.utils import common_setup
-class TestChatCompletion(unittest.TestCase):
-    
-    data = {
-        "id": "chatcmpl-93wIW4A2r0YjlDvx7PKvHV0VxbprP",
-        "choices":[
-            MagicMock(
-                finish_reason="stop",
-                index=0,
-                logprobs=None,
-                message=MagicMock(
-                    content="This is a test, this is a test, this is a test.",
-                    role="assistant",
-                    function_call=None,
-                    tool_calls=None
-                )
-            )
-        ],
-        "created": 1710726108,
-        "model": "gpt-4-0613",
-        "object": "chat.completion",
-        "system_fingerprint": None,
-        "usage": MagicMock(prompt_tokens = 14, completion_tokens = 15, total_tokens = 29)
+from langtrace_python_sdk.constants.instrumentation.openai import APIS
+
+
+@pytest.mark.vcr()
+def test_chat_completion(exporter, openai_client):
+    llm_model_value = "gpt-4"
+    messages_value = [{"role": "user", "content": "Say this is a test three times"}]
+
+    kwargs = {
+        "model": llm_model_value,
+        "messages": messages_value,
+        "stream": False,
     }
 
-    def setUp(self):
-        self.openai_mock, self.tracer, self.span = common_setup(self.data, None)
-   
-       
-    def tearDown(self):
-        pass
+    openai_client.chat.completions.create(**kwargs)
+    spans = exporter.get_finished_spans()
+    completion_span = spans[-1]
+    assert completion_span.name == "openai.chat.completions.create"
 
-    def test_chat_completions_create_non_streaming(self):
-        # Arrange
-        version = importlib.metadata.version('openai')
-        llm_model_value = 'gpt-4'
-        messages_value = [{'role': 'user', 'content': 'Say this is a test three times'}]
+    attributes = completion_span.attributes
+    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
+    assert attributes.get("langtrace.service.name") == "OpenAI"
+    assert attributes.get("langtrace.service.type") == "llm"
+    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+        "openai"
+    )
+    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("url.full") == "https://api.openai.com/v1/"
+    assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+    assert attributes.get("llm.model") == "gpt-4-0613"
+    assert attributes.get("llm.prompts") == json.dumps(messages_value)
+    assert attributes.get("llm.stream") is False
 
+    tokens = json.loads(attributes.get("llm.token.counts"))
+    output_tokens = tokens.get("output_tokens")
+    prompt_tokens = tokens.get("input_tokens")
+    total_tokens = tokens.get("total_tokens")
 
-        kwargs = {
-            'model': llm_model_value,
-            'messages': messages_value,
-            'stream': False,
-        }
-
-
-        # Act
-        wrapped_function = chat_completions_create(self.openai_mock, version, self.tracer)
-        result = wrapped_function(MagicMock(), MagicMock(), (), kwargs)
-        
-
-        # Assert
-        self.assertTrue(self.tracer.start_as_current_span.called_once_with("openai.chat.completions.create", kind=SpanKind.CLIENT))
-
-        expected_attributes = {
-            'langtrace.sdk.name': 'langtrace-python-sdk',
-            "langtrace.service.name": "OpenAI",
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
-            "url.full": "chat/completions/create",
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.model": kwargs.get('model'),
-            "llm.prompts": json.dumps(kwargs.get('messages', [])),
-            "llm.stream": kwargs.get('stream'),
-        }
-        self.assertTrue(
-            self.span.set_attribute.has_calls(
-                [call(key, value) for key, value in expected_attributes.items()], any_order=True
-            )
-        )
-
-        self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
-
-        expected_result_data = {"model": "gpt-4-0613"}   
-
-        self.assertEqual(result.model, expected_result_data["model"])
+    assert output_tokens and prompt_tokens and total_tokens
+    assert output_tokens + prompt_tokens == total_tokens
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.vcr()
+def test_chat_completion_streaming(exporter, openai_client):
+    llm_model_value = "gpt-4"
+    messages_value = [{"role": "user", "content": "Say this is a test three times"}]
+
+    kwargs = {
+        "model": llm_model_value,
+        "messages": messages_value,
+        "stream": True,
+    }
+
+    response = openai_client.chat.completions.create(**kwargs)
+    chunk_count = 0
+    for _ in response:
+        chunk_count += 1
+
+    spans = exporter.get_finished_spans()
+    streaming_span = spans[-1]
+
+    assert streaming_span.name == "openai.chat.completions.create"
+    attributes = streaming_span.attributes
+
+    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
+    assert attributes.get("langtrace.service.name") == "OpenAI"
+    assert attributes.get("langtrace.service.type") == "llm"
+    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+        "openai"
+    )
+    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("url.full") == "https://api.openai.com/v1/"
+    assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+    assert attributes.get("llm.model") == "gpt-4-0613"
+    assert attributes.get("llm.prompts") == json.dumps(messages_value)
+    assert attributes.get("llm.stream") is True
+
+    events = streaming_span.events
+    assert len(events) - 2 == chunk_count  # -2 for start and end events
+
+    # check token usage attributes for stream
+    tokens = json.loads(attributes.get("llm.token.counts"))
+
+    output_tokens = tokens.get("output_tokens")
+    prompt_tokens = tokens.get("input_tokens")
+    total_tokens = tokens.get("total_tokens")
+
+    assert output_tokens and prompt_tokens and total_tokens
+    assert output_tokens + prompt_tokens == total_tokens
+
+
+@pytest.mark.vcr()
+@pytest.mark.asyncio()
+async def test_async_chat_completion_streaming(exporter, async_openai_client):
+    llm_model_value = "gpt-4"
+    messages_value = [{"role": "user", "content": "Say this is a test three times"}]
+
+    kwargs = {
+        "model": llm_model_value,
+        "messages": messages_value,
+        "stream": True,
+    }
+
+    response = await async_openai_client.chat.completions.create(**kwargs)
+    chunk_count = 0
+    async for _ in response:
+        chunk_count += 1
+
+    spans = exporter.get_finished_spans()
+    streaming_span = spans[-1]
+
+    assert streaming_span.name == "openai.chat.completions.create"
+    attributes = streaming_span.attributes
+
+    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
+    assert attributes.get("langtrace.service.name") == "OpenAI"
+    assert attributes.get("langtrace.service.type") == "llm"
+    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+        "openai"
+    )
+    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("url.full") == "https://api.openai.com/v1/"
+    assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+    assert attributes.get("llm.model") == "gpt-4-0613"
+    assert attributes.get("llm.prompts") == json.dumps(messages_value)
+    assert attributes.get("llm.stream") is True
+
+    events = streaming_span.events
+    assert len(events) - 2 == chunk_count  # -2 for start and end events
+
+    # check token usage attributes for stream
+    tokens = json.loads(attributes.get("llm.token.counts"))
+
+    output_tokens = tokens.get("output_tokens")
+    prompt_tokens = tokens.get("input_tokens")
+    total_tokens = tokens.get("total_tokens")
+
+    assert output_tokens and prompt_tokens and total_tokens
+    assert output_tokens + prompt_tokens == total_tokens
