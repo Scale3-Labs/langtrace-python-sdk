@@ -14,6 +14,10 @@ jobs:
     outputs:
       new_version: ${{ steps.version.outputs.version }}
     steps:
+      - name: Github Checkout
+        # v4.1.1
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
