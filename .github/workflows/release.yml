@@ -1,5 +1,5 @@
 name: Build & Release
-run-name: "Releasing: ${{ inputs.release_version }}"
+run-name: "Releasing"
 
 on:
   pull_request:
@@ -14,25 +14,19 @@ jobs:
     outputs:
       new_version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Check labels and set version increment
-        id: set_increment
-        run: |
-          labels=$(echo "${{ toJson(github.event.pull_request.labels.*.name) }}")
-          if [[ $labels == *"major"* ]]; then
-            echo "increment=major" >> $GITHUB_ENV
-          elif [[ $labels == *"minor"* ]]; then
-            echo "increment=minor" >> $GITHUB_ENV
-          else
-            echo "increment=patch" >> $GITHUB_ENV
-          fi
-      - name: Get next version
-        # 2023.10.2
-        uses: reecetech/version-increment@71036b212bbdc100b48aae069870f10953433346
-        id: version
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          use_api: true
-          scheme: semver
-          increment: ${{ steps.set_increment.outputs.increment }}
+            python-version: '3.x'
+
+      - name: Install hatch
+        run: | 
+          pip install hatch
+      
+      - name: Get Version
+        id: version
+        run: | 
+          hatch version >> $GITHUB_ENV"
           
   publish:
     runs-on: ubuntu-latest
