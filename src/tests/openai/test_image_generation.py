@@ -34,7 +34,11 @@ def test_image_generation(openai_client, exporter):
     assert prompts[0]["content"] == prompt
 
     langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response
         assert response.data[0].url == langtrace_response["content"]["url"]
         assert (
             response.data[0].revised_prompt
@@ -73,7 +77,11 @@ async def test_async_image_generation(async_openai_client, exporter):
     assert prompts[0]["content"] == prompt
 
     langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response
         assert response.data[0].url == langtrace_response["content"]["url"]
         assert (
             response.data[0].revised_prompt
