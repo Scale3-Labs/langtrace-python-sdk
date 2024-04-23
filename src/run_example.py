@@ -3,9 +3,9 @@
 
 # from examples.openai.chat_completion import chat_completion
 # from examples.openai.images_generate import images_generate
-from examples.openai.embeddings_create import embeddings_create
+# from examples.openai.embeddings_create import embeddings_create
+from examples.openai.function_calling import function_calling
 
-# from examples.openai.function_calling import function_calling
 # from examples.openai.tool_calling_nonstreaming import run_conversation
 # from examples.openai.async_tool_calling_nonstreaming import run_conversation
 
@@ -29,11 +29,11 @@ from examples.openai.embeddings_create import embeddings_create
 
 # chat_completion()
 # images_generate()
-embeddings_create()
+# embeddings_create()
+function_calling()
 # load_and_split()
 # rag()
 # basic()
-# function_calling()
 # embeddings_create()
 # messages_create()
 # chat_comp()
