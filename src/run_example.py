@@ -4,18 +4,15 @@
 # from examples.openai.chat_completion import chat_completion
 # from examples.openai.images_generate import images_generate
 # from examples.openai.embeddings_create import embeddings_create
-from examples.openai.function_calling import function_calling
-
+# from examples.openai.function_calling import function_calling
 # from examples.openai.tool_calling_nonstreaming import run_conversation
 # from examples.openai.async_tool_calling_nonstreaming import run_conversation
+# from examples.openai.tool_calling_streaming import run_conversation
+# from examples.openai.async_tool_calling_streaming import run_conversation
 
 # for async functions, use asyncio.run()
 # import asyncio
 
-# from examples.openai.chat_completion import chat_completion
-
-# from examples.openai.tool_calling_streaming import run_conversation
-# from examples.openai.async_tool_calling_streaming import run_conversation
 # from examples.anthropic_example.completion import messages_create
 # from examples.pinecone_example.basic import basic
 # from examples.chroma_example.basic import basic
@@ -30,14 +27,13 @@ from examples.openai.function_calling import function_calling
 # chat_completion()
 # images_generate()
 # embeddings_create()
-function_calling()
+# function_calling()
+# run_conversation()
+# asyncio.run(run_conversation())
 # load_and_split()
 # rag()
 # basic()
-# embeddings_create()
 # messages_create()
 # chat_comp()
 # embed_create()
 # chat_stream()
-# asyncio.run(run_conversation())
-# run_conversation()
