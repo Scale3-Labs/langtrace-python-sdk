@@ -1,6 +1,5 @@
-# from examples.langchain_example.basic import basic, load_and_split, rag
 
-
+# OpenAI
 # from examples.openai.chat_completion import chat_completion
 # from examples.openai.images_generate import images_generate
 # from examples.openai.embeddings_create import embeddings_create
@@ -9,11 +8,13 @@
 # from examples.openai.async_tool_calling_nonstreaming import run_conversation
 # from examples.openai.tool_calling_streaming import run_conversation
 # from examples.openai.async_tool_calling_streaming import run_conversation
-
 # for async functions, use asyncio.run()
 # import asyncio
 
-# from examples.anthropic_example.completion import messages_create
+# Anthropic
+from examples.anthropic_example.completion import messages_create
+
+# from examples.langchain_example.basic import basic, load_and_split, rag
 # from examples.pinecone_example.basic import basic
 # from examples.chroma_example.basic import basic
 # from examples.llamaindex_example.basic import basic
@@ -24,16 +25,20 @@
 # from examples.cohere_example.chat_stream import chat_stream
 # from examples.perplexity_example.basic import basic
 
+# OpenAI
 # chat_completion()
 # images_generate()
 # embeddings_create()
 # function_calling()
 # run_conversation()
 # asyncio.run(run_conversation())
+
+# Anthropic
+messages_create()
+
 # load_and_split()
 # rag()
 # basic()
-# messages_create()
 # chat_comp()
 # embed_create()
 # chat_stream()

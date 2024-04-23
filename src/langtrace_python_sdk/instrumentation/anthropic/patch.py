@@ -83,12 +83,14 @@ def messages_create(original_method, version, tracer):
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False:
                 if hasattr(result, "content") and result.content is not None:
+                    span.set_attribute("llm.model", result.model if result.model else kwargs.get("model"))
                     span.set_attribute(
                         "llm.responses",
                         json.dumps(
                             [
                                 {
-                                    "text": result.content[0].text,
+                                    "role": result.role if result.role else "assistant",
+                                    "content": result.content[0].text,
                                     "type": result.content[0].type,
                                 }
                             ]
@@ -136,6 +138,8 @@ def messages_create(original_method, version, tracer):
         output_tokens = 0
         try:
             for chunk in result:
+                if hasattr(chunk, "message") and chunk.message is not None and hasattr(chunk.message, "model") and chunk.message.model is not None:
+                    span.set_attribute("llm.model", chunk.message.model)
                 content = ""
                 if hasattr(chunk, "delta") and chunk.delta is not None:
                     content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
@@ -178,7 +182,8 @@ def messages_create(original_method, version, tracer):
                 ),
             )
             span.set_attribute(
-                "llm.responses", json.dumps([{"text": "".join(result_content)}])
+                "llm.responses",
+                json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
             )
             span.set_status(StatusCode.OK)
             span.end()
