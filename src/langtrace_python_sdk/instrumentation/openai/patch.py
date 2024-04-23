@@ -687,7 +687,7 @@ def embeddings_create(original_method, version, tracer):
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
-            "llm.prompts": "",
+            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("input", "")}]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -750,7 +750,7 @@ def async_embeddings_create(original_method, version, tracer):
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
-            "llm.prompts": "",
+            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("input", "")}]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 

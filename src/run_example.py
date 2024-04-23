@@ -2,8 +2,8 @@
 
 
 # from examples.openai.chat_completion import chat_completion
-
-from examples.openai.images_generate import images_generate
+# from examples.openai.images_generate import images_generate
+from examples.openai.embeddings_create import embeddings_create
 
 # from examples.openai.function_calling import function_calling
 # from examples.openai.tool_calling_nonstreaming import run_conversation
@@ -28,7 +28,8 @@ from examples.openai.images_generate import images_generate
 # from examples.perplexity_example.basic import basic
 
 # chat_completion()
-images_generate()
+# images_generate()
+embeddings_create()
 # load_and_split()
 # rag()
 # basic()
