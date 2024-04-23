@@ -42,6 +42,13 @@ def test_chat_completion(exporter, openai_client):
     assert output_tokens and prompt_tokens and total_tokens
     assert output_tokens + prompt_tokens == total_tokens
 
+    langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
+    for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response
+
 
 @pytest.mark.vcr()
 def test_chat_completion_streaming(exporter, openai_client):
@@ -90,6 +97,13 @@ def test_chat_completion_streaming(exporter, openai_client):
 
     assert output_tokens and prompt_tokens and total_tokens
     assert output_tokens + prompt_tokens == total_tokens
+
+    langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
+    for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response
 
 
 @pytest.mark.vcr()
@@ -140,3 +154,10 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
 
     assert output_tokens and prompt_tokens and total_tokens
     assert output_tokens + prompt_tokens == total_tokens
+
+    langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
+    for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response
