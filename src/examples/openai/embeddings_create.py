@@ -16,3 +16,4 @@ def embeddings_create():
         model="text-embedding-ada-002",
         input="Once upon a time, there was a pirate.",
     )
+    return result
