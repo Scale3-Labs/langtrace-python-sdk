@@ -130,14 +130,12 @@ def chat_create(original_method, version, tracer):
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        # if kwargs.get("preamble") is not None:
-        #     attributes.llm_preamble = kwargs.get("preamble")
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("max_tokens") is not None:
-            attributes.max_tokens = kwargs.get("max_tokens")
+            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
         if kwargs.get("max_input_tokens") is not None:
-            attributes.max_input_tokens = kwargs.get("max_input_tokens")
+            attributes.llm_max_input_tokens = str(kwargs.get("max_input_tokens"))
         if kwargs.get("p") is not None:
             attributes.llm_top_p = kwargs.get("p")
         if kwargs.get("k") is not None:
@@ -320,9 +318,9 @@ def chat_stream(original_method, version, tracer):
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("max_tokens") is not None:
-            attributes.max_tokens = kwargs.get("max_tokens")
+            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
         if kwargs.get("max_input_tokens") is not None:
-            attributes.max_input_tokens = kwargs.get("max_input_tokens")
+            attributes.llm_max_input_tokens = str(kwargs.get("max_input_tokens"))
         if kwargs.get("p") is not None:
             attributes.llm_top_p = kwargs.get("p")
         if kwargs.get("k") is not None:
@@ -354,47 +352,94 @@ def chat_stream(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-
-            result_content = []
             span.add_event(Event.STREAM_START.value)
-            completion_tokens = 0
             try:
                 for event in result:
                     if hasattr(event, "text") and event.text is not None:
-                        completion_tokens += estimate_tokens(event.text)
                         content = event.text
                     else:
                         content = ""
                     span.add_event(
                         Event.STREAM_OUTPUT.value, {"response": "".join(content)}
                     )
-                    result_content.append(content)
+
+                    if hasattr(event, "finish_reason") and event.finish_reason == "COMPLETE":
+                        response = event.response
+
+                        if (hasattr(response, "generation_id")) and (
+                            response.generation_id is not None
+                        ):
+                            span.set_attribute("llm.generation_id", response.generation_id)
+                        if (hasattr(response, "response_id")) and (response.response_id is not None):
+                            span.set_attribute("llm.response_id", response.response_id)
+                        if (hasattr(response, "is_search_required")) and (
+                            response.is_search_required is not None
+                        ):
+                            span.set_attribute("llm.is_search_required", response.is_search_required)
+
+                        # Set the response attributes
+                        if hasattr(response, "text") and response.text is not None:
+                            if (
+                                hasattr(response, "chat_history")
+                                and response.chat_history is not None
+                            ):
+                                responses = [
+                                    {
+                                        "role": (
+                                            item.role
+                                            if hasattr(item, "role")
+                                            and item.role is not None
+                                            else "USER"
+                                        ),
+                                        "content": (
+                                            item.message
+                                            if hasattr(item, "message")
+                                            and item.message is not None
+                                            else ""
+                                        ),
+                                    }
+                                    for item in response.chat_history
+                                ]
+                                span.set_attribute("llm.responses", json.dumps(responses))
+                            else:
+                                responses = [
+                                    {"role": "CHATBOT", "content": response.text}
+                                ]
+                                span.set_attribute("llm.responses", json.dumps(responses))
+
+                        # Get the usage
+                        if hasattr(response, "meta") and response.meta is not None:
+                            if (
+                                hasattr(response.meta, "billed_units")
+                                and response.meta.billed_units is not None
+                            ):
+                                usage = response.meta.billed_units
+                                if usage is not None:
+                                    usage_dict = {
+                                        "input_tokens": (
+                                            usage.input_tokens
+                                            if usage.input_tokens is not None
+                                            else 0
+                                        ),
+                                        "output_tokens": (
+                                            usage.output_tokens
+                                            if usage.output_tokens is not None
+                                            else 0
+                                        ),
+                                        "total_tokens": (
+                                            usage.input_tokens + usage.output_tokens
+                                            if usage.input_tokens is not None
+                                            and usage.output_tokens is not None
+                                            else 0
+                                        ),
+                                    }
+                                    span.set_attribute(
+                                        "llm.token.counts", json.dumps(usage_dict)
+                                    )
+
                     yield event
             finally:
-
-                # Finalize span after processing all chunks
                 span.add_event(Event.STREAM_END.value)
-                span.set_attribute(
-                    "llm.token.counts",
-                    json.dumps(
-                        {
-                            "input_tokens": prompt_tokens,
-                            "output_tokens": completion_tokens,
-                            "total_tokens": prompt_tokens + completion_tokens,
-                        }
-                    ),
-                )
-                span.set_attribute(
-                    "llm.responses",
-                    json.dumps(
-                        [
-                            {
-                                "role": "CHATBOT",
-                                "content": "".join(result_content),
-                            }
-                        ]
-                    ),
-                )
                 span.set_status(StatusCode.OK)
                 span.end()
 

@@ -1,6 +1,7 @@
 
 # Cohere
-from examples.cohere_example.chat import chat_comp
+# from examples.cohere_example.chat import chat_comp
+from examples.cohere_example.chat_stream import chat_stream
 
 # OpenAI
 
@@ -43,8 +44,8 @@ from examples.cohere_example.chat import chat_comp
 # messages_create()
 
 # Cohere
-chat_comp()
-# chat_stream()
+# chat_comp()
+chat_stream()
 # embed_create()
 
 # load_and_split()
