@@ -11,7 +11,7 @@ langtrace.init(write_to_langtrace_cloud=False)
 client = OpenAI()
 
 
-@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
+# @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api():
     response = client.chat.completions.create(
         model="gpt-4",
@@ -22,7 +22,7 @@ def api():
     return response
 
 
-@with_langtrace_root_span()
+# @with_langtrace_root_span()
 def chat_completion():
     response = api()
     # print(response)

@@ -1,21 +1,24 @@
 
+# Cohere
+# from examples.cohere_example.chat import chat_comp
+
 # OpenAI
-# from examples.openai.chat_completion import chat_completion
-# from examples.openai.images_generate import images_generate
-# from examples.openai.embeddings_create import embeddings_create
-# from examples.openai.function_calling import function_calling
-# from examples.openai.tool_calling_nonstreaming import run_conversation
-# from examples.openai.async_tool_calling_nonstreaming import run_conversation
-# from examples.openai.tool_calling_streaming import run_conversation
+
+# from examples.openai_example.tool_calling import tool_calling
+# from examples.openai_example.chat_completion import chat_completion
+# from examples.openai_example.images_generate import images_generate
+# from examples.openai_example.embeddings_create import embeddings_create
+# from examples.openai_example.function_calling import function_calling
+# from examples.openai_example.tool_calling_nonstreaming import run_conversation
+# from examples.openai_example.async_tool_calling_nonstreaming import run_conversation
+# from examples.openai_example.tool_calling_streaming import run_conversation
 # from examples.openai.async_tool_calling_streaming import run_conversation
+
 # for async functions, use asyncio.run()
 # import asyncio
 
 # Anthropic
-# from examples.anthropic_example.completion import messages_create
-
-# Cohere
-from examples.cohere_example.chat import chat_comp
+from examples.anthropic_example.completion import messages_create
 
 # from examples.cohere_example.chat_stream import chat_stream
 # from examples.cohere_example.embed_create import embed_create
@@ -29,6 +32,7 @@ from examples.cohere_example.chat import chat_comp
 # from examples.perplexity_example.basic import basic
 
 # OpenAI
+# tool_calling()
 # chat_completion()
 # images_generate()
 # embeddings_create()
@@ -37,10 +41,10 @@ from examples.cohere_example.chat import chat_comp
 # asyncio.run(run_conversation())
 
 # Anthropic
-# messages_create()
+messages_create()
 
 # Cohere
-chat_comp()
+# chat_comp()
 # chat_stream()
 # embed_create()
 

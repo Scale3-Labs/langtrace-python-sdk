@@ -45,19 +45,19 @@ def function_calling():
         functions=student_custom_functions,
         stream=True,
     )
-    return response
+    # return response
 
-    # result = []
-    # for chunk in response:
-    #     if chunk.choices[0].delta.function_call is not None:
-    #         content = [
-    #             choice.delta.function_call.arguments if choice.delta.function_call and
-    #             choice.delta.function_call.arguments else ""
-    #             for choice in chunk.choices]
-    #         result.append(
-    #             content[0] if len(content) > 0 else "")
+    result = []
+    for chunk in response:
+        if chunk.choices[0].delta.function_call is not None:
+            content = [
+                choice.delta.function_call.arguments if choice.delta.function_call and
+                choice.delta.function_call.arguments else ""
+                for choice in chunk.choices]
+            result.append(
+                content[0] if len(content) > 0 else "")
 
-    # print("".join(result))
+    print("".join(result))
 
     # Loading the response as a JSON object
     # json_response = json.loads(response.choices[0].message.function_call.arguments)

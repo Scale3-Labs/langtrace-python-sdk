@@ -71,6 +71,8 @@ def messages_create(original_method, version, tracer):
             attributes.llm_top_p = kwargs.get("top_k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
+        if kwargs.get("max_tokens") is not None:
+            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
 
         span = tracer.start_span(
             APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT

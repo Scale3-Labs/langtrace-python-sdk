@@ -248,7 +248,8 @@ def chat_completions_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
-            tools.append(json.dumps(kwargs.get("functions")))
+            for function in kwargs.get("functions"):
+                tools.append(json.dumps({"type": "function", "function": function}))
         if kwargs.get("tools") is not None:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
@@ -500,7 +501,8 @@ def async_chat_completions_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
-            tools.append(json.dumps(kwargs.get("functions")))
+            for function in kwargs.get("functions"):
+                tools.append(json.dumps({"type": "function", "function": function}))
         if kwargs.get("tools") is not None:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
@@ -707,9 +709,13 @@ def embeddings_create(original_method, version, tracer):
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
-            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("input", "")}]),
+            "llm.prompts": "",
+            "llm.embedding_inputs": json.dumps([kwargs.get("input", "")]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
+
+        if kwargs.get("encoding_format") is not None:
+            span_attributes["llm.encoding_format"] = json.dumps([kwargs.get("encoding_format")])
 
         attributes = LLMSpanAttributes(**span_attributes)
         kwargs.get("encoding_format")
