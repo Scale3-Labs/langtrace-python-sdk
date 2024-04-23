@@ -26,8 +26,8 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
-def embed_create(original_method, version, tracer):
-    """Wrap the `embed_create` method."""
+def rerank(original_method, version, tracer):
+    """Wrap the `rerank` method."""
 
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["COHERE"]
@@ -39,8 +39,102 @@ def embed_create(original_method, version, tracer):
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
-            "url.full": APIS["EMBED_CREATE"]["URL"],
-            "llm.api": APIS["EMBED_CREATE"]["ENDPOINT"],
+            "url.full": APIS["RERANK"]["URL"],
+            "llm.api": APIS["RERANK"]["ENDPOINT"],
+            "llm.model": kwargs.get("model"),
+            "llm.prompts": "",
+            "llm.documents": json.dumps(kwargs.get("documents")),
+            "llm.retrieval.query": kwargs.get("query"),
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+
+        if kwargs.get("top_n") is not None:
+            attributes.llm_top_k = kwargs.get("top_n")
+
+        if kwargs.get("user") is not None:
+            attributes.llm_user = kwargs.get("user")
+
+        span = tracer.start_span(APIS["RERANK"]["METHOD"], kind=SpanKind.CLIENT)
+        for field, value in attributes.model_dump(by_alias=True).items():
+            if value is not None:
+                span.set_attribute(field, value)
+        try:
+            # Attempt to call the original method
+            result = wrapped(*args, **kwargs)
+
+            if hasattr(result, "results") and result.results is not None:
+                results = []
+                for _, doc in enumerate(result.results):
+                    results.append(doc.json())
+                span.set_attribute("llm.retrieval.results", json.dumps(results))
+
+            if (hasattr(result, "response_id")) and (result.response_id is not None):
+                span.set_attribute("llm.response_id", result.response_id)
+
+            if hasattr(result, "meta") and result.meta is not None:
+                if (
+                    hasattr(result.meta, "billed_units")
+                    and result.meta.billed_units is not None
+                ):
+                    usage = result.meta.billed_units
+                    if usage is not None:
+                        usage_dict = {
+                            "input_tokens": (
+                                usage.input_tokens
+                                if usage.input_tokens is not None
+                                else 0
+                            ),
+                            "output_tokens": (
+                                usage.output_tokens
+                                if usage.output_tokens is not None
+                                else 0
+                            ),
+                            "total_tokens": (
+                                usage.input_tokens + usage.output_tokens
+                                if usage.input_tokens is not None
+                                and usage.output_tokens is not None
+                                else 0
+                            ),
+                            "search_units": (
+                                usage.search_units
+                                if usage.search_units is not None
+                                else 0
+                            ),
+                        }
+                        span.set_attribute(
+                            "llm.token.counts", json.dumps(usage_dict)
+                        )
+
+            span.set_status(StatusCode.OK)
+            span.end()
+            return result
+
+        except Exception as error:
+            span.record_exception(error)
+            span.set_status(Status(StatusCode.ERROR, str(error)))
+            span.end()
+            raise
+
+    return traced_method
+
+
+def embed(original_method, version, tracer):
+    """Wrap the `embed` method."""
+
+    def traced_method(wrapped, instance, args, kwargs):
+        service_provider = SERVICE_PROVIDERS["COHERE"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "url.full": APIS["EMBED"]["URL"],
+            "llm.api": APIS["EMBED"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
             "llm.embedding_inputs": json.dumps(kwargs.get("texts")),
@@ -55,7 +149,7 @@ def embed_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
 
-        span = tracer.start_span(APIS["EMBED_CREATE"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(APIS["EMBED"]["METHOD"], kind=SpanKind.CLIENT)
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
                 span.set_attribute(field, value)
@@ -85,6 +179,11 @@ def embed_create(original_method, version, tracer):
                                 usage.input_tokens + usage.output_tokens
                                 if usage.input_tokens is not None
                                 and usage.output_tokens is not None
+                                else 0
+                            ),
+                            "search_units": (
+                                usage.search_units
+                                if usage.search_units is not None
                                 else 0
                             ),
                         }
@@ -169,7 +268,7 @@ def chat_create(original_method, version, tracer):
         if kwargs.get("p") is not None:
             attributes.llm_top_p = kwargs.get("p")
         if kwargs.get("k") is not None:
-            attributes.llm_top_p = kwargs.get("k")
+            attributes.llm_top_k = kwargs.get("k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("conversation_id") is not None:
@@ -276,6 +375,11 @@ def chat_create(original_method, version, tracer):
                                     and usage.output_tokens is not None
                                     else 0
                                 ),
+                                "search_units": (
+                                    usage.search_units
+                                    if usage.search_units is not None
+                                    else 0
+                                ),
                             }
                             span.set_attribute(
                                 "llm.token.counts", json.dumps(usage_dict)
@@ -360,7 +464,7 @@ def chat_stream(original_method, version, tracer):
         if kwargs.get("p") is not None:
             attributes.llm_top_p = kwargs.get("p")
         if kwargs.get("k") is not None:
-            attributes.llm_top_p = kwargs.get("k")
+            attributes.llm_top_k = kwargs.get("k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("conversation_id") is not None:
@@ -466,6 +570,11 @@ def chat_stream(original_method, version, tracer):
                                             usage.input_tokens + usage.output_tokens
                                             if usage.input_tokens is not None
                                             and usage.output_tokens is not None
+                                            else 0
+                                        ),
+                                        "search_units": (
+                                            usage.search_units
+                                            if usage.search_units is not None
                                             else 0
                                         ),
                                     }

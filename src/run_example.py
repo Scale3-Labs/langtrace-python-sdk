@@ -3,7 +3,8 @@
 # from examples.cohere_example.chat import chat_comp
 # from examples.cohere_example.chat_stream import chat_stream
 # from examples.cohere_example.tools import tool_calling
-from examples.cohere_example.embed import embed
+# from examples.cohere_example.embed import embed
+from examples.cohere_example.rerank import rerank
 
 # OpenAI
 
@@ -47,7 +48,8 @@ from examples.cohere_example.embed import embed
 # chat_comp()
 # chat_stream()
 # tool_calling()
-embed()
+# embed()
+rerank()
 
 # load_and_split()
 # rag()

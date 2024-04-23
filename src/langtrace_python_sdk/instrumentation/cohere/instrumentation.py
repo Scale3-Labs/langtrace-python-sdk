@@ -23,7 +23,7 @@ from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.cohere.patch import (chat_create,
                                                                chat_stream,
-                                                               embed_create)
+                                                               embed, rerank)
 
 
 class CohereInstrumentation(BaseInstrumentor):
@@ -54,7 +54,13 @@ class CohereInstrumentation(BaseInstrumentor):
         wrap_function_wrapper(
             "cohere.client",
             "Client.embed",
-            embed_create("cohere.client.embed", version, tracer),
+            embed("cohere.client.embed", version, tracer),
+        )
+
+        wrap_function_wrapper(
+            "cohere.client",
+            "Client.rerank",
+            rerank("cohere.client.rerank", version, tracer),
         )
 
     def _instrument_module(self, module_name):
