@@ -24,7 +24,6 @@ from opentelemetry.trace.status import Status, StatusCode
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
-from langtrace_python_sdk.utils.llm import estimate_tokens
 
 
 def embed_create(original_method, version, tracer):
@@ -44,6 +43,7 @@ def embed_create(original_method, version, tracer):
             "llm.api": APIS["EMBED_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
+            "llm.embedding_inputs": json.dumps(kwargs.get("texts")),
             "llm.embedding_dataset_id": kwargs.get("dataset_id"),
             "llm.embedding_input_type": kwargs.get("input_type"),
             "llm.embedding_job_name": kwargs.get("name"),
@@ -62,6 +62,36 @@ def embed_create(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
+
+            if hasattr(result, "meta") and result.meta is not None:
+                if (
+                    hasattr(result.meta, "billed_units")
+                    and result.meta.billed_units is not None
+                ):
+                    usage = result.meta.billed_units
+                    if usage is not None:
+                        usage_dict = {
+                            "input_tokens": (
+                                usage.input_tokens
+                                if usage.input_tokens is not None
+                                else 0
+                            ),
+                            "output_tokens": (
+                                usage.output_tokens
+                                if usage.output_tokens is not None
+                                else 0
+                            ),
+                            "total_tokens": (
+                                usage.input_tokens + usage.output_tokens
+                                if usage.input_tokens is not None
+                                and usage.output_tokens is not None
+                                else 0
+                            ),
+                        }
+                        span.set_attribute(
+                            "llm.token.counts", json.dumps(usage_dict)
+                        )
+
             span.set_status(StatusCode.OK)
             span.end()
             return result

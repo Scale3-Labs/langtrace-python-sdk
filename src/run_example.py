@@ -2,7 +2,8 @@
 # Cohere
 # from examples.cohere_example.chat import chat_comp
 # from examples.cohere_example.chat_stream import chat_stream
-from examples.cohere_example.tools import tool_calling
+# from examples.cohere_example.tools import tool_calling
+from examples.cohere_example.embed import embed
 
 # OpenAI
 
@@ -22,8 +23,6 @@ from examples.cohere_example.tools import tool_calling
 # from examples.anthropic_example.completion import messages_create
 
 # Rest
-# from examples.cohere_example.chat_stream import chat_stream
-# from examples.cohere_example.embed_create import embed_create
 # from examples.langchain_example.basic import basic, load_and_split, rag
 # from examples.pinecone_example.basic import basic
 # from examples.chroma_example.basic import basic
@@ -47,8 +46,8 @@ from examples.cohere_example.tools import tool_calling
 # Cohere
 # chat_comp()
 # chat_stream()
-tool_calling()
-# embed_create()
+# tool_calling()
+embed()
 
 # load_and_split()
 # rag()
