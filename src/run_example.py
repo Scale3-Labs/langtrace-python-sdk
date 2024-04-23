@@ -1,6 +1,6 @@
 
 # Cohere
-# from examples.cohere_example.chat import chat_comp
+from examples.cohere_example.chat import chat_comp
 
 # OpenAI
 
@@ -13,16 +13,15 @@
 # from examples.openai_example.async_tool_calling_nonstreaming import run_conversation
 # from examples.openai_example.tool_calling_streaming import run_conversation
 # from examples.openai.async_tool_calling_streaming import run_conversation
-
 # for async functions, use asyncio.run()
 # import asyncio
 
 # Anthropic
-from examples.anthropic_example.completion import messages_create
+# from examples.anthropic_example.completion import messages_create
 
+# Rest
 # from examples.cohere_example.chat_stream import chat_stream
 # from examples.cohere_example.embed_create import embed_create
-
 # from examples.langchain_example.basic import basic, load_and_split, rag
 # from examples.pinecone_example.basic import basic
 # from examples.chroma_example.basic import basic
@@ -41,10 +40,10 @@ from examples.anthropic_example.completion import messages_create
 # asyncio.run(run_conversation())
 
 # Anthropic
-messages_create()
+# messages_create()
 
 # Cohere
-# chat_comp()
+chat_comp()
 # chat_stream()
 # embed_create()
 

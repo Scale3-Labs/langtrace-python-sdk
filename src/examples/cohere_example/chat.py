@@ -19,9 +19,9 @@ def chat_comp():
             {"role": "USER", "message": "Who discovered gravity?"},
             {"role": "CHATBOT", "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton"}
         ],
-        message="What is today's news?",
-        # preamble="answer like yoda",
+        message="Tell me a story in 3 sentences or less?",
+        preamble="answer like a pirate",
         # perform web search before answering the question. You can also use your own custom connector.
-        # connectors=[{"id": "web-search"}]
+        connectors=[{"id": "web-search"}]
     )
     print(response)

@@ -82,32 +82,33 @@ def chat_create(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["COHERE"]
 
         message = kwargs.get("message", "")
-        prompts = json.dumps([{"role": "USER", "content": message}])
+        prompts = [{"role": "USER", "content": message}]
+        system_prompts = []
+        history = []
         preamble = kwargs.get("preamble")
         if preamble:
-            prompts = json.dumps(
-                [{"role": "system", "content": preamble}]
-                + [{"role": "USER", "content": message}]
-            )
+            system_prompts = [{"role": "system", "content": preamble}]
 
         chat_history = kwargs.get("chat_history")
         if chat_history:
             history = [
                 {
-                    "message": {
-                        "role": (
-                            item.get("role") if item.get("role") is not None else "USER"
-                        ),
-                        "content": (
-                            item.get("message")
-                            if item.get("message") is not None
-                            else ""
-                        ),
-                    }
+                    "role": (
+                        item.get("role") if item.get("role") is not None else "USER"
+                    ),
+                    "content": (
+                        item.get("message")
+                        if item.get("message") is not None
+                        else ""
+                    ),
                 }
                 for item in chat_history
             ]
-            prompts = prompts + json.dumps(history)
+        if len(history) > 0:
+            prompts = history + prompts
+        if len(system_prompts) > 0:
+            prompts = system_prompts + prompts
+        prompts = json.dumps(prompts)
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
@@ -129,6 +130,8 @@ def chat_create(original_method, version, tracer):
 
         attributes = LLMSpanAttributes(**span_attributes)
 
+        # if kwargs.get("preamble") is not None:
+        #     attributes.llm_preamble = kwargs.get("preamble")
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("max_tokens") is not None:
@@ -189,27 +192,25 @@ def chat_create(original_method, version, tracer):
                     ):
                         responses = [
                             {
-                                "message": {
-                                    "role": (
-                                        item.role
-                                        if hasattr(item, "role")
-                                        and item.role is not None
-                                        else "USER"
-                                    ),
-                                    "content": (
-                                        item.message
-                                        if hasattr(item, "message")
-                                        and item.message is not None
-                                        else ""
-                                    ),
-                                }
+                                "role": (
+                                    item.role
+                                    if hasattr(item, "role")
+                                    and item.role is not None
+                                    else "USER"
+                                ),
+                                "content": (
+                                    item.message
+                                    if hasattr(item, "message")
+                                    and item.message is not None
+                                    else ""
+                                ),
                             }
                             for item in result.chat_history
                         ]
                         span.set_attribute("llm.responses", json.dumps(responses))
                     else:
                         responses = [
-                            {"message": {"role": "CHATBOT", "content": result.text}}
+                            {"role": "CHATBOT", "content": result.text}
                         ]
                         span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -268,33 +269,33 @@ def chat_stream(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["COHERE"]
 
         message = kwargs.get("message", "")
-        prompt_tokens = estimate_tokens(message)
-        prompts = json.dumps([{"role": "USER", "content": message}])
+        prompts = [{"role": "USER", "content": message}]
+        system_prompts = []
+        history = []
         preamble = kwargs.get("preamble")
         if preamble:
-            prompts = json.dumps(
-                [{"role": "system", "content": preamble}]
-                + [{"role": "USER", "content": message}]
-            )
+            system_prompts = [{"role": "system", "content": preamble}]
 
         chat_history = kwargs.get("chat_history")
         if chat_history:
             history = [
                 {
-                    "message": {
-                        "role": (
-                            item.get("role") if item.get("role") is not None else "USER"
-                        ),
-                        "content": (
-                            item.get("message")
-                            if item.get("message") is not None
-                            else ""
-                        ),
-                    }
+                    "role": (
+                        item.get("role") if item.get("role") is not None else "USER"
+                    ),
+                    "content": (
+                        item.get("message")
+                        if item.get("message") is not None
+                        else ""
+                    ),
                 }
                 for item in chat_history
             ]
-            prompts = prompts + json.dumps(history)
+        if len(history) > 0:
+            prompts = history + prompts
+        if len(system_prompts) > 0:
+            prompts = system_prompts + prompts
+        prompts = json.dumps(prompts)
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
@@ -388,10 +389,8 @@ def chat_stream(original_method, version, tracer):
                     json.dumps(
                         [
                             {
-                                "message": {
-                                    "role": "CHATBOT",
-                                    "content": "".join(result_content),
-                                }
+                                "role": "CHATBOT",
+                                "content": "".join(result_content),
                             }
                         ]
                     ),
