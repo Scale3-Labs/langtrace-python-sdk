@@ -30,13 +30,15 @@ def test_image_generation(openai_client, exporter):
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["IMAGES_GENERATION"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
-    assert attributes.get("llm.prompts") == json.dumps([prompt])
+    prompts = json.loads(attributes.get("llm.prompts"))
+    assert prompts[0]["content"] == prompt
 
     langtrace_responses = json.loads(attributes.get("llm.responses"))
     for langtrace_response in langtrace_responses:
-        assert response.data[0].url == langtrace_response.get("url")
-        assert response.data[0].revised_prompt == langtrace_response.get(
-            "revised_prompt"
+        assert response.data[0].url == langtrace_response["content"]["url"]
+        assert (
+            response.data[0].revised_prompt
+            == langtrace_response["content"]["revised_prompt"]
         )
 
 
@@ -67,11 +69,13 @@ async def test_async_image_generation(async_openai_client, exporter):
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["IMAGES_GENERATION"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
-    assert attributes.get("llm.prompts") == json.dumps([prompt])
+    prompts = json.loads(attributes.get("llm.prompts"))
+    assert prompts[0]["content"] == prompt
 
     langtrace_responses = json.loads(attributes.get("llm.responses"))
     for langtrace_response in langtrace_responses:
-        assert response.data[0].url == langtrace_response.get("url")
-        assert response.data[0].revised_prompt == langtrace_response.get(
-            "revised_prompt"
+        assert response.data[0].url == langtrace_response["content"]["url"]
+        assert (
+            response.data[0].revised_prompt
+            == langtrace_response["content"]["revised_prompt"]
         )
