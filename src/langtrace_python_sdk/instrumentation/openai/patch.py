@@ -624,10 +624,20 @@ def async_chat_completions_create(original_method, version, tracer):
                                 completion_tokens += token_counts
                                 content = [choice.delta.function_call.arguments]
                     elif tool_calls:
-                        # TODO(Karthik): Tool calls streaming is tricky. The chunks after the
-                        # first one are missing the function name and id though the arguments
-                        # are spread across the chunks.
-                        content = []
+                        for choice in chunk.choices:
+                            tool_call = ""
+                            if (choice.delta and choice.delta.tool_calls is not None):
+                                toolcalls = choice.delta.tool_calls
+                                content = []
+                                for tool_call in toolcalls:
+                                    if tool_call and tool_call.function is not None and tool_call.function.arguments is not None:
+                                        token_counts = estimate_tokens(
+                                            tool_call.function.arguments
+                                        )
+                                        completion_tokens += token_counts
+                                        content = content + [tool_call.function.arguments]
+                                    else:
+                                        content = content + []
                 else:
                     content = []
                 span.add_event(
