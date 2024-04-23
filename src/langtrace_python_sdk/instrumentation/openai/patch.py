@@ -52,7 +52,7 @@ def images_generate(original_method, version, tracer):
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps([kwargs.get("prompt", [])]),
+            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("prompt", [])}]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -75,12 +75,15 @@ def images_generate(original_method, version, tracer):
                     )
                     response = [
                         {
-                            "url": data.url if hasattr(data, "url") else "",
-                            "revised_prompt": (
-                                data.revised_prompt
-                                if hasattr(data, "revised_prompt")
-                                else ""
-                            ),
+                            "role": "assistant",
+                            "content": {
+                                "url": data.url if hasattr(data, "url") else "",
+                                "revised_prompt": (
+                                    data.revised_prompt
+                                    if hasattr(data, "revised_prompt")
+                                    else ""
+                                ),
+                            }
                         }
                     ]
                     span.set_attribute("llm.responses", json.dumps(response))
@@ -124,7 +127,7 @@ def async_images_generate(original_method, version, tracer):
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps([kwargs.get("prompt", [])]),
+            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("prompt", [])}]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -148,12 +151,15 @@ def async_images_generate(original_method, version, tracer):
                     )
                     response = [
                         {
-                            "url": data.url if hasattr(data, "url") else "",
-                            "revised_prompt": (
-                                data.revised_prompt
-                                if hasattr(data, "revised_prompt")
-                                else ""
-                            ),
+                            "role": "assistant",
+                            "content": {
+                                "url": data.url if hasattr(data, "url") else "",
+                                "revised_prompt": (
+                                    data.revised_prompt
+                                    if hasattr(data, "revised_prompt")
+                                    else ""
+                                ),
+                            }
                         }
                     ]
                     span.set_attribute("llm.responses", json.dumps(response))

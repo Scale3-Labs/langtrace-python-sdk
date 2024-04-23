@@ -3,7 +3,8 @@
 
 # from examples.openai.chat_completion import chat_completion
 
-# from examples.openai import images_generate
+from examples.openai.images_generate import images_generate
+
 # from examples.openai.function_calling import function_calling
 # from examples.openai.tool_calling_nonstreaming import run_conversation
 # from examples.openai.async_tool_calling_nonstreaming import run_conversation
@@ -11,7 +12,7 @@
 # for async functions, use asyncio.run()
 # import asyncio
 
-from examples.openai.chat_completion import chat_completion
+# from examples.openai.chat_completion import chat_completion
 
 # from examples.openai.tool_calling_streaming import run_conversation
 # from examples.openai.async_tool_calling_streaming import run_conversation
@@ -26,12 +27,12 @@ from examples.openai.chat_completion import chat_completion
 # from examples.cohere_example.chat_stream import chat_stream
 # from examples.perplexity_example.basic import basic
 
-chat_completion()
+# chat_completion()
+images_generate()
 # load_and_split()
 # rag()
 # basic()
 # function_calling()
-# images_generate()
 # embeddings_create()
 # messages_create()
 # chat_comp()
