@@ -1,7 +1,8 @@
-from dotenv import find_dotenv, load_dotenv
 import cohere
+from dotenv import find_dotenv, load_dotenv
 
 from langtrace_python_sdk import langtrace
+
 # from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
