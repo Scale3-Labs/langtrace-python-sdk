@@ -183,7 +183,7 @@ def chat_create(original_method, version, tracer):
                 span.set_attribute("llm.is_search_required", result.is_search_required)
 
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                if hasattr(result, "text") and result.text is not None:
+                if hasattr(result, "text") and result.text is not None and result.text != "":
                     if (
                         hasattr(result, "chat_history")
                         and result.chat_history is not None
@@ -211,6 +211,12 @@ def chat_create(original_method, version, tracer):
                             {"role": "CHATBOT", "content": result.text}
                         ]
                         span.set_attribute("llm.responses", json.dumps(responses))
+                elif hasattr(result, "tool_calls") and result.tool_calls is not None:
+                    tool_calls = []
+                    for tool_call in result.tool_calls:
+                        tool_calls.append(tool_call.json())
+                    span.set_attribute("llm.tool_calls", json.dumps(tool_calls))
+                    span.set_attribute("llm.responses", json.dumps([]))
                 else:
                     responses = []
                     span.set_attribute("llm.responses", json.dumps(responses))
