@@ -14,18 +14,21 @@ client = OpenAI()
 
 student_custom_functions = [
     {
-        "name": "extract_student_info",
-        "description": "Get the student information from the body of the input text",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "description": "Name of the person"},
-                "major": {"type": "string", "description": "Major subject."},
-                "school": {"type": "string", "description": "The university name."},
-                "grades": {"type": "integer", "description": "GPA of the student."},
-                "club": {
-                    "type": "string",
-                    "description": "School club for extracurricular activities. ",
+        "type": "function",
+        "function": {
+            "name": "extract_student_info",
+            "description": "Get the student information from the body of the input text",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Name of the person"},
+                    "major": {"type": "string", "description": "Major subject."},
+                    "school": {"type": "string", "description": "The university name."},
+                    "grades": {"type": "integer", "description": "GPA of the student."},
+                    "club": {
+                        "type": "string",
+                        "description": "School club for extracurricular activities. ",
+                    },
                 },
             },
         },
@@ -33,7 +36,7 @@ student_custom_functions = [
 ]
 
 
-def function_calling():
+def tool_calling():
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
@@ -42,8 +45,8 @@ def function_calling():
                 "content": "John is a grad student in computer science at Stanford University. He is an American and has a 3.8 GPA. John is known for his programming skills and is an active member of the university's Robotics Club. He hopes to pursue a career in artificial intelligence after graduating.",
             }
         ],
-        functions=student_custom_functions,
-        stream=True,
+        tools=student_custom_functions,
+        stream=False,
     )
     return response
 
