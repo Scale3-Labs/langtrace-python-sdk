@@ -3,10 +3,6 @@
 import pytest
 import os
 from openai import OpenAI, AsyncOpenAI
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-from opentelemetry import trace
 from langtrace_python_sdk.instrumentation.openai.instrumentation import (
     OpenAIInstrumentation,
 )
@@ -33,13 +29,9 @@ def vcr_config():
     return {"filter_headers": ["authorization", "api-key"]}
 
 
-@pytest.fixture(scope="session")
-def exporter():
-    exporter = InMemorySpanExporter()
-    processor = SimpleSpanProcessor(exporter)
-
-    provider = TracerProvider()
-    provider.add_span_processor(processor)
-    trace.set_tracer_provider(provider)
+@pytest.fixture(scope="session", autouse=True)
+def instrument():
     OpenAIInstrumentation().instrument()
-    return exporter
+
+    yield
+    # exporter.shutdown()
