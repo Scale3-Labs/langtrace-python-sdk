@@ -242,7 +242,7 @@ tomli==2.0.1
 tomlkit==0.12.4
 tornado==6.4
 tqdm==4.66.2
-trace-attributes==1.0.32
+trace-attributes==3.0.2
 traitlets==5.14.2
 trove-classifiers==2024.3.3
 typer==0.9.0
