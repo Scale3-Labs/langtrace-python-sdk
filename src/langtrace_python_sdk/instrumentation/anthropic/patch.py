@@ -1,5 +1,18 @@
 """
-This module contains the patching logic for the Anthropic library."""
+Copyright (c) 2024 Scale3 Labs
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 import json
 
@@ -58,6 +71,8 @@ def messages_create(original_method, version, tracer):
             attributes.llm_top_p = kwargs.get("top_k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
+        if kwargs.get("max_tokens") is not None:
+            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
 
         span = tracer.start_span(
             APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
@@ -70,12 +85,14 @@ def messages_create(original_method, version, tracer):
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False:
                 if hasattr(result, "content") and result.content is not None:
+                    span.set_attribute("llm.model", result.model if result.model else kwargs.get("model"))
                     span.set_attribute(
                         "llm.responses",
                         json.dumps(
                             [
                                 {
-                                    "text": result.content[0].text,
+                                    "role": result.role if result.role else "assistant",
+                                    "content": result.content[0].text,
                                     "type": result.content[0].type,
                                 }
                             ]
@@ -106,11 +123,11 @@ def messages_create(original_method, version, tracer):
                 return result
             else:
                 return handle_streaming_response(result, span)
-        except Exception as e:
+        except Exception as err:
             # Record the exception in the span
-            span.record_exception(e)
+            span.record_exception(err)
             # Set the span status to indicate an error
-            span.set_status(Status(StatusCode.ERROR, str(e)))
+            span.set_status(Status(StatusCode.ERROR, str(err)))
             # Reraise the exception to ensure it's not swallowed
             span.end()
             raise
@@ -123,6 +140,8 @@ def messages_create(original_method, version, tracer):
         output_tokens = 0
         try:
             for chunk in result:
+                if hasattr(chunk, "message") and chunk.message is not None and hasattr(chunk.message, "model") and chunk.message.model is not None:
+                    span.set_attribute("llm.model", chunk.message.model)
                 content = ""
                 if hasattr(chunk, "delta") and chunk.delta is not None:
                     content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
@@ -165,7 +184,8 @@ def messages_create(original_method, version, tracer):
                 ),
             )
             span.set_attribute(
-                "llm.responses", json.dumps([{"text": "".join(result_content)}])
+                "llm.responses",
+                json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
             )
             span.set_status(StatusCode.OK)
             span.end()

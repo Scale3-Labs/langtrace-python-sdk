@@ -1,44 +1,56 @@
-# from examples.langchain_example.basic import basic, load_and_split, rag
 
+# Cohere
+# from examples.cohere_example.chat import chat_comp
+# from examples.cohere_example.chat_stream import chat_stream
+# from examples.cohere_example.tools import tool_calling
+# from examples.cohere_example.embed import embed
+from examples.cohere_example.rerank import rerank
 
-# from examples.openai.chat_completion import chat_completion
+# OpenAI
 
-# from examples.openai import images_generate
-# from examples.openai.function_calling import function_calling
-# from examples.openai.tool_calling_nonstreaming import run_conversation
-# from examples.openai.async_tool_calling_nonstreaming import run_conversation
+# from examples.openai_example.tool_calling import tool_calling
+# from examples.openai_example.chat_completion import chat_completion
+# from examples.openai_example.images_generate import images_generate
+# from examples.openai_example.embeddings_create import embeddings_create
+# from examples.openai_example.function_calling import function_calling
+# from examples.openai_example.tool_calling_nonstreaming import run_conversation
+# from examples.openai_example.async_tool_calling_nonstreaming import run_conversation
+# from examples.openai_example.tool_calling_streaming import run_conversation
+# from examples.openai.async_tool_calling_streaming import run_conversation
+# for async functions, use asyncio.run()
+# import asyncio
 
-# from examples.openai.tool_calling_streaming import run_conversation
-from examples.openai.async_tool_calling_streaming import run_conversation
-
+# Anthropic
 # from examples.anthropic_example.completion import messages_create
 
+# Rest
+# from examples.langchain_example.basic import basic, load_and_split, rag
 # from examples.pinecone_example.basic import basic
 # from examples.chroma_example.basic import basic
 # from examples.llamaindex_example.basic import basic
 # from examples.langchain_example.basic import basic
-# from examples.cohere_example.chat import chat_comp
-# from examples.cohere_example.embed_create import embed_create
 # from examples.hiveagent_example.basic import basic
-
-# from examples.cohere_example.chat_stream import chat_stream
-
 # from examples.perplexity_example.basic import basic
+
+# OpenAI
+# tool_calling()
+# chat_completion()
+# images_generate()
+# embeddings_create()
+# function_calling()
+# run_conversation()
+# asyncio.run(run_conversation())
+
+# Anthropic
+# messages_create()
+
+# Cohere
+# chat_comp()
+# chat_stream()
+# tool_calling()
+# embed()
+rerank()
 
 # load_and_split()
 # rag()
 # basic()
-# chat_completion()
-# function_calling()
-# images_generate()
-# embeddings_create()
-# messages_create()
-# chat_comp()
-# embed_create()
-# chat_stream()
-
-# for async functions, use asyncio.run()
-import asyncio
-asyncio.run(run_conversation())
-
-# run_conversation()

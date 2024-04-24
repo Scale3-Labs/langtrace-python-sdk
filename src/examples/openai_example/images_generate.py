@@ -6,13 +6,15 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(batch=True, log_spans_to_console=True, write_to_remote_url=False)
+langtrace.init(write_to_langtrace_cloud=False)
+
 client = OpenAI()
 
 
 @with_langtrace_root_span()
-def embeddings_create():
-    result = client.embeddings.create(
-        model="text-embedding-ada-002",
-        input="Once upon a time, there was a frog.",
+def images_generate():
+    result = client.images.generate(
+        model="dall-e-3",
+        prompt="A cute baby sea otter",
     )
+    print(result)

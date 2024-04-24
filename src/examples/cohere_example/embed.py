@@ -1,5 +1,5 @@
-from dotenv import find_dotenv, load_dotenv
 import cohere
+from dotenv import find_dotenv, load_dotenv
 
 from langtrace_python_sdk import langtrace
 
@@ -13,10 +13,11 @@ co = cohere.Client()
 
 
 # @with_langtrace_root_span("embed_create")
-def embed_create():
+def embed():
     response = co.embed(
         texts=["hello", "goodbye"],
         model="embed-english-v3.0",
         input_type="classification",
     )
-    # print(response)
+    print(response)
+    return response
