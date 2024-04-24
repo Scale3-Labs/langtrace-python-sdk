@@ -1,10 +1,9 @@
-import json
+# import json
 
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
@@ -34,20 +33,19 @@ student_custom_functions = [
 ]
 
 
-# @with_langtrace_root_span()
 def function_calling():
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
         messages=[
             {
                 "role": "user",
-                "content": "David Nguyen is a sophomore majoring in computer science at Stanford University. He is Asian American and has a 3.8 GPA. David is known for his programming skills and is an active member of the university's Robotics Club. He hopes to pursue a career in artificial intelligence after graduating.",
+                "content": "John is a grad student in computer science at Stanford University. He is an American and has a 3.8 GPA. John is known for his programming skills and is an active member of the university's Robotics Club. He hopes to pursue a career in artificial intelligence after graduating.",
             }
         ],
         functions=student_custom_functions,
-        function_call="auto",
         stream=True,
     )
+    # return response
 
     result = []
     for chunk in response:
