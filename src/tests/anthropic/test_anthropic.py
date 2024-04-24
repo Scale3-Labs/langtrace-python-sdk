@@ -1,73 +1,109 @@
-import unittest
-from unittest.mock import MagicMock, call
-from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
-from opentelemetry.trace import SpanKind
-import importlib.metadata
-from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from opentelemetry.trace.status import Status, StatusCode
+import pytest
 import json
-from langtrace.trace_attributes import Event, LLMSpanAttributes
-
-from tests.utils import common_setup
-
-class TestAnthropic(unittest.TestCase):
-
-    data = {
-        "content" : [MagicMock(text="Some text", type="text")],
-        "system_fingerprint" : "None",
-        "usage" : MagicMock(input_tokens=23, output_tokens=44),
-        "chunks" : [MagicMock(delta="Some text", message="text")]}
+import importlib
+from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 
 
-    def setUp(self):
-        
-        # Mock the original method
-        self.anthropic_mock, self.tracer, self.span = common_setup(self.data, None)
+@pytest.mark.vcr()
+def test_anthropic(anthropic_client, exporter):
+    llm_model_value = "claude-3-opus-20240229"
+    messages_value = [{"role": "user", "content": "How are you today?"}]
 
-    def tearDown(self):
-        pass
+    kwargs = {
+        "model": llm_model_value,
+        "messages": messages_value,
+        # "system": "Respond only in Yoda-speak.",
+        "stream": False,
+        "max_tokens": 1024,
+    }
+    response = anthropic_client.messages.create(**kwargs)
+    spans = exporter.get_finished_spans()
+    completion_span = spans[-1]
 
-    def test_anthropic(self):
-        # Arrange
-        version = importlib.metadata.version('anthropic')        
-        kwargs = {
-            "model": "claude-3-opus-20240229",
-            "messages" : [{"role": "user", "content": "How are you today?"}],
-            "stream": False
-        }   
+    assert completion_span.name == "anthropic.messages.create"
+    attributes = completion_span.attributes
 
-        # Act
-        wrapped_function = messages_create("anthropic.messages.create", version, self.tracer)
-        result = wrapped_function(self.anthropic_mock, MagicMock(), (), kwargs)
-        
+    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
+    assert attributes.get("langtrace.service.name") == "Anthropic"
+    assert attributes.get("langtrace.service.type") == "llm"
+    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+        "anthropic"
+    )
+    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("url.full") == "https://api.anthropic.com"
+    assert attributes.get("llm.api") == APIS["MESSAGES_CREATE"]["ENDPOINT"]
+    assert attributes.get("llm.model") == llm_model_value
+    assert attributes.get("llm.prompts") == json.dumps(messages_value)
+    assert attributes.get("llm.stream") is False
 
-        # Assert
-        self.assertTrue(self.tracer.start_as_current_span.called_once_with("anthropic.messages.create", kind=SpanKind.CLIENT))
-        self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
-        
-        expected_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": "Anthropic",
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
-            "url.full": "/v1/messages",
-            "llm.api": APIS["MESSAGES_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
-            "llm.stream": kwargs.get("stream"),
-        }
+    tokens = json.loads(attributes.get("llm.token.counts"))
+    output_tokens = tokens.get("output_tokens")
+    prompt_tokens = tokens.get("input_tokens")
+    total_tokens = tokens.get("total_tokens")
 
-        self.assertTrue(
-            self.span.set_attribute.has_calls(
-                [call(key, value) for key, value in expected_attributes.items()], any_order=True
-            )
-        )
-       
-        expected_result_data = {"system_fingerprint": "None"  }   
+    assert output_tokens and prompt_tokens and total_tokens
+    assert output_tokens + prompt_tokens == total_tokens
 
-        self.assertEqual(result.system_fingerprint, expected_result_data["system_fingerprint"])
+    langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
+    for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response
 
 
-if __name__ == '__main__':
-    unittest.main()
+@pytest.mark.vcr()
+def test_anthropic_streaming(anthropic_client, exporter):
+    llm_model_value = "claude-3-opus-20240229"
+    messages_value = [{"role": "user", "content": "How are you today?"}]
+
+    kwargs = {
+        "model": llm_model_value,
+        "messages": messages_value,
+        # "system": "Respond only in Yoda-speak.",
+        "stream": True,
+        "max_tokens": 1024,
+    }
+    response = anthropic_client.messages.create(**kwargs)
+    chunk_count = 0
+
+    for chunk in response:
+        if chunk:
+            chunk_count += 1
+
+    spans = exporter.get_finished_spans()
+    streaming_span = spans[-1]
+
+    assert streaming_span.name == "anthropic.messages.create"
+    attributes = streaming_span.attributes
+
+    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
+    assert attributes.get("langtrace.service.name") == "Anthropic"
+    assert attributes.get("langtrace.service.type") == "llm"
+    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+        "anthropic"
+    )
+    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("url.full") == "https://api.anthropic.com"
+    assert attributes.get("llm.api") == APIS["MESSAGES_CREATE"]["ENDPOINT"]
+    assert attributes.get("llm.model") == llm_model_value
+    assert attributes.get("llm.prompts") == json.dumps(messages_value)
+    assert attributes.get("llm.stream") is True
+    events = streaming_span.events
+
+    assert len(events) - 2 == chunk_count  # -2 for start and end events
+
+    tokens = json.loads(attributes.get("llm.token.counts"))
+    output_tokens = tokens.get("output_tokens")
+    prompt_tokens = tokens.get("input_tokens")
+    total_tokens = tokens.get("total_tokens")
+
+    assert output_tokens and prompt_tokens and total_tokens
+    assert output_tokens + prompt_tokens == total_tokens
+
+    langtrace_responses = json.loads(attributes.get("llm.responses"))
+    assert isinstance(langtrace_responses, list)
+    for langtrace_response in langtrace_responses:
+        assert isinstance(langtrace_response, dict)
+        assert "role" in langtrace_response
+        assert "content" in langtrace_response

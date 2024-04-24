@@ -1,5 +1,18 @@
 """
-This module contains the patching logic for the Anthropic library."""
+Copyright (c) 2024 Scale3 Labs
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 import json
 
@@ -10,14 +23,11 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
-from langtrace_python_sdk.utils.llm import estimate_tokens
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 
 
-def embed_create(original_method, version, tracer):
-    """Wrap the `embed_create` method."""
+def rerank(original_method, version, tracer):
+    """Wrap the `rerank` method."""
 
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["COHERE"]
@@ -29,10 +39,105 @@ def embed_create(original_method, version, tracer):
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
-            "url.full": APIS["EMBED_CREATE"]["URL"],
-            "llm.api": APIS["EMBED_CREATE"]["ENDPOINT"],
+            "url.full": APIS["RERANK"]["URL"],
+            "llm.api": APIS["RERANK"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
+            "llm.documents": json.dumps(kwargs.get("documents")),
+            "llm.retrieval.query": kwargs.get("query"),
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+
+        if kwargs.get("top_n") is not None:
+            attributes.llm_top_k = kwargs.get("top_n")
+
+        if kwargs.get("user") is not None:
+            attributes.llm_user = kwargs.get("user")
+
+        span = tracer.start_span(APIS["RERANK"]["METHOD"], kind=SpanKind.CLIENT)
+        for field, value in attributes.model_dump(by_alias=True).items():
+            if value is not None:
+                span.set_attribute(field, value)
+        try:
+            # Attempt to call the original method
+            result = wrapped(*args, **kwargs)
+
+            if hasattr(result, "results") and result.results is not None:
+                results = []
+                for _, doc in enumerate(result.results):
+                    results.append(doc.json())
+                span.set_attribute("llm.retrieval.results", json.dumps(results))
+
+            if (hasattr(result, "response_id")) and (result.response_id is not None):
+                span.set_attribute("llm.response_id", result.response_id)
+
+            if hasattr(result, "meta") and result.meta is not None:
+                if (
+                    hasattr(result.meta, "billed_units")
+                    and result.meta.billed_units is not None
+                ):
+                    usage = result.meta.billed_units
+                    if usage is not None:
+                        usage_dict = {
+                            "input_tokens": (
+                                usage.input_tokens
+                                if usage.input_tokens is not None
+                                else 0
+                            ),
+                            "output_tokens": (
+                                usage.output_tokens
+                                if usage.output_tokens is not None
+                                else 0
+                            ),
+                            "total_tokens": (
+                                usage.input_tokens + usage.output_tokens
+                                if usage.input_tokens is not None
+                                and usage.output_tokens is not None
+                                else 0
+                            ),
+                            "search_units": (
+                                usage.search_units
+                                if usage.search_units is not None
+                                else 0
+                            ),
+                        }
+                        span.set_attribute(
+                            "llm.token.counts", json.dumps(usage_dict)
+                        )
+
+            span.set_status(StatusCode.OK)
+            span.end()
+            return result
+
+        except Exception as error:
+            span.record_exception(error)
+            span.set_status(Status(StatusCode.ERROR, str(error)))
+            span.end()
+            raise
+
+    return traced_method
+
+
+def embed(original_method, version, tracer):
+    """Wrap the `embed` method."""
+
+    def traced_method(wrapped, instance, args, kwargs):
+        service_provider = SERVICE_PROVIDERS["COHERE"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": "1.0.0",
+            "url.full": APIS["EMBED"]["URL"],
+            "llm.api": APIS["EMBED"]["ENDPOINT"],
+            "llm.model": kwargs.get("model"),
+            "llm.prompts": "",
+            "llm.embedding_inputs": json.dumps(kwargs.get("texts")),
             "llm.embedding_dataset_id": kwargs.get("dataset_id"),
             "llm.embedding_input_type": kwargs.get("input_type"),
             "llm.embedding_job_name": kwargs.get("name"),
@@ -44,13 +149,48 @@ def embed_create(original_method, version, tracer):
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
 
-        span = tracer.start_span(APIS["EMBED_CREATE"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(APIS["EMBED"]["METHOD"], kind=SpanKind.CLIENT)
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
                 span.set_attribute(field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
+
+            if hasattr(result, "meta") and result.meta is not None:
+                if (
+                    hasattr(result.meta, "billed_units")
+                    and result.meta.billed_units is not None
+                ):
+                    usage = result.meta.billed_units
+                    if usage is not None:
+                        usage_dict = {
+                            "input_tokens": (
+                                usage.input_tokens
+                                if usage.input_tokens is not None
+                                else 0
+                            ),
+                            "output_tokens": (
+                                usage.output_tokens
+                                if usage.output_tokens is not None
+                                else 0
+                            ),
+                            "total_tokens": (
+                                usage.input_tokens + usage.output_tokens
+                                if usage.input_tokens is not None
+                                and usage.output_tokens is not None
+                                else 0
+                            ),
+                            "search_units": (
+                                usage.search_units
+                                if usage.search_units is not None
+                                else 0
+                            ),
+                        }
+                        span.set_attribute(
+                            "llm.token.counts", json.dumps(usage_dict)
+                        )
+
             span.set_status(StatusCode.OK)
             span.end()
             return result
@@ -71,32 +211,33 @@ def chat_create(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["COHERE"]
 
         message = kwargs.get("message", "")
-        prompts = json.dumps([{"role": "USER", "content": message}])
+        prompts = [{"role": "USER", "content": message}]
+        system_prompts = []
+        history = []
         preamble = kwargs.get("preamble")
         if preamble:
-            prompts = json.dumps(
-                [{"role": "system", "content": preamble}]
-                + [{"role": "USER", "content": message}]
-            )
+            system_prompts = [{"role": "system", "content": preamble}]
 
         chat_history = kwargs.get("chat_history")
         if chat_history:
             history = [
                 {
-                    "message": {
-                        "role": (
-                            item.get("role") if item.get("role") is not None else "USER"
-                        ),
-                        "content": (
-                            item.get("message")
-                            if item.get("message") is not None
-                            else ""
-                        ),
-                    }
+                    "role": (
+                        item.get("role") if item.get("role") is not None else "USER"
+                    ),
+                    "content": (
+                        item.get("message")
+                        if item.get("message") is not None
+                        else ""
+                    ),
                 }
                 for item in chat_history
             ]
-            prompts = prompts + json.dumps(history)
+        if len(history) > 0:
+            prompts = history + prompts
+        if len(system_prompts) > 0:
+            prompts = system_prompts + prompts
+        prompts = json.dumps(prompts)
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
@@ -121,13 +262,13 @@ def chat_create(original_method, version, tracer):
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("max_tokens") is not None:
-            attributes.max_tokens = kwargs.get("max_tokens")
+            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
         if kwargs.get("max_input_tokens") is not None:
-            attributes.max_input_tokens = kwargs.get("max_input_tokens")
+            attributes.llm_max_input_tokens = str(kwargs.get("max_input_tokens"))
         if kwargs.get("p") is not None:
             attributes.llm_top_p = kwargs.get("p")
         if kwargs.get("k") is not None:
-            attributes.llm_top_p = kwargs.get("k")
+            attributes.llm_top_k = kwargs.get("k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("conversation_id") is not None:
@@ -171,36 +312,40 @@ def chat_create(original_method, version, tracer):
                 span.set_attribute("llm.is_search_required", result.is_search_required)
 
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                if hasattr(result, "text") and result.text is not None:
+                if hasattr(result, "text") and result.text is not None and result.text != "":
                     if (
                         hasattr(result, "chat_history")
                         and result.chat_history is not None
                     ):
                         responses = [
                             {
-                                "message": {
-                                    "role": (
-                                        item.role
-                                        if hasattr(item, "role")
-                                        and item.role is not None
-                                        else "USER"
-                                    ),
-                                    "content": (
-                                        item.message
-                                        if hasattr(item, "message")
-                                        and item.message is not None
-                                        else ""
-                                    ),
-                                }
+                                "role": (
+                                    item.role
+                                    if hasattr(item, "role")
+                                    and item.role is not None
+                                    else "USER"
+                                ),
+                                "content": (
+                                    item.message
+                                    if hasattr(item, "message")
+                                    and item.message is not None
+                                    else ""
+                                ),
                             }
                             for item in result.chat_history
                         ]
                         span.set_attribute("llm.responses", json.dumps(responses))
                     else:
                         responses = [
-                            {"message": {"role": "CHATBOT", "content": result.text}}
+                            {"role": "CHATBOT", "content": result.text}
                         ]
                         span.set_attribute("llm.responses", json.dumps(responses))
+                elif hasattr(result, "tool_calls") and result.tool_calls is not None:
+                    tool_calls = []
+                    for tool_call in result.tool_calls:
+                        tool_calls.append(tool_call.json())
+                    span.set_attribute("llm.tool_calls", json.dumps(tool_calls))
+                    span.set_attribute("llm.responses", json.dumps([]))
                 else:
                     responses = []
                     span.set_attribute("llm.responses", json.dumps(responses))
@@ -230,6 +375,11 @@ def chat_create(original_method, version, tracer):
                                     and usage.output_tokens is not None
                                     else 0
                                 ),
+                                "search_units": (
+                                    usage.search_units
+                                    if usage.search_units is not None
+                                    else 0
+                                ),
                             }
                             span.set_attribute(
                                 "llm.token.counts", json.dumps(usage_dict)
@@ -257,33 +407,33 @@ def chat_stream(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["COHERE"]
 
         message = kwargs.get("message", "")
-        prompt_tokens = estimate_tokens(message)
-        prompts = json.dumps([{"role": "USER", "content": message}])
+        prompts = [{"role": "USER", "content": message}]
+        system_prompts = []
+        history = []
         preamble = kwargs.get("preamble")
         if preamble:
-            prompts = json.dumps(
-                [{"role": "system", "content": preamble}]
-                + [{"role": "USER", "content": message}]
-            )
+            system_prompts = [{"role": "system", "content": preamble}]
 
         chat_history = kwargs.get("chat_history")
         if chat_history:
             history = [
                 {
-                    "message": {
-                        "role": (
-                            item.get("role") if item.get("role") is not None else "USER"
-                        ),
-                        "content": (
-                            item.get("message")
-                            if item.get("message") is not None
-                            else ""
-                        ),
-                    }
+                    "role": (
+                        item.get("role") if item.get("role") is not None else "USER"
+                    ),
+                    "content": (
+                        item.get("message")
+                        if item.get("message") is not None
+                        else ""
+                    ),
                 }
                 for item in chat_history
             ]
-            prompts = prompts + json.dumps(history)
+        if len(history) > 0:
+            prompts = history + prompts
+        if len(system_prompts) > 0:
+            prompts = system_prompts + prompts
+        prompts = json.dumps(prompts)
 
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
@@ -308,13 +458,13 @@ def chat_stream(original_method, version, tracer):
         if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
         if kwargs.get("max_tokens") is not None:
-            attributes.max_tokens = kwargs.get("max_tokens")
+            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
         if kwargs.get("max_input_tokens") is not None:
-            attributes.max_input_tokens = kwargs.get("max_input_tokens")
+            attributes.llm_max_input_tokens = str(kwargs.get("max_input_tokens"))
         if kwargs.get("p") is not None:
             attributes.llm_top_p = kwargs.get("p")
         if kwargs.get("k") is not None:
-            attributes.llm_top_p = kwargs.get("k")
+            attributes.llm_top_k = kwargs.get("k")
         if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
         if kwargs.get("conversation_id") is not None:
@@ -342,49 +492,99 @@ def chat_stream(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-
-            result_content = []
             span.add_event(Event.STREAM_START.value)
-            completion_tokens = 0
             try:
                 for event in result:
                     if hasattr(event, "text") and event.text is not None:
-                        completion_tokens += estimate_tokens(event.text)
                         content = event.text
                     else:
                         content = ""
                     span.add_event(
                         Event.STREAM_OUTPUT.value, {"response": "".join(content)}
                     )
-                    result_content.append(content)
+
+                    if hasattr(event, "finish_reason") and event.finish_reason == "COMPLETE":
+                        response = event.response
+
+                        if (hasattr(response, "generation_id")) and (
+                            response.generation_id is not None
+                        ):
+                            span.set_attribute("llm.generation_id", response.generation_id)
+                        if (hasattr(response, "response_id")) and (response.response_id is not None):
+                            span.set_attribute("llm.response_id", response.response_id)
+                        if (hasattr(response, "is_search_required")) and (
+                            response.is_search_required is not None
+                        ):
+                            span.set_attribute("llm.is_search_required", response.is_search_required)
+
+                        # Set the response attributes
+                        if hasattr(response, "text") and response.text is not None:
+                            if (
+                                hasattr(response, "chat_history")
+                                and response.chat_history is not None
+                            ):
+                                responses = [
+                                    {
+                                        "role": (
+                                            item.role
+                                            if hasattr(item, "role")
+                                            and item.role is not None
+                                            else "USER"
+                                        ),
+                                        "content": (
+                                            item.message
+                                            if hasattr(item, "message")
+                                            and item.message is not None
+                                            else ""
+                                        ),
+                                    }
+                                    for item in response.chat_history
+                                ]
+                                span.set_attribute("llm.responses", json.dumps(responses))
+                            else:
+                                responses = [
+                                    {"role": "CHATBOT", "content": response.text}
+                                ]
+                                span.set_attribute("llm.responses", json.dumps(responses))
+
+                        # Get the usage
+                        if hasattr(response, "meta") and response.meta is not None:
+                            if (
+                                hasattr(response.meta, "billed_units")
+                                and response.meta.billed_units is not None
+                            ):
+                                usage = response.meta.billed_units
+                                if usage is not None:
+                                    usage_dict = {
+                                        "input_tokens": (
+                                            usage.input_tokens
+                                            if usage.input_tokens is not None
+                                            else 0
+                                        ),
+                                        "output_tokens": (
+                                            usage.output_tokens
+                                            if usage.output_tokens is not None
+                                            else 0
+                                        ),
+                                        "total_tokens": (
+                                            usage.input_tokens + usage.output_tokens
+                                            if usage.input_tokens is not None
+                                            and usage.output_tokens is not None
+                                            else 0
+                                        ),
+                                        "search_units": (
+                                            usage.search_units
+                                            if usage.search_units is not None
+                                            else 0
+                                        ),
+                                    }
+                                    span.set_attribute(
+                                        "llm.token.counts", json.dumps(usage_dict)
+                                    )
+
                     yield event
             finally:
-
-                # Finalize span after processing all chunks
                 span.add_event(Event.STREAM_END.value)
-                span.set_attribute(
-                    "llm.token.counts",
-                    json.dumps(
-                        {
-                            "input_tokens": prompt_tokens,
-                            "output_tokens": completion_tokens,
-                            "total_tokens": prompt_tokens + completion_tokens,
-                        }
-                    ),
-                )
-                span.set_attribute(
-                    "llm.responses",
-                    json.dumps(
-                        [
-                            {
-                                "message": {
-                                    "role": "CHATBOT",
-                                    "content": "".join(result_content),
-                                }
-                            }
-                        ]
-                    ),
-                )
                 span.set_status(StatusCode.OK)
                 span.end()
 
