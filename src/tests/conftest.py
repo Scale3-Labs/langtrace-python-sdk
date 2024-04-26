@@ -15,3 +15,8 @@ def exporter():
     trace.set_tracer_provider(provider)
 
     return exporter
+
+
+@pytest.fixture(autouse=True)
+def clear_exporter(exporter):
+    exporter.clear()
