@@ -10,7 +10,7 @@ from langtrace_python_sdk import langtrace
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init()
 
 
 def groq_example():
