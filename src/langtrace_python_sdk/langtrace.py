@@ -30,6 +30,8 @@ from langtrace_python_sdk.instrumentation.chroma.instrumentation import \
     ChromaInstrumentation
 from langtrace_python_sdk.instrumentation.cohere.instrumentation import \
     CohereInstrumentation
+from langtrace_python_sdk.instrumentation.groq.instrumentation import \
+    GroqInstrumentation
 from langtrace_python_sdk.instrumentation.langchain.instrumentation import \
     LangchainInstrumentation
 from langtrace_python_sdk.instrumentation.langchain_community.instrumentation import \
@@ -83,6 +85,7 @@ def init(
     trace.set_tracer_provider(provider)
 
     openai_instrumentation = OpenAIInstrumentation()
+    groq_instrumentation = GroqInstrumentation()
     pinecone_instrumentation = PineconeInstrumentation()
     llamaindex_instrumentation = LlamaindexInstrumentation()
     chroma_instrumentation = ChromaInstrumentation()
@@ -95,6 +98,7 @@ def init(
 
     # Call the instrument method with some arguments
     openai_instrumentation.instrument()
+    groq_instrumentation.instrument()
     pinecone_instrumentation.instrument()
     llamaindex_instrumentation.instrument()
     chroma_instrumentation.instrument()
