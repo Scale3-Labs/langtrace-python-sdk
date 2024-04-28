@@ -10,14 +10,17 @@ SERVICE_PROVIDERS = {
     "ANTHROPIC": "Anthropic",
     "AZURE": "Azure",
     "CHROMA": "Chroma",
+    "GROQ": "Groq",
     "LANGCHAIN": "Langchain",
     "LANGCHAIN_COMMUNITY": "Langchain Community",
     "LANGCHAIN_CORE": "Langchain Core",
+    "LANGGRAPH": "Langgraph",
     "LLAMAINDEX": "LlamaIndex",
     "OPENAI": "OpenAI",
     "PINECONE": "Pinecone",
     "COHERE": "Cohere",
     "PPLX": "Perplexity",
+    "QDRANT": "Qdrant",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"
