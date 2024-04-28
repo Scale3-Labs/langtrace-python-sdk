@@ -46,6 +46,8 @@ from langtrace_python_sdk.instrumentation.openai.instrumentation import \
     OpenAIInstrumentation
 from langtrace_python_sdk.instrumentation.pinecone.instrumentation import \
     PineconeInstrumentation
+from langtrace_python_sdk.instrumentation.qdrant.instrumentation import \
+    QdrantInstrumentation
 
 
 def init(
@@ -89,6 +91,7 @@ def init(
     pinecone_instrumentation = PineconeInstrumentation()
     llamaindex_instrumentation = LlamaindexInstrumentation()
     chroma_instrumentation = ChromaInstrumentation()
+    qdrant_instrumentation = QdrantInstrumentation()
     langchain_instrumentation = LangchainInstrumentation()
     langchain_core_instrumentation = LangchainCoreInstrumentation()
     langchain_community_instrumentation = LangchainCommunityInstrumentation()
@@ -102,6 +105,7 @@ def init(
     pinecone_instrumentation.instrument()
     llamaindex_instrumentation.instrument()
     chroma_instrumentation.instrument()
+    qdrant_instrumentation.instrument()
     langchain_instrumentation.instrument()
     langchain_core_instrumentation.instrument()
     langchain_community_instrumentation.instrument()

@@ -20,6 +20,7 @@ SERVICE_PROVIDERS = {
     "PINECONE": "Pinecone",
     "COHERE": "Cohere",
     "PPLX": "Perplexity",
+    "QDRANT": "Qdrant",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"
