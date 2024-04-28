@@ -36,6 +36,8 @@ from langtrace_python_sdk.instrumentation.langchain_community.instrumentation im
     LangchainCommunityInstrumentation
 from langtrace_python_sdk.instrumentation.langchain_core.instrumentation import \
     LangchainCoreInstrumentation
+from langtrace_python_sdk.instrumentation.langgraph.instrumentation import \
+    LanggraphInstrumentation
 from langtrace_python_sdk.instrumentation.llamaindex.instrumentation import \
     LlamaindexInstrumentation
 from langtrace_python_sdk.instrumentation.openai.instrumentation import \
@@ -87,6 +89,7 @@ def init(
     langchain_instrumentation = LangchainInstrumentation()
     langchain_core_instrumentation = LangchainCoreInstrumentation()
     langchain_community_instrumentation = LangchainCommunityInstrumentation()
+    langgraph_instrumentation = LanggraphInstrumentation()
     anthropic_instrumentation = AnthropicInstrumentation()
     cohere_instrumentation = CohereInstrumentation()
 
@@ -98,5 +101,6 @@ def init(
     langchain_instrumentation.instrument()
     langchain_core_instrumentation.instrument()
     langchain_community_instrumentation.instrument()
+    langgraph_instrumentation.instrument()
     anthropic_instrumentation.instrument()
     cohere_instrumentation.instrument()
