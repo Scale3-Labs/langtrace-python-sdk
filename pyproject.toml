@@ -18,7 +18,7 @@ classifiers=[
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  'trace-attributes==3.0.2',
+  'trace-attributes==3.0.5',
   'opentelemetry-api',
   'opentelemetry-sdk',
   'opentelemetry-instrumentation',
