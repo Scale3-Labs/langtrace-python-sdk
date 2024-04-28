@@ -30,18 +30,24 @@ from langtrace_python_sdk.instrumentation.chroma.instrumentation import \
     ChromaInstrumentation
 from langtrace_python_sdk.instrumentation.cohere.instrumentation import \
     CohereInstrumentation
+from langtrace_python_sdk.instrumentation.groq.instrumentation import \
+    GroqInstrumentation
 from langtrace_python_sdk.instrumentation.langchain.instrumentation import \
     LangchainInstrumentation
 from langtrace_python_sdk.instrumentation.langchain_community.instrumentation import \
     LangchainCommunityInstrumentation
 from langtrace_python_sdk.instrumentation.langchain_core.instrumentation import \
     LangchainCoreInstrumentation
+from langtrace_python_sdk.instrumentation.langgraph.instrumentation import \
+    LanggraphInstrumentation
 from langtrace_python_sdk.instrumentation.llamaindex.instrumentation import \
     LlamaindexInstrumentation
 from langtrace_python_sdk.instrumentation.openai.instrumentation import \
     OpenAIInstrumentation
 from langtrace_python_sdk.instrumentation.pinecone.instrumentation import \
     PineconeInstrumentation
+from langtrace_python_sdk.instrumentation.qdrant.instrumentation import \
+    QdrantInstrumentation
 
 
 def init(
@@ -81,22 +87,28 @@ def init(
     trace.set_tracer_provider(provider)
 
     openai_instrumentation = OpenAIInstrumentation()
+    groq_instrumentation = GroqInstrumentation()
     pinecone_instrumentation = PineconeInstrumentation()
     llamaindex_instrumentation = LlamaindexInstrumentation()
     chroma_instrumentation = ChromaInstrumentation()
+    qdrant_instrumentation = QdrantInstrumentation()
     langchain_instrumentation = LangchainInstrumentation()
     langchain_core_instrumentation = LangchainCoreInstrumentation()
     langchain_community_instrumentation = LangchainCommunityInstrumentation()
+    langgraph_instrumentation = LanggraphInstrumentation()
     anthropic_instrumentation = AnthropicInstrumentation()
     cohere_instrumentation = CohereInstrumentation()
 
     # Call the instrument method with some arguments
     openai_instrumentation.instrument()
+    groq_instrumentation.instrument()
     pinecone_instrumentation.instrument()
     llamaindex_instrumentation.instrument()
     chroma_instrumentation.instrument()
+    qdrant_instrumentation.instrument()
     langchain_instrumentation.instrument()
     langchain_core_instrumentation.instrument()
     langchain_community_instrumentation.instrument()
+    langgraph_instrumentation.instrument()
     anthropic_instrumentation.instrument()
     cohere_instrumentation.instrument()
