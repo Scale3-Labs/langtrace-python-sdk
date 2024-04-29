@@ -33,6 +33,3 @@ def vcr_config():
 @pytest.fixture(scope="session", autouse=True)
 def instrument():
     AnthropicInstrumentation().instrument()
-
-    yield
-    # exporter.shutdown()
