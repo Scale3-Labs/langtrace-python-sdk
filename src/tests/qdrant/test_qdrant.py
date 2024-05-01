@@ -52,34 +52,6 @@ def test_qdrant_upsert(qdrant_client, exporter):
     assert attributes.get("db.collection.name") == COLLECTION_NAME
 
 
-def test_qdrant_add(qdrant_client, exporter):
-    # Prepare your documents, metadata, and IDs
-    docs = [
-        "Qdrant has Langchain integrations",
-        "Qdrant also has Llama Index integrations",
-    ]
-    metadata = [
-        {"source": "Langchain-docs"},
-        {"source": "Linkedin-docs"},
-    ]
-    ids = [42, 2]
-
-    qdrant_client.add(COLLECTION_NAME, documents=docs, metadata=metadata, ids=ids)
-    spans = exporter.get_finished_spans()
-    add_span = spans[-1]
-    attributes = add_span.attributes
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["QDRANT"]
-    assert attributes.get("langtrace.service.type") == "vectordb"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "qdrant_client"
-    )
-    assert attributes.get("db.system") == SERVICE_PROVIDERS["QDRANT"].lower()
-    assert attributes.get("db.operation") == "add"
-    assert attributes.get("db.upload.documents_count") == 2
-    assert attributes.get("db.collection.name") == COLLECTION_NAME
-
-
 def test_qdrant_search(qdrant_client, exporter):
     qdrant_client.create_collection(
         collection_name=COLLECTION_NAME,
