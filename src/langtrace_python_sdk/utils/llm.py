@@ -65,3 +65,4 @@ def set_span_attributes(span, name, value):
         if value != "":
             span.set_attribute(name, value)
     return
+

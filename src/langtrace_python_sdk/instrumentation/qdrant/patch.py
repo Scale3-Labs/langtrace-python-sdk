@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from langtrace.trace_attributes import DatabaseSpanAttributes
+from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.utils.llm import set_span_attributes
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
@@ -82,9 +83,9 @@ def collection_patch(method, version, tracer):
     return traced_method
 
 
+@silently_fail
 def _set_upsert_attributes(span, args, kwargs):
     points = kwargs.get("points") or args[1]
-
     if isinstance(points, list):
         length = len(points)
     else:
@@ -93,6 +94,7 @@ def _set_upsert_attributes(span, args, kwargs):
     set_span_attributes(span, "db.upsert.points_count", length)
 
 
+@silently_fail
 def _set_upload_attributes(span, args, kwargs, field):
     docs = kwargs.get(field) or args[0]
     if isinstance(docs, list):
