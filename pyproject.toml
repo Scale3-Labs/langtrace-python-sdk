@@ -38,7 +38,8 @@ dev = [
     "llama-index",
     "langchain-openai",
     "chromadb",
-    "cohere"
+    "cohere",
+    "qdrant_client"
 ]
 
 test = [
