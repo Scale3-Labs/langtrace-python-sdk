@@ -715,13 +715,11 @@ def embeddings_create(original_method, version, tracer):
         }
 
         if kwargs.get("encoding_format") is not None:
-            span_attributes["llm.encoding_format"] = json.dumps([kwargs.get("encoding_format")])
+            span_attributes["llm.encoding.formats"] = json.dumps([kwargs.get("encoding_format")])
 
         attributes = LLMSpanAttributes(**span_attributes)
         kwargs.get("encoding_format")
 
-        if kwargs.get("encoding_format") is not None:
-            attributes.llm_encoding_format = kwargs.get("encoding_format")
         if kwargs.get("dimensions") is not None:
             attributes["llm.dimensions"] = kwargs.get("dimensions")
         if kwargs.get("user") is not None:
