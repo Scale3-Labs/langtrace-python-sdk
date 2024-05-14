@@ -11,7 +11,10 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(api_host="http://localhost:3000")
+langtrace.init(
+    write_spans_to_console=True,
+    disable_instrumentations={"all_except": ["pinecone", "openai"]},
+)
 
 client = OpenAI()
 pinecone = Pinecone()
