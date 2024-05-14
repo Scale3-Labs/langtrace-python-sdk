@@ -184,6 +184,15 @@ def chat_completion():
    api_call2()
 ```
 
+- `get_prompt_from_registry` - this function is designed to fetch the desired prompt from the `Prompt Registry`. You can pass two options for filtering `prompt_version` & `variables`.
+
+
+```python
+from langtrace_python_sdk import get_prompt_from_registry
+
+prompt = get_prompt_from_registry(<Registry ID>, options={"prompt_version": 1, "variables": {"foo": "bar"} })
+```
+
 ## Supported integrations
 
 Langtrace automatically captures traces from the following vendors:
