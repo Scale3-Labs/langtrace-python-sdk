@@ -7,7 +7,7 @@ from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=True)
 
 
 @with_langtrace_root_span("messages_create")

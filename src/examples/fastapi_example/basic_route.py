@@ -8,7 +8,7 @@ from openai import OpenAI
 
 from langtrace_python_sdk import langtrace
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=True)
 app = FastAPI()
 client = OpenAI()
 

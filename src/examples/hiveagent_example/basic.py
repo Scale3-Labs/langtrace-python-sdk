@@ -6,7 +6,7 @@ from openai import OpenAI
 load_dotenv()
 
 langtrace.init(
-    write_to_langtrace_cloud=False,
+    write_spans_to_console=True,
     api_host="http://localhost:3000",
 )
 
