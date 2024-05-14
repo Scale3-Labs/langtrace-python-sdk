@@ -5,7 +5,8 @@ from langtrace_python_sdk import langtrace
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=True)
+
 
 co = cohere.Client()
 
@@ -13,7 +14,11 @@ co = cohere.Client()
 # @with_langtrace_root_span("chat_stream")
 def chat_stream():
     result = []
-    for event in co.chat_stream(message="Tell me a short story in 2 lines", preamble="Respond like a pirate", max_tokens=100):
+    for event in co.chat_stream(
+        message="Tell me a short story in 2 lines",
+        preamble="Respond like a pirate",
+        max_tokens=100,
+    ):
         if event.event_type == "text-generation":
             result.append(event.text)
         elif event.event_type == "stream-end":
