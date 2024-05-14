@@ -21,7 +21,9 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.chroma import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 
 
 def collection_patch(method, version, tracer):
@@ -42,7 +44,7 @@ def collection_patch(method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "chromadb",
             "db.operation": api["OPERATION"],
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         if hasattr(instance, "name") and instance.name is not None:
