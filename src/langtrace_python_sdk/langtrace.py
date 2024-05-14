@@ -81,17 +81,17 @@ def init(
     batch_processor_remote = BatchSpanProcessor(remote_write_exporter)
     simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
     simple_processor_console = SimpleSpanProcessor(console_exporter)
-
+    
     if write_spans_to_console:
         provider.add_span_processor(simple_processor_console)
 
-    if custom_remote_exporter is not None:
+    elif custom_remote_exporter is not None:
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
             provider.add_span_processor(simple_processor_remote)
 
-    if api_host is not None:
+    elif api_host is not None:
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
