@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
 import asyncio
 from functools import wraps
 
 from opentelemetry import baggage, context, trace
 from opentelemetry.trace import SpanKind
 
-from langtrace_python_sdk.constants.instrumentation.common import \
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+)
 
 
 def with_langtrace_root_span(

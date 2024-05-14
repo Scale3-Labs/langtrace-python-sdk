@@ -23,7 +23,9 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 
 
 def messages_create(original_method, version, tracer):
@@ -58,7 +60,7 @@ def messages_create(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.prompts": prompts,
             "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -85,7 +87,10 @@ def messages_create(original_method, version, tracer):
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False:
                 if hasattr(result, "content") and result.content is not None:
-                    span.set_attribute("llm.model", result.model if result.model else kwargs.get("model"))
+                    span.set_attribute(
+                        "llm.model",
+                        result.model if result.model else kwargs.get("model"),
+                    )
                     span.set_attribute(
                         "llm.responses",
                         json.dumps(
@@ -140,7 +145,12 @@ def messages_create(original_method, version, tracer):
         output_tokens = 0
         try:
             for chunk in result:
-                if hasattr(chunk, "message") and chunk.message is not None and hasattr(chunk.message, "model") and chunk.message.model is not None:
+                if (
+                    hasattr(chunk, "message")
+                    and chunk.message is not None
+                    and hasattr(chunk.message, "model")
+                    and chunk.message.model is not None
+                ):
                     span.set_attribute("llm.model", chunk.message.model)
                 content = ""
                 if hasattr(chunk, "delta") and chunk.delta is not None:

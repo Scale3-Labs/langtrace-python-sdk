@@ -22,8 +22,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from langtrace_python_sdk.instrumentation.anthropic.patch import \
-    messages_create
+from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
 
 logging.basicConfig(level=logging.FATAL)
 

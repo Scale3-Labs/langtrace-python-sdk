@@ -1,5 +1,3 @@
-
-
 APIS = {
     "CHAT_COMPLETION": {
         "METHOD": "groq.chat.completions.create",

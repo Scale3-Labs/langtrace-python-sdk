@@ -48,17 +48,12 @@ def invoke_tool(state):
     if multiply_call is None:
         raise Exception("No adder input found.")
 
-    res = multiply.invoke(
-        json.loads(multiply_call.get("function").get("arguments"))
-    )
+    res = multiply.invoke(json.loads(multiply_call.get("function").get("arguments")))
 
-    return ToolMessage(
-        tool_call_id=multiply_call.get("id"),
-        content=res
-    )
+    return ToolMessage(tool_call_id=multiply_call.get("id"), content=res)
 
 
-@with_langtrace_root_span('langgraph_example')
+@with_langtrace_root_span("langgraph_example")
 def basic():
 
     graph = MessageGraph()
@@ -67,10 +62,14 @@ def basic():
 
     graph.add_node("multiply", invoke_tool)
 
-    graph.add_conditional_edges("oracle", router, {
-        "multiply": "multiply",
-        "end": END,
-    })
+    graph.add_conditional_edges(
+        "oracle",
+        router,
+        {
+            "multiply": "multiply",
+            "end": END,
+        },
+    )
 
     graph.add_edge("multiply", END)
 
