@@ -22,7 +22,9 @@ def groq_example():
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
 
     chain = prompt | chat
-    result = chain.invoke({"text": "Explain the importance of low latency LLMs in 2 sentences or less."})
+    result = chain.invoke(
+        {"text": "Explain the importance of low latency LLMs in 2 sentences or less."}
+    )
     # print(result)
     return result
 

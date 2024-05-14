@@ -1,10 +1,9 @@
-
 # Cohere
 # from examples.cohere_example.chat import chat_comp
 # from examples.cohere_example.chat_stream import chat_stream
 # from examples.cohere_example.tools import tool_calling
 # from examples.cohere_example.embed import embed
-from examples.cohere_example.rerank import rerank
+# from examples.cohere_example.rerank import rerank
 
 # OpenAI
 
@@ -25,7 +24,8 @@ from examples.cohere_example.rerank import rerank
 
 # Rest
 # from examples.langchain_example.basic import basic, load_and_split, rag
-# from examples.pinecone_example.basic import basic
+from examples.pinecone_example.basic import basic
+
 # from examples.chroma_example.basic import basic
 # from examples.llamaindex_example.basic import basic
 # from examples.langchain_example.basic import basic
@@ -49,8 +49,8 @@ from examples.cohere_example.rerank import rerank
 # chat_stream()
 # tool_calling()
 # embed()
-rerank()
+# rerank()
 
 # load_and_split()
 # rag()
-# basic()
+basic()

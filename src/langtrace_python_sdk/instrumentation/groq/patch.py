@@ -22,10 +22,11 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.constants.instrumentation.groq import APIS
-from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
-                                            estimate_tokens)
+from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
 
 
 def chat_completions_create(original_method, version, tracer):
@@ -136,7 +137,8 @@ def chat_completions_create(original_method, version, tracer):
                                 if "content_filter_results" in choice
                                 else {}
                             ),
-                        } for choice in result.choices
+                        }
+                        for choice in result.choices
                     ]
                     span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -224,16 +226,22 @@ def chat_completions_create(original_method, version, tracer):
                     elif tool_calls:
                         for choice in chunk.choices:
                             tool_call = ""
-                            if (choice.delta and choice.delta.tool_calls is not None):
+                            if choice.delta and choice.delta.tool_calls is not None:
                                 toolcalls = choice.delta.tool_calls
                                 content = []
                                 for tool_call in toolcalls:
-                                    if tool_call and tool_call.function is not None and tool_call.function.arguments is not None:
+                                    if (
+                                        tool_call
+                                        and tool_call.function is not None
+                                        and tool_call.function.arguments is not None
+                                    ):
                                         token_counts = estimate_tokens(
                                             tool_call.function.arguments
                                         )
                                         completion_tokens += token_counts
-                                        content = content + [tool_call.function.arguments]
+                                        content = content + [
+                                            tool_call.function.arguments
+                                        ]
                                     else:
                                         content = content + []
                 else:
@@ -389,7 +397,8 @@ def async_chat_completions_create(original_method, version, tracer):
                                 if "content_filter_results" in choice
                                 else {}
                             ),
-                        } for choice in result.choices
+                        }
+                        for choice in result.choices
                     ]
                     span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -477,16 +486,22 @@ def async_chat_completions_create(original_method, version, tracer):
                     elif tool_calls:
                         for choice in chunk.choices:
                             tool_call = ""
-                            if (choice.delta and choice.delta.tool_calls is not None):
+                            if choice.delta and choice.delta.tool_calls is not None:
                                 toolcalls = choice.delta.tool_calls
                                 content = []
                                 for tool_call in toolcalls:
-                                    if tool_call and tool_call.function is not None and tool_call.function.arguments is not None:
+                                    if (
+                                        tool_call
+                                        and tool_call.function is not None
+                                        and tool_call.function.arguments is not None
+                                    ):
                                         token_counts = estimate_tokens(
                                             tool_call.function.arguments
                                         )
                                         completion_tokens += token_counts
-                                        content = content + [tool_call.function.arguments]
+                                        content = content + [
+                                            tool_call.function.arguments
+                                        ]
                                     else:
                                         content = content + []
                 else:
