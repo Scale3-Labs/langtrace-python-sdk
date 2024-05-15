@@ -125,6 +125,10 @@ def init(
 def init_instrumentations(
     disable_instrumentations: DisableInstrumentations, all_instrumentations: dict
 ):
+    if disable_instrumentations is None:
+        for _, v in all_instrumentations.items():
+            v.instrument()
+            return
     validate_instrumentations(disable_instrumentations)
 
     for key in disable_instrumentations:
@@ -145,7 +149,6 @@ def init_instrumentations(
 
 
 def validate_instrumentations(disable_instrumentations):
-
     if disable_instrumentations is not None:
         for key, value in disable_instrumentations.items():
             if isinstance(value, str):
