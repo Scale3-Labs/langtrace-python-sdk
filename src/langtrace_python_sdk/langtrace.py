@@ -70,7 +70,7 @@ def init(
     write_spans_to_console: bool = False,
     custom_remote_exporter=None,
     api_host: Optional[str] = None,
-    disable_instrumentations: Optional[DisableInstrumentations] = {},
+    disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
     provider = TracerProvider()
 
