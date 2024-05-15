@@ -70,7 +70,7 @@ def init(
     write_spans_to_console: bool = False,
     custom_remote_exporter=None,
     api_host: Optional[str] = None,
-    disable_instrumentations: Optional[DisableInstrumentations] = {},
+    disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
     provider = TracerProvider()
 
@@ -125,27 +125,35 @@ def init(
 def init_instrumentations(
     disable_instrumentations: DisableInstrumentations, all_instrumentations: dict
 ):
-    validate_instrumentations(disable_instrumentations)
+    if disable_instrumentations is None:
+        for _, v in all_instrumentations.items():
+            v.instrument()
+    else:
 
-    for key in disable_instrumentations:
-        for vendor in disable_instrumentations[key]:
-            if key == "only":
-                filtered_dict = {
-                    k: v for k, v in all_instrumentations.items() if k != vendor.value
-                }
-                for _, v in filtered_dict.items():
-                    v.instrument()
-            else:
-                filtered_dict = {
-                    k: v for k, v in all_instrumentations.items() if k == vendor.value
-                }
+        validate_instrumentations(disable_instrumentations)
 
-                for _, v in filtered_dict.items():
-                    v.instrument()
+        for key in disable_instrumentations:
+            for vendor in disable_instrumentations[key]:
+                if key == "only":
+                    filtered_dict = {
+                        k: v
+                        for k, v in all_instrumentations.items()
+                        if k != vendor.value
+                    }
+                    for _, v in filtered_dict.items():
+                        v.instrument()
+                else:
+                    filtered_dict = {
+                        k: v
+                        for k, v in all_instrumentations.items()
+                        if k == vendor.value
+                    }
+
+                    for _, v in filtered_dict.items():
+                        v.instrument()
 
 
 def validate_instrumentations(disable_instrumentations):
-
     if disable_instrumentations is not None:
         for key, value in disable_instrumentations.items():
             if isinstance(value, str):
