@@ -128,24 +128,29 @@ def init_instrumentations(
     if disable_instrumentations is None:
         for _, v in all_instrumentations.items():
             v.instrument()
-            return
-    validate_instrumentations(disable_instrumentations)
+    else:
 
-    for key in disable_instrumentations:
-        for vendor in disable_instrumentations[key]:
-            if key == "only":
-                filtered_dict = {
-                    k: v for k, v in all_instrumentations.items() if k != vendor.value
-                }
-                for _, v in filtered_dict.items():
-                    v.instrument()
-            else:
-                filtered_dict = {
-                    k: v for k, v in all_instrumentations.items() if k == vendor.value
-                }
+        validate_instrumentations(disable_instrumentations)
 
-                for _, v in filtered_dict.items():
-                    v.instrument()
+        for key in disable_instrumentations:
+            for vendor in disable_instrumentations[key]:
+                if key == "only":
+                    filtered_dict = {
+                        k: v
+                        for k, v in all_instrumentations.items()
+                        if k != vendor.value
+                    }
+                    for _, v in filtered_dict.items():
+                        v.instrument()
+                else:
+                    filtered_dict = {
+                        k: v
+                        for k, v in all_instrumentations.items()
+                        if k == vendor.value
+                    }
+
+                    for _, v in filtered_dict.items():
+                        v.instrument()
 
 
 def validate_instrumentations(disable_instrumentations):
