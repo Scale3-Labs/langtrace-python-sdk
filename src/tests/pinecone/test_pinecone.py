@@ -14,35 +14,42 @@ from tests.utils import common_setup
 
 class TestPinecone(unittest.TestCase):
     data = {
-    "status": "success",
-    "message": "Data upserted successfully",
-    "upserted_ids": [1, 2, 3]
+        "status": "success",
+        "message": "Data upserted successfully",
+        "upserted_ids": [1, 2, 3],
     }
-    
-    def setUp(self):
-        self.pinecone_mock, self.tracer, self.span = common_setup(self.data, 'pinecone.Index.upsert')
 
+    def setUp(self):
+        self.pinecone_mock, self.tracer, self.span = common_setup(
+            self.data, "pinecone.Index.upsert"
+        )
 
     def tearDown(self):
         self.pinecone_mock.stop()
 
     def test_pinecone(self):
-    
-       # Arrange
-        version = importlib.metadata.version('pinecone-client')
+
+        # Arrange
+        version = importlib.metadata.version("pinecone-client")
         method = "UPSERT"
         vectors = [[1, 2, 3], [4, 5, 6]]
 
         # Act
-        wrapped_function = generic_patch(pinecone.Index.upsert, method, version, self.tracer)
+        wrapped_function = generic_patch(
+            pinecone.Index.upsert, method, version, self.tracer
+        )
         result = wrapped_function(MagicMock(), MagicMock(), (vectors,), {})
 
         # Assert
-        self.assertTrue(self.tracer.start_as_current_span.called_once_with("pinecone.data.index", kind=SpanKind.CLIENT))
+        self.assertTrue(
+            self.tracer.start_as_current_span.called_once_with(
+                "pinecone.data.index", kind=SpanKind.CLIENT
+            )
+        )
         api = APIS[method]
         service_provider = SERVICE_PROVIDERS["PINECONE"]
         expected_attributes = {
-            'langtrace.sdk.name': 'langtrace-python-sdk',
+            "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
             "langtrace.service.version": version,
@@ -52,21 +59,23 @@ class TestPinecone(unittest.TestCase):
         }
         self.assertTrue(
             self.span.set_attribute.has_calls(
-                [call(key, value) for key, value in expected_attributes.items()], any_order=True
+                [call(key, value) for key, value in expected_attributes.items()],
+                any_order=True,
             )
-        )      
+        )
 
         actual_calls = self.span.set_attribute.call_args_list
 
         for key, value in expected_attributes.items():
             self.assertIn(call(key, value), actual_calls)
-            
+
         self.assertEqual(self.span.set_status.call_count, 1)
         self.assertTrue(self.span.set_status.has_calls([call(Status(StatusCode.OK))]))
 
-        expected_result = ['status', 'message', 'upserted_ids']
+        expected_result = ["status", "message", "upserted_ids"]
         result_keys = json.loads(result).keys()
         self.assertSetEqual(set(expected_result), set(result_keys), "Keys mismatch")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

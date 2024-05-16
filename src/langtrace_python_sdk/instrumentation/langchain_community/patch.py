@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
@@ -23,7 +22,9 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 
 
 def generic_patch(
@@ -40,7 +41,7 @@ def generic_patch(
             "langtrace.service.version": version,
             "langtrace.version": "1.0.0",
             "langchain.task.name": task,
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         if trace_input and len(args) > 0:
