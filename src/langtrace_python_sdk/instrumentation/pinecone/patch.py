@@ -84,7 +84,6 @@ def generic_patch(original_method, method, version, tracer):
         set_span_attribute(span, "db.query.top_k", kwargs.get("top_k"))
         set_span_attribute(span, "db.query.namespace", kwargs.get("namespace"))
         set_span_attribute(span, "db.query.id", kwargs.get("id"))
-        set_span_attribute(span, "db.query.queries", kwargs.get("queries"))
         filter = (
             json.dumps(kwargs.get("filter"))
             if isinstance(kwargs.get("filter"), dict)
@@ -101,6 +100,7 @@ def generic_patch(original_method, method, version, tracer):
     @silently_fail
     def set_query_response_attributes(span, response):
         matches = response.get("matches")
+
         usage = response.get("usage")
         for match in matches:
             span.add_event(
@@ -109,7 +109,7 @@ def generic_patch(original_method, method, version, tracer):
                     "db.query.match.id": match.get("id"),
                     "db.query.match.score": match.get("score"),
                     "db.query.match.metadata": match.get("metadata"),
-                    "db.query.match.values": match.get("values"),
+                    # "db.query.match.values": match.get("values"),
                 },
             )
 

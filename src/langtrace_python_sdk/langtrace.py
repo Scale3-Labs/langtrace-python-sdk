@@ -24,6 +24,8 @@ from opentelemetry.sdk.trace.export import (
     ConsoleSpanExporter,
     SimpleSpanProcessor,
 )
+import sys
+from opentelemetry.sdk.resources import Resource
 
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation.anthropic.instrumentation import (
@@ -72,7 +74,7 @@ def init(
     api_host: Optional[str] = None,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
-    provider = TracerProvider()
+    provider = TracerProvider(resource=Resource.create({"service.name": sys.argv[0]}))
 
     remote_write_exporter = (
         LangTraceExporter(api_key=api_key, api_host=api_host)
