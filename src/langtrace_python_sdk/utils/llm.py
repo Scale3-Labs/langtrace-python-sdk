@@ -58,3 +58,11 @@ def calculate_price_from_usage(model, usage):
             + cost_table["output"] * usage["completion_tokens"]
         ) / 1000
     return 0
+
+
+def set_span_attributes(span, name, value):
+    if value is not None:
+        if value != "":
+            span.set_attribute(name, value)
+    return
+

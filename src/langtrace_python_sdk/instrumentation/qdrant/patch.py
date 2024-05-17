@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 from langtrace.trace_attributes import DatabaseSpanAttributes
+from langtrace_python_sdk.utils.silently_fail import silently_fail
+from langtrace_python_sdk.utils.llm import set_span_attributes
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -47,12 +49,19 @@ def collection_patch(method, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        if hasattr(instance, "name") and instance.name is not None:
-            span_attributes["db.collection.name"] = instance.name
-
         attributes = DatabaseSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
+            collection_name = kwargs.get("collection_name") or args[0]
+            operation = api["OPERATION"]
+            set_span_attributes(span, "db.collection.name", collection_name)
+            if operation == "upsert":
+                _set_upsert_attributes(span, args, kwargs)
+            elif operation == "add":
+                _set_upload_attributes(span, args, kwargs, "documents")
+
+            # Todo: Add support for other operations here.
+
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
@@ -72,3 +81,26 @@ def collection_patch(method, version, tracer):
                 raise
 
     return traced_method
+
+
+@silently_fail
+def _set_upsert_attributes(span, args, kwargs):
+    points = kwargs.get("points") or args[1]
+    if isinstance(points, list):
+        length = len(points)
+    else:
+        # In case of using Batch.
+        length = len(points.ids)
+    set_span_attributes(span, "db.upsert.points_count", length)
+
+
+@silently_fail
+def _set_upload_attributes(span, args, kwargs, field):
+    docs = kwargs.get(field) or args[0]
+    if isinstance(docs, list):
+        length = len(docs)
+    else:
+        # In case of using Batch.
+        length = len(docs.ids)
+
+    set_span_attributes(span, f"db.upload.{field}_count", length)
