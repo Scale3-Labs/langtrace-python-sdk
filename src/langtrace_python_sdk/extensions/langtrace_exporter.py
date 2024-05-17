@@ -55,7 +55,7 @@ class LangTraceExporter(SpanExporter):
         self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
         self.api_host: str = api_host or LANGTRACE_REMOTE_URL
 
-        if not self.api_key:
+        if not self.api_key and not self.api_host:
             raise ValueError("No API key provided")
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
