@@ -38,13 +38,15 @@ dev = [
     "llama-index",
     "langchain-openai",
     "chromadb",
-    "cohere"
+    "cohere",
+    "qdrant_client"
 ]
 
 test = [
     "pytest",
     "pytest-vcr",
-    "pytest-asyncio"
+    "pytest-asyncio",
+    "protobuf==3.20.0",
 ]
 
 
