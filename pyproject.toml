@@ -34,6 +34,7 @@ dev = [
     "anthropic",
     "python-dotenv",
     "langchain",
+    'langchain-community',
     "langchain-openai",
     "llama-index",
     "langchain-openai",
