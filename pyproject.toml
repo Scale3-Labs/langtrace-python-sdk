@@ -24,7 +24,8 @@ dependencies = [
   'opentelemetry-instrumentation',
   'pinecone-client',
   'tiktoken',
-  "protobuf==3.20.2",
+  'opentelemetry-exporter-otlp-proto-http>=1.24.0',
+  'opentelemetry-exporter-otlp-proto-grpc>=1.24.0'
 
 ]
 
@@ -42,7 +43,7 @@ dev = [
     "langchain-openai",
     "chromadb",
     "cohere",
-    "qdrant_client"
+    'qdrant-client'
 ]
 
 test = [
