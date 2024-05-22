@@ -80,7 +80,6 @@ def collection_patch(method, version, tracer):
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
-                print(f"RESULT For operation {operation}: ", result)
                 return result
             except Exception as err:
                 # Record the exception in the span
