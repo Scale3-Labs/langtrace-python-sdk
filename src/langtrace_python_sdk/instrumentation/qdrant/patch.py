@@ -61,7 +61,6 @@ def collection_patch(method, version, tracer):
                 _set_upload_attributes(span, args, kwargs, "documents")
 
             elif operation == "upsert":
-                print("OPERATION: ", operation, "\n")
                 _set_upsert_attributes(span, args, kwargs)
 
             elif operation in ["query", "discover", "recommend", "retrieve", "search"]:
