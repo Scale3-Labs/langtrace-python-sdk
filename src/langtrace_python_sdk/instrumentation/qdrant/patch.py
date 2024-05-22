@@ -59,7 +59,6 @@ def collection_patch(method, version, tracer):
             set_span_attributes(span, "db.collection.name", collection_name)
 
             if operation == "add":
-                print("OPERATION: ", operation, "\n", kwargs)
                 _set_upload_attributes(span, args, kwargs, "documents")
 
             elif operation == "upsert":
