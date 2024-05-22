@@ -41,7 +41,6 @@ dev = [
     "langchain",
     'langchain-community',
     "langchain-openai",
-    "llama-index",
     "langchain-openai",
     "cohere"
 ]
