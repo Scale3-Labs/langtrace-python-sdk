@@ -40,7 +40,8 @@ dev = [
     "langchain-openai",
     "chromadb",
     "cohere",
-    "qdrant_client"
+    "qdrant_client",
+    "weaviate-client",
 ]
 
 test = [
