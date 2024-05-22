@@ -125,4 +125,4 @@ def _set_search_attributes(span, args, kwargs):
 @silently_fail
 def _set_batch_search_attributes(span, args, kwargs, method):
     requests = kwargs.get("requests") or []
-    set_span_attributes(span, f"qdrant.{method}.requests_count", len(requests))
+    set_span_attributes(span, f"db.{method}.requests_count", len(requests))
