@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import itertools
 from langtrace.trace_attributes import DatabaseSpanAttributes
+from langtrace_python_sdk.utils.llm import set_span_attributes
+from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -59,8 +62,32 @@ def collection_patch(method, version, tracer):
                 if value is not None:
                     span.set_attribute(field, value)
             try:
+
+                operation = api["OPERATION"]
+                if operation == "add":
+                    _set_chroma_add_attributes(span, kwargs)
+                elif operation == "get":
+                    _set_chroma_get_attributes(span, kwargs)
+                elif operation == "query":
+                    _set_chroma_query_attributes(span, kwargs)
+                elif operation == "peek":
+                    _set_chroma_peek_attributes(span, kwargs)
+                elif operation == "update":
+                    _set_chroma_update_attributes(span, kwargs)
+                elif operation == "upsert":
+                    _set_chroma_upsert_attributes(span, kwargs)
+                elif operation == "modify":
+                    _set_chroma_modify_attributes(span, kwargs)
+                elif operation == "delete":
+                    _set_chroma_delete_attributes(span, kwargs)
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
+
+                if operation == "query":
+                    events = _set_chroma_query_response(span, result)
+                    for event in events:
+                        span.add_event(name="db.chroma.query.result", attributes=event)
+
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
@@ -74,3 +101,166 @@ def collection_patch(method, version, tracer):
                 raise
 
     return traced_method
+
+
+def get_count_or_none(value):
+    return len(value) if value is not None else None
+
+
+def handle_null_params(param):
+    return str(param) if param else None
+
+
+@silently_fail
+def _set_chroma_add_attributes(span, kwargs):
+    set_span_attributes(
+        span, "db.chroma.add.ids_count", get_count_or_none(kwargs.get("ids"))
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.add.embeddings_count",
+        get_count_or_none(kwargs.get("embeddings")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.add.metadatas_count",
+        get_count_or_none(kwargs.get("metadatas")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.add.documents_count",
+        get_count_or_none(kwargs.get("documents")),
+    )
+
+
+@silently_fail
+def _set_chroma_get_attributes(span, kwargs):
+    set_span_attributes(
+        span, "db.chroma.get.ids_count", get_count_or_none(kwargs.get("ids"))
+    )
+    set_span_attributes(
+        span, "db.chroma.get.where", handle_null_params(kwargs.get("where"))
+    )
+    set_span_attributes(span, "db.chroma.get.limit", kwargs.get("limit"))
+    set_span_attributes(span, "db.chroma.get.offset", kwargs.get("offset"))
+    set_span_attributes(
+        span,
+        "db.chroma.get.where_document",
+        handle_null_params(kwargs.get("where_document")),
+    )
+    set_span_attributes(
+        span, "db.chroma.get.include", handle_null_params(kwargs.get("include"))
+    )
+
+
+@silently_fail
+def _set_chroma_query_attributes(span, kwargs):
+    set_span_attributes(
+        span,
+        "db.chroma.query.query_embeddings_count",
+        get_count_or_none(kwargs.get("query_embeddings")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.query.query_texts_count",
+        get_count_or_none(kwargs.get("query_texts")),
+    )
+    set_span_attributes(span, "db.chroma.query.n_results", kwargs.get("n_results"))
+    set_span_attributes(
+        span, "db.chroma.query.where", handle_null_params(kwargs.get("where"))
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.query.where_document",
+        handle_null_params(kwargs.get("where_document")),
+    )
+    set_span_attributes(
+        span, "db.chroma.query.include", handle_null_params(kwargs.get("include"))
+    )
+
+
+@silently_fail
+def _set_chroma_peek_attributes(span, kwargs):
+    set_span_attributes(span, "db.chroma.peek.limit", kwargs.get("limit"))
+
+
+@silently_fail
+def _set_chroma_update_attributes(span, kwargs):
+    set_span_attributes(
+        span, "db.chroma.update.ids_count", get_count_or_none(kwargs.get("ids"))
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.update.embeddings_count",
+        get_count_or_none(kwargs.get("embeddings")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.update.metadatas_count",
+        get_count_or_none(kwargs.get("metadatas")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.update.documents_count",
+        get_count_or_none(kwargs.get("documents")),
+    )
+
+
+@silently_fail
+def _set_chroma_modify_attributes(span, kwargs):
+    set_span_attributes(span, "db.chroma.modify.name", kwargs.get("name"))
+    # TODO: Add metadata attribute
+
+
+@silently_fail
+def _set_chroma_upsert_attributes(span, kwargs):
+    set_span_attributes(
+        span,
+        "db.chroma.upsert.embeddings_count",
+        get_count_or_none(kwargs.get("embeddings")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.upsert.metadatas_count",
+        get_count_or_none(kwargs.get("metadatas")),
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.upsert.documents_count",
+        get_count_or_none(kwargs.get("documents")),
+    )
+
+
+@silently_fail
+def _set_chroma_delete_attributes(span, kwargs):
+    set_span_attributes(
+        span, "db.chroma.delete.ids_count", get_count_or_none(kwargs.get("ids"))
+    )
+    set_span_attributes(
+        span, "db.chroma.delete.where", handle_null_params(kwargs.get("where"))
+    )
+    set_span_attributes(
+        span,
+        "db.chroma.delete.where_document",
+        handle_null_params(kwargs.get("where_document")),
+    )
+
+
+@silently_fail
+def _set_chroma_query_response(span, result):
+
+    attributes = []
+    ids = result.get("ids")[0]
+    distances = result.get("distances")[0]
+    metadatas = result.get("metadatas")[0]
+    documents = result.get("documents")[0]
+
+    for idx, _ in enumerate(ids):
+        attribute = {
+            "id": ids[idx],
+            "distance": distances[idx],
+            "metadata": metadatas[idx],
+            "document": documents[idx],
+        }
+        attributes.append(attribute)
+    return attributes
