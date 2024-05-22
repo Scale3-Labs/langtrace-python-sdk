@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import itertools
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from langtrace_python_sdk.utils.llm import set_span_attributes
 from langtrace_python_sdk.utils.silently_fail import silently_fail
