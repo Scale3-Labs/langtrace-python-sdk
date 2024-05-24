@@ -11,7 +11,7 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(write_spans_to_console=True, api_key='aa')
 
 client = OpenAI()
 pinecone = Pinecone()
