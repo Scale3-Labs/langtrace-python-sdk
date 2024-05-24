@@ -7,7 +7,7 @@ interactions:
       "connectors": [{"id": "web-search"}], "temperature": 0.1}'
     headers:
       accept:
-      - '*/*, text/event-stream, application/stream+json'
+      - '*/*'
       accept-encoding:
       - gzip, deflate
       connection:
@@ -17,7 +17,7 @@ interactions:
       content-type:
       - application/json
       host:
-      - api.cohere.ai
+      - api.cohere.com
       user-agent:
       - python-httpx/0.27.0
       x-fern-language:
@@ -25,12 +25,12 @@ interactions:
       x-fern-sdk-name:
       - cohere
       x-fern-sdk-version:
-      - 5.3.2
+      - 5.5.3
     method: POST
-    uri: https://api.cohere.ai/v1/chat
+    uri: https://api.cohere.com/v1/chat
   response:
     body:
-      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"1d521296-3008-42bf-8062-8b744d997ba0"}
+      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"79644b13-2cc8-462e-93be-f03cc16aed9a"}
 
         {"is_finished":false,"event_type":"text-generation","text":"Ar"}
 
@@ -38,200 +38,138 @@ interactions:
 
         {"is_finished":false,"event_type":"text-generation","text":","}
 
-        {"is_finished":false,"event_type":"text-generation","text":" here"}
+        {"is_finished":false,"event_type":"text-generation","text":" many"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" be"}
+        {"is_finished":false,"event_type":"text-generation","text":" years"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" the"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" story"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" of"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" Gold"}
-
-        {"is_finished":false,"event_type":"text-generation","text":"il"}
-
-        {"is_finished":false,"event_type":"text-generation","text":"ocks"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" and"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" the"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" Three"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" Bears"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" told"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" in"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" three"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" sentences"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" or"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" less"}
-
-        {"is_finished":false,"event_type":"text-generation","text":":"}
-
-        {"is_finished":false,"event_type":"text-generation","text":"\n\nOnce"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" upon"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" a"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" time"}
+        {"is_finished":false,"event_type":"text-generation","text":" ago"}
 
         {"is_finished":false,"event_type":"text-generation","text":","}
 
         {"is_finished":false,"event_type":"text-generation","text":" a"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" little"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" girl"}
+        {"is_finished":false,"event_type":"text-generation","text":" man"}
 
         {"is_finished":false,"event_type":"text-generation","text":" named"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" Gold"}
+        {"is_finished":false,"event_type":"text-generation","text":" Isaac"}
 
-        {"is_finished":false,"event_type":"text-generation","text":"il"}
+        {"is_finished":false,"event_type":"text-generation","text":" Newton"}
 
-        {"is_finished":false,"event_type":"text-generation","text":"ocks"}
+        {"is_finished":false,"event_type":"text-generation","text":" sat"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" stumbled"}
+        {"is_finished":false,"event_type":"text-generation","text":" beneath"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" into"}
+        {"is_finished":false,"event_type":"text-generation","text":" an"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" apple"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" tree"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" observing"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" an"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" apple"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" fall"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
 
         {"is_finished":false,"event_type":"text-generation","text":" the"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" home"}
+        {"is_finished":false,"event_type":"text-generation","text":" ground"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" This"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" inspired"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" him"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ponder"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" upon"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" concept"}
 
         {"is_finished":false,"event_type":"text-generation","text":" of"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" three"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" bears"}
-
-        {"is_finished":false,"event_type":"text-generation","text":","}
-
-        {"is_finished":false,"event_type":"text-generation","text":" she"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" ate"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" their"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" food"}
-
-        {"is_finished":false,"event_type":"text-generation","text":","}
-
-        {"is_finished":false,"event_type":"text-generation","text":" broke"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" their"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" chairs"}
-
-        {"is_finished":false,"event_type":"text-generation","text":","}
+        {"is_finished":false,"event_type":"text-generation","text":" gravity"}
 
         {"is_finished":false,"event_type":"text-generation","text":" and"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" slept"}
+        {"is_finished":false,"event_type":"text-generation","text":" eventually"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" in"}
+        {"is_finished":false,"event_type":"text-generation","text":" formulated"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" their"}
+        {"is_finished":false,"event_type":"text-generation","text":" his"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" beds"}
+        {"is_finished":false,"event_type":"text-generation","text":" theories"}
 
-        {"is_finished":false,"event_type":"text-generation","text":"."}
-
-        {"is_finished":false,"event_type":"text-generation","text":" When"}
+        {"is_finished":false,"event_type":"text-generation","text":" on"}
 
         {"is_finished":false,"event_type":"text-generation","text":" the"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" three"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" bears"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" returned"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" they"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" were"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" outraged"}
-
-        {"is_finished":false,"event_type":"text-generation","text":","}
-
-        {"is_finished":false,"event_type":"text-generation","text":" but"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" Gold"}
-
-        {"is_finished":false,"event_type":"text-generation","text":"il"}
-
-        {"is_finished":false,"event_type":"text-generation","text":"ocks"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" had"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" disappeared"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" -"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" she"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" had"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" run"}
-
-        {"is_finished":false,"event_type":"text-generation","text":" away"}
+        {"is_finished":false,"event_type":"text-generation","text":" matter"}
 
         {"is_finished":false,"event_type":"text-generation","text":"."}
 
-        {"is_finished":false,"event_type":"text-generation","text":"\n\nAr"}
+        {"is_finished":false,"event_type":"text-generation","text":" Ar"}
 
         {"is_finished":false,"event_type":"text-generation","text":"gh"}
 
         {"is_finished":false,"event_type":"text-generation","text":","}
 
-        {"is_finished":false,"event_type":"text-generation","text":" that"}
+        {"is_finished":false,"event_type":"text-generation","text":" thus"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" be"}
+        {"is_finished":false,"event_type":"text-generation","text":" began"}
 
         {"is_finished":false,"event_type":"text-generation","text":" the"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" end"}
+        {"is_finished":false,"event_type":"text-generation","text":" world"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''s"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" understanding"}
 
         {"is_finished":false,"event_type":"text-generation","text":" of"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" the"}
+        {"is_finished":false,"event_type":"text-generation","text":" gravity"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" story"}
+        {"is_finished":false,"event_type":"text-generation","text":","}
 
-        {"is_finished":false,"event_type":"text-generation","text":" me"}
+        {"is_finished":false,"event_type":"text-generation","text":" thanks"}
 
-        {"is_finished":false,"event_type":"text-generation","text":" heart"}
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
 
-        {"is_finished":false,"event_type":"text-generation","text":"ies"}
+        {"is_finished":false,"event_type":"text-generation","text":" this"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" curious"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" chap"}
 
         {"is_finished":false,"event_type":"text-generation","text":"!"}
 
-        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"86b73a20-0cfa-414b-b148-e7857669ef3e","text":"Argh,
-        here be the story of Goldilocks and the Three Bears told in three sentences
-        or less:\n\nOnce upon a time, a little girl named Goldilocks stumbled into
-        the home of three bears, she ate their food, broke their chairs, and slept
-        in their beds. When the three bears returned they were outraged, but Goldilocks
-        had disappeared - she had run away.\n\nArgh, that be the end of the story
-        me hearties!","generation_id":"1d521296-3008-42bf-8062-8b744d997ba0","chat_history":[{"role":"USER","message":"Who
+        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"7fdfb159-de9d-4cef-856b-cb2b801668db","text":"Argh,
+        many years ago, a man named Isaac Newton sat beneath an apple tree, observing
+        an apple fall to the ground. This inspired him to ponder upon the concept
+        of gravity and eventually formulated his theories on the matter. Argh, thus
+        began the world''s understanding of gravity, thanks to this curious chap!","generation_id":"79644b13-2cc8-462e-93be-f03cc16aed9a","chat_history":[{"role":"USER","message":"Who
         discovered gravity?"},{"role":"CHATBOT","message":"The man who is widely credited
         with discovering gravity is Sir Isaac Newton"},{"role":"USER","message":"Tell
-        me a story in 3 sentences or less?"},{"role":"CHATBOT","message":"Argh, here
-        be the story of Goldilocks and the Three Bears told in three sentences or
-        less:\n\nOnce upon a time, a little girl named Goldilocks stumbled into the
-        home of three bears, she ate their food, broke their chairs, and slept in
-        their beds. When the three bears returned they were outraged, but Goldilocks
-        had disappeared - she had run away.\n\nArgh, that be the end of the story
-        me hearties!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":31,"output_tokens":96},"tokens":{"input_tokens":49,"output_tokens":96}},"documents":[]},"finish_reason":"COMPLETE"}
+        me a story in 3 sentences or less?"},{"role":"CHATBOT","message":"Argh, many
+        years ago, a man named Isaac Newton sat beneath an apple tree, observing an
+        apple fall to the ground. This inspired him to ponder upon the concept of
+        gravity and eventually formulated his theories on the matter. Argh, thus began
+        the world''s understanding of gravity, thanks to this curious chap!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":31,"output_tokens":63},"tokens":{"input_tokens":49,"output_tokens":63}},"documents":[]},"finish_reason":"COMPLETE"}
 
         '
     headers:
@@ -246,7 +184,7 @@ interactions:
       content-type:
       - application/stream+json
       date:
-      - Fri, 26 Apr 2024 13:59:03 GMT
+      - Fri, 24 May 2024 09:38:03 GMT
       expires:
       - Thu, 01 Jan 1970 00:00:00 UTC
       pragma:
@@ -260,15 +198,15 @@ interactions:
       x-accel-expires:
       - '0'
       x-debug-trace-id:
-      - 2803337aa161b7c4f034921bb2bb1444
+      - 7a2dadc471ebb9e4e0050988183969e1
       x-endpoint-monthly-call-limit:
       - '1000'
       x-envoy-upstream-service-time:
-      - '66'
+      - '85'
       x-trial-endpoint-call-limit:
-      - '40'
+      - '10'
       x-trial-endpoint-call-remaining:
-      - '39'
+      - '8'
     status:
       code: 200
       message: OK
