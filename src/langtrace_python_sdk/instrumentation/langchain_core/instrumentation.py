@@ -23,7 +23,9 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.langchain_core.patch import (
-    generic_patch, runnable_patch)
+    generic_patch,
+    runnable_patch,
+)
 
 
 # pylint: disable=dangerous-default-value

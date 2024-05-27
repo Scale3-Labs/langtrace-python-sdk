@@ -22,10 +22,11 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.utils.llm import (calculate_prompt_tokens,
-                                            estimate_tokens)
+from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
 
 
 def images_generate(original_method, version, tracer):
@@ -52,7 +53,9 @@ def images_generate(original_method, version, tracer):
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("prompt", [])}]),
+            "llm.prompts": json.dumps(
+                [{"role": "user", "content": kwargs.get("prompt", [])}]
+            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -83,7 +86,7 @@ def images_generate(original_method, version, tracer):
                                     if hasattr(data, "revised_prompt")
                                     else ""
                                 ),
-                            }
+                            },
                         }
                     ]
                     span.set_attribute("llm.responses", json.dumps(response))
@@ -127,7 +130,9 @@ def async_images_generate(original_method, version, tracer):
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("prompt", [])}]),
+            "llm.prompts": json.dumps(
+                [{"role": "user", "content": kwargs.get("prompt", [])}]
+            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -159,7 +164,7 @@ def async_images_generate(original_method, version, tracer):
                                     if hasattr(data, "revised_prompt")
                                     else ""
                                 ),
-                            }
+                            },
                         }
                     ]
                     span.set_attribute("llm.responses", json.dumps(response))
@@ -287,7 +292,8 @@ def chat_completions_create(original_method, version, tracer):
                                 if "content_filter_results" in choice
                                 else {}
                             ),
-                        } for choice in result.choices
+                        }
+                        for choice in result.choices
                     ]
                     span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -375,16 +381,22 @@ def chat_completions_create(original_method, version, tracer):
                     elif tool_calls:
                         for choice in chunk.choices:
                             tool_call = ""
-                            if (choice.delta and choice.delta.tool_calls is not None):
+                            if choice.delta and choice.delta.tool_calls is not None:
                                 toolcalls = choice.delta.tool_calls
                                 content = []
                                 for tool_call in toolcalls:
-                                    if tool_call and tool_call.function is not None and tool_call.function.arguments is not None:
+                                    if (
+                                        tool_call
+                                        and tool_call.function is not None
+                                        and tool_call.function.arguments is not None
+                                    ):
                                         token_counts = estimate_tokens(
                                             tool_call.function.arguments
                                         )
                                         completion_tokens += token_counts
-                                        content = content + [tool_call.function.arguments]
+                                        content = content + [
+                                            tool_call.function.arguments
+                                        ]
                                     else:
                                         content = content + []
                 else:
@@ -540,7 +552,8 @@ def async_chat_completions_create(original_method, version, tracer):
                                 if "content_filter_results" in choice
                                 else {}
                             ),
-                        } for choice in result.choices
+                        }
+                        for choice in result.choices
                     ]
                     span.set_attribute("llm.responses", json.dumps(responses))
                 else:
@@ -628,16 +641,22 @@ def async_chat_completions_create(original_method, version, tracer):
                     elif tool_calls:
                         for choice in chunk.choices:
                             tool_call = ""
-                            if (choice.delta and choice.delta.tool_calls is not None):
+                            if choice.delta and choice.delta.tool_calls is not None:
                                 toolcalls = choice.delta.tool_calls
                                 content = []
                                 for tool_call in toolcalls:
-                                    if tool_call and tool_call.function is not None and tool_call.function.arguments is not None:
+                                    if (
+                                        tool_call
+                                        and tool_call.function is not None
+                                        and tool_call.function.arguments is not None
+                                    ):
                                         token_counts = estimate_tokens(
                                             tool_call.function.arguments
                                         )
                                         completion_tokens += token_counts
-                                        content = content + [tool_call.function.arguments]
+                                        content = content + [
+                                            tool_call.function.arguments
+                                        ]
                                     else:
                                         content = content + []
                 else:
@@ -715,7 +734,9 @@ def embeddings_create(original_method, version, tracer):
         }
 
         if kwargs.get("encoding_format") is not None:
-            span_attributes["llm.encoding.formats"] = json.dumps([kwargs.get("encoding_format")])
+            span_attributes["llm.encoding.formats"] = json.dumps(
+                [kwargs.get("encoding_format")]
+            )
 
         attributes = LLMSpanAttributes(**span_attributes)
         kwargs.get("encoding_format")
@@ -774,7 +795,9 @@ def async_embeddings_create(original_method, version, tracer):
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
-            "llm.prompts": json.dumps([{"role": "user", "content": kwargs.get("input", "")}]),
+            "llm.prompts": json.dumps(
+                [{"role": "user", "content": kwargs.get("input", "")}]
+            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 

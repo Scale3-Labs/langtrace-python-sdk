@@ -23,7 +23,9 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.groq.patch import (
-    async_chat_completions_create, chat_completions_create)
+    async_chat_completions_create,
+    chat_completions_create,
+)
 
 logging.basicConfig(level=logging.FATAL)
 

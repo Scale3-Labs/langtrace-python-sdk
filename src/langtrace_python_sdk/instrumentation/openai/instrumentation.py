@@ -23,9 +23,13 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.openai.patch import (
-    async_chat_completions_create, async_embeddings_create,
-    async_images_generate, chat_completions_create, embeddings_create,
-    images_generate)
+    async_chat_completions_create,
+    async_embeddings_create,
+    async_images_generate,
+    chat_completions_create,
+    embeddings_create,
+    images_generate,
+)
 
 logging.basicConfig(level=logging.FATAL)
 

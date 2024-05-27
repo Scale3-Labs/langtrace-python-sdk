@@ -9,7 +9,8 @@ from langtrace_python_sdk import langtrace
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=True)
+
 
 client = OpenAI()
 
@@ -21,7 +22,9 @@ def get_current_weather(location, unit="fahrenheit"):
     if "tokyo" in location.lower():
         return json.dumps({"location": "Tokyo", "temperature": "10", "unit": unit})
     elif "san francisco" in location.lower():
-        return json.dumps({"location": "San Francisco", "temperature": "72", "unit": unit})
+        return json.dumps(
+            {"location": "San Francisco", "temperature": "72", "unit": unit}
+        )
     elif "paris" in location.lower():
         return json.dumps({"location": "Paris", "temperature": "22", "unit": unit})
     else:
@@ -30,7 +33,12 @@ def get_current_weather(location, unit="fahrenheit"):
 
 def run_conversation():
     # Step 1: send the conversation and available functions to the model
-    messages = [{"role": "user", "content": "What's the weather like in San Francisco, Tokyo, and Paris?"}]
+    messages = [
+        {
+            "role": "user",
+            "content": "What's the weather like in San Francisco, Tokyo, and Paris?",
+        }
+    ]
     tools = [
         {
             "type": "function",

@@ -23,7 +23,10 @@ dependencies = [
   'opentelemetry-sdk',
   'opentelemetry-instrumentation',
   'pinecone-client',
-  'tiktoken'
+  'tiktoken',
+  'opentelemetry-exporter-otlp-proto-http>=1.24.0',
+  'opentelemetry-exporter-otlp-proto-grpc>=1.24.0'
+
 ]
 
 requires-python = ">=3.9"
@@ -34,17 +37,19 @@ dev = [
     "anthropic",
     "python-dotenv",
     "langchain",
+    'langchain-community',
     "langchain-openai",
     "llama-index",
     "langchain-openai",
     "chromadb",
-    "cohere"
+    "cohere",
+    'qdrant-client'
 ]
 
 test = [
     "pytest",
     "pytest-vcr",
-    "pytest-asyncio"
+    "pytest-asyncio",
 ]
 
 

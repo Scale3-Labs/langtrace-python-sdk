@@ -28,24 +28,25 @@ To use the managed SaaS version of Langtrace, follow the steps below:
 
 Get started by adding simply three lines to your code!
 
-``` python
+```python
 pip install langtrace-python-sdk
 ```
 
-``` python
+```python
 from langtrace_python_sdk import langtrace # Must precede any llm module imports
 langtrace.init(api_key=<your_api_key>)
 ```
 
 OR
 
-``` python
+```python
 from langtrace_python_sdk import langtrace # Must precede any llm module imports
 langtrace.init() # LANGTRACE_API_KEY as an ENVIRONMENT variable
 ```
 
 ## FastAPI Quick Start
-Initialize FastAPI project and add this inside the ```main.py``` file
+
+Initialize FastAPI project and add this inside the `main.py` file
 
 ```python
 from fastapi import FastAPI
@@ -67,7 +68,9 @@ def root():
 ```
 
 ## Django Quick Start
-Initialize django project and add this inside the ```__init.py__``` file
+
+Initialize django project and add this inside the `__init.py__` file
+
 ```python
 from langtrace_python_sdk import langtrace
 from openai import OpenAI
@@ -85,7 +88,9 @@ client.chat.completions.create(
 ```
 
 ## Flask Quick Start
-Initialize flask project and this inside ```app.py``` file
+
+Initialize flask project and this inside `app.py` file
+
 ```python
 from flask import Flask
 from langtrace_python_sdk import langtrace
@@ -110,27 +115,38 @@ def main():
 
 Get started by adding simply two lines to your code and see traces being logged to the console!
 
-``` python
+```python
 pip install langtrace-python-sdk
 ```
 
-``` python
+```python
 from langtrace_python_sdk import langtrace # Must precede any llm module imports
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=True)
 ```
 
 ## Langtrace self hosted custom exporter
 
 Get started by adding simply three lines to your code and see traces being exported to your remote location!
 
-``` python
+```python
 pip install langtrace-python-sdk
 ```
 
-``` python
+```python
 from langtrace_python_sdk import langtrace # Must precede any llm module imports
 langtrace.init(custom_remote_exporter=<your_exporter>, batch=<True or False>)
 ```
+
+### Configure Langtrace
+
+| Parameter                  | Type                                | Default Value                 | Description                                                                    |
+| -------------------------- | ----------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
+| `api_key`                  | `str`                               | `LANGTRACE_API_KEY` or `None` | The API key for authentication.                                                |
+| `batch`                    | `bool`                              | `True`                        | Whether to batch spans before sending them.                                    |
+| `write_spans_to_console`   | `bool`                              | `False`                       | Whether to write spans to the console.                                         |
+| `custom_remote_exporter`   | `Optional[Exporter]`                | `None`                        | Custom remote exporter. If `None`, a default `LangTraceExporter` will be used. |
+| `api_host`                 | `Optional[str]`                     | `https://langtrace.ai/`       | The API host for the remote exporter.                                          |
+| `disable_instrumentations` | `Optional[DisableInstrumentations]` | `None`                        | You can pass an object to disable instrumentation for specific vendors ex: `{'only': ['openai']}` or `{'all_except': ['openai']}`
 
 ### Additional Customization
 
@@ -148,7 +164,6 @@ def example():
     )
     return response
 ```
-
 
 - `with_additional_attributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
 
@@ -182,6 +197,14 @@ def api_call2():
 def chat_completion():
    api_call1()
    api_call2()
+```
+
+- `get_prompt_from_registry` - this function is designed to fetch the desired prompt from the `Prompt Registry`. You can pass two options for filtering `prompt_version` & `variables`.
+
+```python
+from langtrace_python_sdk import get_prompt_from_registry
+
+prompt = get_prompt_from_registry(<Registry ID>, options={"prompt_version": 1, "variables": {"foo": "bar"} })
 ```
 
 ## Supported integrations
