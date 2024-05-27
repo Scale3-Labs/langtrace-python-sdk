@@ -92,8 +92,6 @@ def get_response_object_attributes(response_object):
 def create_traced_method(method_name, version, tracer, get_collection_name=None):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method_name]
-        print(f"args: {args}")
-        print(f"kwargs: {kwargs}")
         service_provider = SERVICE_PROVIDERS["WEAVIATE"]
         extra_attributes = baggage.get_baggage(
             LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
