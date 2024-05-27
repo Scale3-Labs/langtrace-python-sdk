@@ -46,7 +46,7 @@ def generic_patch(original_method, method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "pinecone",
             "db.operation": api["OPERATION"],
-            "db.query": kwargs.get("query", ""),
+            "db.query": json.dumps(kwargs.get("query")),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.utils.llm import set_span_attributes
@@ -46,7 +47,7 @@ def collection_patch(method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "qdrant",
             "db.operation": api["OPERATION"],
-            "db.query": kwargs.get("query", ""),
+            "db.query": json.dumps(kwargs.get("query")),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
