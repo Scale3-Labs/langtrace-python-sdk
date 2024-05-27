@@ -53,7 +53,13 @@ def with_langtrace_root_span(
                 span_id = str(span.get_span_context().span_id)
                 trace_id = str(span.get_span_context().trace_id)
 
-                return func(*args, span_id, trace_id, **kwargs)
+                if (
+                    "span_id" in func.__code__.co_varnames
+                    and "trace_id" in func.__code__.co_varnames
+                ):
+                    return func(*args, span_id, trace_id, **kwargs)
+                else:
+                    return func(*args, **kwargs)
 
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
@@ -64,7 +70,13 @@ def with_langtrace_root_span(
             with tracer.start_as_current_span(operation_name, kind=kind) as span:
                 span_id = span.get_span_context().span_id
                 trace_id = span.get_span_context().trace_id
-                return await func(*args, span_id, trace_id, **kwargs)
+                if (
+                    "span_id" in func.__code__.co_varnames
+                    and "trace_id" in func.__code__.co_varnames
+                ):
+                    return await func(*args, span_id, trace_id, **kwargs)
+                else:
+                    return await func(*args, **kwargs)
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
