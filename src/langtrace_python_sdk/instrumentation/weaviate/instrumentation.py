@@ -26,7 +26,7 @@ from langtrace_python_sdk.instrumentation.weaviate.patch import (
     generic_collection_patch,
     generic_query_patch,
 )
-from src.langtrace_python_sdk.constants.instrumentation.weaviate import APIS
+from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 
 logging.basicConfig(level=logging.FATAL)
 
