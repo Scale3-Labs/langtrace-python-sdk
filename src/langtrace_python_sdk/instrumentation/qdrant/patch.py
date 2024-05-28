@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.utils.llm import set_span_attributes
@@ -46,6 +47,7 @@ def collection_patch(method, version, tracer):
             "langtrace.version": "1.0.0",
             "db.system": "qdrant",
             "db.operation": api["OPERATION"],
+            "db.query": json.dumps(kwargs.get("query")),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -55,12 +57,22 @@ def collection_patch(method, version, tracer):
             collection_name = kwargs.get("collection_name") or args[0]
             operation = api["OPERATION"]
             set_span_attributes(span, "db.collection.name", collection_name)
-            if operation == "upsert":
-                _set_upsert_attributes(span, args, kwargs)
-            elif operation == "add":
+
+            if operation == "add":
                 _set_upload_attributes(span, args, kwargs, "documents")
 
-            # Todo: Add support for other operations here.
+            elif operation == "upsert":
+                _set_upsert_attributes(span, args, kwargs)
+
+            elif operation in ["query", "discover", "recommend", "retrieve", "search"]:
+                _set_search_attributes(span, args, kwargs)
+            elif operation in [
+                "query_batch",
+                "discover_batch",
+                "recommend_batch",
+                "search_batch",
+            ]:
+                _set_batch_search_attributes(span, args, kwargs, operation)
 
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
@@ -104,3 +116,15 @@ def _set_upload_attributes(span, args, kwargs, field):
         length = len(docs.ids)
 
     set_span_attributes(span, f"db.upload.{field}_count", length)
+
+
+@silently_fail
+def _set_search_attributes(span, args, kwargs):
+    limit = kwargs.get("limit") or 10
+    set_span_attributes(span, "db.query.top_k", limit)
+
+
+@silently_fail
+def _set_batch_search_attributes(span, args, kwargs, method):
+    requests = kwargs.get("requests") or []
+    set_span_attributes(span, f"db.{method}.requests_count", len(requests))

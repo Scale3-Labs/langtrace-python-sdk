@@ -22,6 +22,7 @@ SERVICE_PROVIDERS = {
     "COHERE": "Cohere",
     "PPLX": "Perplexity",
     "QDRANT": "Qdrant",
+    "WEAVIATE": "Weaviate",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

@@ -616,6 +616,7 @@ def async_chat_completions_create(original_method, version, tracer):
         span.add_event(Event.STREAM_START.value)
         completion_tokens = 0
         try:
+            content = []
             async for chunk in result:
                 if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
