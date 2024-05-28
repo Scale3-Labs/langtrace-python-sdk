@@ -7,7 +7,8 @@ from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone
 
-from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
+
+from langtrace_python_sdk import with_langtrace_root_span, send_user_feedback
 
 _ = load_dotenv(find_dotenv())
 
@@ -18,7 +19,8 @@ pinecone = Pinecone()
 
 
 @with_langtrace_root_span()
-def basic():
+def basic(span_id, trace_id):
+
     result = client.embeddings.create(
         model="text-embedding-ada-002",
         input="Some random text string goes here",
@@ -36,5 +38,8 @@ def basic():
 
     resp = index.query(
         vector=embedding, top_k=1, include_values=False, namespace="test-namespace"
+    )
+    send_user_feedback(
+        {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
     )
     print(resp)
