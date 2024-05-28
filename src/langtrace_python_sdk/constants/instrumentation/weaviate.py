@@ -2,35 +2,43 @@ from langtrace.trace_attributes import WeaviateMethods
 
 APIS = {
     "weaviate.query.bm25": {
-        "METHOD": WeaviateMethods.QUERY_BM25.value,
+        "MODULE": WeaviateMethods.QUERY_BM25.value,
+        "METHOD": "_BM25Query.bm25",
         "OPERATION": "query",
     },
     "weaviate.query.fetch_object_by_id": {
-        "METHOD": WeaviateMethods.QUERY_FETCH_OBJECT_BY_ID.value,
+        "MODULE": WeaviateMethods.QUERY_FETCH_OBJECT_BY_ID.value,
+        "METHOD": "_FetchObjectByIDQuery.fetch_object_by_id",
         "OPERATION": "query",
     },
     "weaviate.query.fetch_objects": {
-        "METHOD": WeaviateMethods.QUERY_FETCH_OBJECTS.value,
+        "MODULE": WeaviateMethods.QUERY_FETCH_OBJECTS.value,
+        "METHOD": "_FetchObjectsQuery.fetch_objects",
         "OPERATION": "query",
     },
     "weaviate.query.hybrid": {
-        "METHOD": WeaviateMethods.QUERY_HYBRID.value,
+        "MODULE": WeaviateMethods.QUERY_HYBRID.value,
+        "METHOD": "_HybridQuery.hybrid",
         "OPERATION": "query",
     },
     "weaviate.query.near_object": {
-        "METHOD": WeaviateMethods.QUERY_NEAR_OBJECT.value,
+        "MODULE": WeaviateMethods.QUERY_NEAR_OBJECT.value,
+        "METHOD": "_NearObjectQuery.near_object",
         "OPERATION": "query",
     },
     "weaviate.query.near_text": {
-        "METHOD": WeaviateMethods.QUERY_NEAR_TEXT.value,
+        "MODULE": WeaviateMethods.QUERY_NEAR_TEXT.value,
+        "METHOD": "_NearTextQuery.near_text",
         "OPERATION": "query",
     },
     "weaviate.query.near_vector": {
-        "METHOD": WeaviateMethods.QUERY_NEAR_VECTOR.value,
+        "MODULE": WeaviateMethods.QUERY_NEAR_VECTOR.value,
+        "METHOD": "_NearVectorQuery.near_vector",
         "OPERATION": "query",
     },
     "weaviate.collections.create": {
-        "METHOD": WeaviateMethods.COLLECTIONS_CREATE.value,
+        "MODULE": WeaviateMethods.COLLECTIONS_OPERATIONS.value,
+        "METHOD": "_Collections.create",
         "OPERATION": "create",
     },
 }

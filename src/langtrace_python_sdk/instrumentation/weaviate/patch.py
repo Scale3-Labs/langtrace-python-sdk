@@ -15,40 +15,20 @@ limitations under the License.
 """
 
 import json
-from collections.abc import Iterable
-from datetime import datetime
-from typing import Optional
 
 from langtrace.trace_attributes import DatabaseSpanAttributes, Event
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-from pydantic import BaseModel, Extra, Field
 
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
-from langtrace_python_sdk.utils.misc import to_iso_format
+from langtrace_python_sdk.utils.misc import (to_iso_format,extract_input_params)
 
 # Predefined metadata response attributes
 METADATA_ATTRIBUTES = ['creation_time', 'last_update_time', 'distance', 'certainty',
                        'score', 'explain_score', 'is_consistent', 'rerank_score']
-
-
-def extract_input_params(args, kwargs):
-    extracted_params = {}
-    for key, value in kwargs.items():
-        if hasattr(value, '__dict__'):
-            extracted_params[key] = json.dumps(vars(value))
-        else:
-            extracted_params[key] = value
-    for i, value in enumerate(args):
-        if hasattr(value, '__dict__'):
-            extracted_params[f'arg{i}'] = json.dumps(vars(value))
-        else:
-            extracted_params[f'arg{i}'] = value
-    # Remove None values
-    return {k: v for k, v in extracted_params.items() if v is not None}
 
 
 def extract_metadata(metadata):

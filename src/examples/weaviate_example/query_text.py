@@ -67,7 +67,6 @@ def insert():
 @with_langtrace_root_span()
 def query_data_bm25():
     try:
-        pass
         questions = client.collections.get("Question")
         response = questions.query.bm25(
             query="science",
@@ -84,7 +83,6 @@ def query_data_bm25():
 @with_langtrace_root_span()
 def query_data_near_text():
     try:
-        pass
         questions = client.collections.get("Question")
         response = questions.query.near_text(
             query="biology",
@@ -101,8 +99,6 @@ def query_data_near_text():
             move_away=Move(force=0.45, concepts="history"),
             # group_by=GroupByAggregate(prop="inPublication"),
         )
-        # print(json.dumps(response))
-        # json.dumps(response, default=custom_serializer, indent=4)
 
         for each_obj in response.objects:
             print(each_obj.properties)
@@ -114,7 +110,6 @@ def query_data_near_text():
 @with_langtrace_root_span()
 def query_fetch_object_by_id():
     try:
-        pass
         questions = client.collections.get("Question")
         response = questions.query.fetch_object_by_id(
             "cb9899ad-5903-4596-9465-6ab012486855")
@@ -128,7 +123,6 @@ def query_fetch_object_by_id():
 @with_langtrace_root_span()
 def query_fetch_objects():
     try:
-        pass
         questions = client.collections.get("Question")
         response = questions.query.fetch_objects(include_vector=True
                                                  )
