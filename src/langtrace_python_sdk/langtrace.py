@@ -64,6 +64,9 @@ from langtrace_python_sdk.instrumentation.pinecone.instrumentation import (
 from langtrace_python_sdk.instrumentation.qdrant.instrumentation import (
     QdrantInstrumentation,
 )
+from langtrace_python_sdk.instrumentation.weaviate.instrumentation import (
+    WeaviateInstrumentation,
+)
 
 
 def init(
@@ -119,6 +122,7 @@ def init(
         "langgraph": LanggraphInstrumentation(),
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
+        "weaviate": WeaviateInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
