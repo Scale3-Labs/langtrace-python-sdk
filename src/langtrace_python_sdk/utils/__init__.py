@@ -3,5 +3,3 @@ def set_span_attribute(span, name, value):
         if value != "":
             span.set_attribute(name, value)
     return
-
-

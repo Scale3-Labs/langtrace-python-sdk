@@ -16,25 +16,42 @@ limitations under the License.
 
 import json
 
-from langtrace.trace_attributes import DatabaseSpanAttributes, Event
+from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
-from langtrace_python_sdk.utils.misc import (to_iso_format,extract_input_params)
+from langtrace_python_sdk.utils.misc import extract_input_params, to_iso_format
 
 # Predefined metadata response attributes
-METADATA_ATTRIBUTES = ['creation_time', 'last_update_time', 'distance', 'certainty',
-                       'score', 'explain_score', 'is_consistent', 'rerank_score']
+METADATA_ATTRIBUTES = [
+    "creation_time",
+    "last_update_time",
+    "distance",
+    "certainty",
+    "score",
+    "explain_score",
+    "is_consistent",
+    "rerank_score",
+]
 
 
 def extract_metadata(metadata):
     # Extraction response Query metadata
-    extracted_metadata = {attr: to_iso_format(getattr(metadata, attr)) if 'time' in attr else getattr(metadata, attr)
-                          for attr in METADATA_ATTRIBUTES if hasattr(metadata, attr)}
+    extracted_metadata = {
+        attr: (
+            to_iso_format(getattr(metadata, attr))
+            if "time" in attr
+            else getattr(metadata, attr)
+        )
+        for attr in METADATA_ATTRIBUTES
+        if hasattr(metadata, attr)
+    }
 
     return {k: v for k, v in extracted_metadata.items() if v is not None}
 
@@ -42,7 +59,7 @@ def extract_metadata(metadata):
 def aggregate_responses(result):
     all_responses = []
 
-    if hasattr(result, 'objects') and result.objects is not None:
+    if hasattr(result, "objects") and result.objects is not None:
         for each_obj in result.objects:
             # Loop for multiple object responses
             response_attributes = get_response_object_attributes(each_obj)
@@ -58,14 +75,29 @@ def get_response_object_attributes(response_object):
 
     response_attributes = {
         **response_object.properties,
-        "uuid": str(response_object.uuid) if hasattr(response_object, 'uuid') else None,
-        "collection": response_object.collection if hasattr(response_object, 'collection') else None,
-        "vector": response_object.vector if hasattr(response_object, 'vector') else None,
-        "references": response_object.references if hasattr(response_object, 'references') else None,
-        "metadata": extract_metadata(response_object.metadata) if hasattr(response_object, 'metadata') else None,
+        "uuid": str(response_object.uuid) if hasattr(response_object, "uuid") else None,
+        "collection": (
+            response_object.collection
+            if hasattr(response_object, "collection")
+            else None
+        ),
+        "vector": (
+            response_object.vector if hasattr(response_object, "vector") else None
+        ),
+        "references": (
+            response_object.references
+            if hasattr(response_object, "references")
+            else None
+        ),
+        "metadata": (
+            extract_metadata(response_object.metadata)
+            if hasattr(response_object, "metadata")
+            else None
+        ),
     }
-    response_attributes = {k: v for k,
-                           v in response_attributes.items() if v is not None}
+    response_attributes = {
+        k: v for k, v in response_attributes.items() if v is not None
+    }
     return response_attributes
 
 
@@ -73,11 +105,13 @@ def create_traced_method(method_name, version, tracer, get_collection_name=None)
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[method_name]
         service_provider = SERVICE_PROVIDERS["WEAVIATE"]
-        extra_attributes = baggage.get_baggage(
-            LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
-        collection_name = get_collection_name(
-            instance, kwargs) if get_collection_name else instance._name
+        collection_name = (
+            get_collection_name(instance, kwargs)
+            if get_collection_name
+            else instance._name
+        )
 
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
@@ -104,8 +138,7 @@ def create_traced_method(method_name, version, tracer, get_collection_name=None)
                 if api["OPERATION"] == "query":
                     span.add_event(
                         name="db.response",
-                        attributes={
-                            "db.response": aggregate_responses(result)},
+                        attributes={"db.response": aggregate_responses(result)},
                     )
                 span.set_status(StatusCode.OK)
                 return result
@@ -125,4 +158,9 @@ def generic_query_patch(method_name, version, tracer):
 
 
 def generic_collection_patch(method_name, version, tracer):
-    return create_traced_method(method_name, version, tracer, get_collection_name=lambda instance, kwargs: kwargs.get("name"))
+    return create_traced_method(
+        method_name,
+        version,
+        tracer,
+        get_collection_name=lambda instance, kwargs: kwargs.get("name"),
+    )

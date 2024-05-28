@@ -68,6 +68,7 @@ from langtrace_python_sdk.instrumentation.weaviate.instrumentation import (
     WeaviateInstrumentation,
 )
 
+
 def init(
     api_key: str = None,
     batch: bool = True,

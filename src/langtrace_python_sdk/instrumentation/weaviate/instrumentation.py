@@ -13,18 +13,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+
 import importlib.metadata
-import inspect
 import logging
 from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
-from src.langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.weaviate.patch import (
-    generic_collection_patch, generic_query_patch)
+    generic_collection_patch,
+    generic_query_patch,
+)
+from src.langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 
 logging.basicConfig(level=logging.FATAL)
 
