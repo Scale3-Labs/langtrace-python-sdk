@@ -57,12 +57,22 @@ def collection_patch(method, version, tracer):
             collection_name = kwargs.get("collection_name") or args[0]
             operation = api["OPERATION"]
             set_span_attributes(span, "db.collection.name", collection_name)
-            if operation == "upsert":
-                _set_upsert_attributes(span, args, kwargs)
-            elif operation == "add":
+
+            if operation == "add":
                 _set_upload_attributes(span, args, kwargs, "documents")
 
-            # Todo: Add support for other operations here.
+            elif operation == "upsert":
+                _set_upsert_attributes(span, args, kwargs)
+
+            elif operation in ["query", "discover", "recommend", "retrieve", "search"]:
+                _set_search_attributes(span, args, kwargs)
+            elif operation in [
+                "query_batch",
+                "discover_batch",
+                "recommend_batch",
+                "search_batch",
+            ]:
+                _set_batch_search_attributes(span, args, kwargs, operation)
 
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
@@ -106,3 +116,15 @@ def _set_upload_attributes(span, args, kwargs, field):
         length = len(docs.ids)
 
     set_span_attributes(span, f"db.upload.{field}_count", length)
+
+
+@silently_fail
+def _set_search_attributes(span, args, kwargs):
+    limit = kwargs.get("limit") or 10
+    set_span_attributes(span, "db.query.top_k", limit)
+
+
+@silently_fail
+def _set_batch_search_attributes(span, args, kwargs, method):
+    requests = kwargs.get("requests") or []
+    set_span_attributes(span, f"db.{method}.requests_count", len(requests))

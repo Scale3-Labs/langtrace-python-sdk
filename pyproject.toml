@@ -35,15 +35,14 @@ requires-python = ">=3.9"
 dev = [
     "openai",
     "anthropic",
+    "chromadb",
+    'qdrant-client',
     "python-dotenv",
     "langchain",
     'langchain-community',
     "langchain-openai",
-    "llama-index",
     "langchain-openai",
-    "chromadb",
-    "cohere",
-    'qdrant-client'
+    "cohere"
 ]
 
 test = [
