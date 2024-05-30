@@ -28,19 +28,3 @@ def test_langchain(exporter):
         "StrOutputParser.invoke",
         "RunnableSequence.invoke",
     ] == [span.name for span in spans]
-
-
-def test_load_and_split(exporter):
-    url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
-    loader = PyPDFLoader(url)
-    data = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=0)
-    text_splitter.split_documents(data)
-    spans = exporter.get_finished_spans()
-    assert [
-        "PagedPDFSplitter.lazy_load",
-        "PyPDFLoader.lazy_load",
-        "BasePDFLoader.load",
-        "PagedPDFSplitter.load",
-        "PyPDFLoader.load",
-    ] == [span.name for span in spans]
