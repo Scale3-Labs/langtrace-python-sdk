@@ -126,7 +126,6 @@ def send_user_feedback(data: EvaluationAPIData) -> None:
                 timeout=None,
             )
             response.raise_for_status()
-            print("SENDING FEEDBACK PUT", response.status_code, response.text)
 
         else:
             # Make a POST request to create a new evaluation
@@ -137,7 +136,6 @@ def send_user_feedback(data: EvaluationAPIData) -> None:
                 headers=headers,
                 timeout=None,
             )
-            print("Response", response.status_code, response.text)
             response.raise_for_status()
 
     except requests.RequestException as err:
