@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
+
 from langtrace.trace_attributes import DatabaseSpanAttributes
-from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -26,15 +26,16 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
-import json
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.silently_fail import silently_fail
 
 
-def generic_patch(original_method, method, version, tracer):
+def generic_patch(operation_name, version, tracer):
     """
     A generic patch method that wraps a function with a span"""
 
     def traced_method(wrapped, instance, args, kwargs):
-        api = APIS[method]
+        api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS["PINECONE"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
@@ -56,7 +57,7 @@ def generic_patch(original_method, method, version, tracer):
 
             if span.is_recording():
                 set_span_attribute(span, "server.address", instance._config.host)
-                if method == "QUERY":
+                if operation_name == "QUERY":
                     set_query_input_attributes(span, kwargs)
 
             for field, value in attributes.model_dump(by_alias=True).items():
@@ -64,7 +65,7 @@ def generic_patch(original_method, method, version, tracer):
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
-                result = original_method(instance, *args, **kwargs)
+                result = wrapped(*args, **kwargs)
                 if result:
                     if span.is_recording():
                         set_query_response_attributes(span, result)

@@ -15,25 +15,25 @@ limitations under the License.
 """
 
 import asyncio
+import os
 from functools import wraps
 from typing import Optional
 
+import requests
+from opentelemetry import baggage, context, trace
+from opentelemetry.trace import SpanKind
+
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
+)
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
 )
 from langtrace_python_sdk.utils.types import (
     EvaluationAPIData,
     LangTraceApiError,
     LangTraceEvaluation,
 )
-from opentelemetry import baggage, context, trace
-from opentelemetry.trace import SpanKind
-
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-)
-import os
-import requests
 
 
 def with_langtrace_root_span(
@@ -161,7 +161,7 @@ def _get_evaluation(span_id: str) -> Optional[LangTraceEvaluation]:
             headers={"x-api-key": os.environ["LANGTRACE_API_KEY"]},
             timeout=None,
         )
-        evaluations = response.json()["evaluations"]
+        evaluations = response.json().get("evaluations", [])
         response.raise_for_status()
         return None if not evaluations else evaluations[0]
 
