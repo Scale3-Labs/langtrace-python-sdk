@@ -17,7 +17,7 @@ limitations under the License.
 import importlib.metadata
 import logging
 from typing import Collection
-
+from opentelemetry.instrumentation.utils import unwrap
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
@@ -28,7 +28,7 @@ from langtrace_python_sdk.instrumentation.weaviate.patch import (
 )
 from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 
-logging.basicConfig(level=logging.FATAL)
+logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG for detailed logging
 
 
 class WeaviateInstrumentation(BaseInstrumentor):
@@ -47,17 +47,19 @@ class WeaviateInstrumentation(BaseInstrumentor):
         for api_name, api_config in APIS.items():
             module_path, function_name = api_name.rsplit(".", 1)
             if api_config.get("OPERATION") == "query":
-                wrap_function_wrapper(
-                    api_config["MODULE"],
-                    api_config["METHOD"],
-                    generic_query_patch(api_name, version, tracer),
-                )
+                if getattr(api_config["MODULE"], api_config["METHOD"], None):
+                    wrap_function_wrapper(
+                        api_config["MODULE"],
+                        api_config["METHOD"],
+                        generic_query_patch(api_name, version, tracer),
+                    )
             elif api_config.get("OPERATION") == "create":
-                wrap_function_wrapper(
-                    api_config["MODULE"],
-                    api_config["METHOD"],
-                    generic_collection_patch(api_name, version, tracer),
-                )
+                if getattr(api_config["MODULE"], api_config["METHOD"], None):
+                    wrap_function_wrapper(
+                        api_config["MODULE"],
+                        api_config["METHOD"],
+                        generic_collection_patch(api_name, version, tracer),
+                    )
 
     def _instrument_module(self, module_name):
         pass
