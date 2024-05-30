@@ -29,7 +29,7 @@ def create_index():
 
 
 @with_langtrace_root_span()
-def basic(span_id, trace_id):
+def basic(span_id=None, trace_id=None):
 
     result = client.embeddings.create(
         model="text-embedding-ada-002",
@@ -44,7 +44,6 @@ def basic(span_id, trace_id):
 
     index = pinecone.Index(PINECONE_INDEX_NAME)
     res = index.upsert(vectors=[data_to_upsert], namespace="test-namespace")
-    print("res", res)
 
     resp = index.query(
         vector=embedding, top_k=1, include_values=False, namespace="test-namespace"
@@ -52,8 +51,7 @@ def basic(span_id, trace_id):
     send_user_feedback(
         {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
     )
-    print(resp)
+    return resp
 
 
 # create_index()
-basic("span_id", "trace_id")
