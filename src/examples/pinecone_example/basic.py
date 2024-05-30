@@ -51,7 +51,7 @@ def basic(span_id=None, trace_id=None):
     send_user_feedback(
         {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
     )
-    return resp
+    return [res, resp]
 
 
 # create_index()
