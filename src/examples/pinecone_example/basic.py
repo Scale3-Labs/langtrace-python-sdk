@@ -2,13 +2,12 @@
 This example demonstrates how to use Pinecone with Langtrace.
 """
 
-from langtrace_python_sdk import langtrace
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
-from pinecone import Pinecone
+from pinecone import Pinecone, ServerlessSpec
 
-
-from langtrace_python_sdk import with_langtrace_root_span, send_user_feedback
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
+from langtrace_python_sdk.utils.with_root_span import send_user_feedback
 
 _ = load_dotenv(find_dotenv())
 
@@ -16,6 +15,17 @@ langtrace.init()
 
 client = OpenAI()
 pinecone = Pinecone()
+
+PINECONE_INDEX_NAME = "test-index"
+
+
+def create_index():
+    pinecone.create_index(
+        name=PINECONE_INDEX_NAME,
+        dimension=1536,
+        metric="cosine",
+        spec=ServerlessSpec(cloud="aws", region="us-east-1"),
+    )
 
 
 @with_langtrace_root_span()
@@ -32,7 +42,7 @@ def basic(span_id, trace_id):
     unique_id = "unique_random_id"
     data_to_upsert = {"id": unique_id, "values": embedding}
 
-    index = pinecone.Index("test-index")
+    index = pinecone.Index(PINECONE_INDEX_NAME)
     res = index.upsert(vectors=[data_to_upsert], namespace="test-namespace")
     print("res", res)
 
@@ -43,3 +53,7 @@ def basic(span_id, trace_id):
         {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
     )
     print(resp)
+
+
+# create_index()
+basic("span_id", "trace_id")
