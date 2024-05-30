@@ -9,6 +9,8 @@ from opentelemetry.trace.span import format_trace_id
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
+from colorama import Fore
+from requests.exceptions import RequestException
 
 
 class LangTraceExporter(SpanExporter):
@@ -55,9 +57,6 @@ class LangTraceExporter(SpanExporter):
         self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
         self.api_host: str = api_host or LANGTRACE_REMOTE_URL
 
-        if not self.api_key:
-            raise ValueError("No API key provided")
-
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         """
         Exports a batch of telemetry data.
@@ -68,10 +67,17 @@ class LangTraceExporter(SpanExporter):
         Returns:
             The result of the export SUCCESS or FAILURE
         """
+        if not self.api_key:
+            print(Fore.RED)
+            print(
+                "Missing Langtrace API key, proceed to https://langtrace.ai to create one"
+            )
+            print("Set the API key as an environment variable LANGTRACE_API_KEY")
+            print(Fore.RESET)
+            return
         data = [
             {
                 "traceId": format_trace_id(span.get_span_context().trace_id),
-                "instrumentationLibrary": span.instrumentation_info.__repr__(),
                 "droppedEventsCount": span.dropped_events,
                 "droppedAttributesCount": span.dropped_attributes,
                 "droppedLinksCount": span.dropped_links,
@@ -83,14 +89,23 @@ class LangTraceExporter(SpanExporter):
 
         # Send data to remote URL
         try:
-            requests.post(
+            response = requests.post(
                 url=f"{self.api_host}/api/trace",
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
+                timeout=20,
             )
-            print(f"sent to {self.api_host}/api/trace with {len(data)} spans")
+
+            if not response.ok:
+                raise RequestException(response.text)
+
+            print(
+                Fore.GREEN + f"Exported {len(spans)} spans successfully." + Fore.RESET
+            )
             return SpanExportResult.SUCCESS
-        except Exception as e:
+        except RequestException as err:
+            print(Fore.RED + "Failed to export spans.")
+            print(Fore.RED + f"Error: {err}" + Fore.RESET)
             return SpanExportResult.FAILURE
 
     def shutdown(self) -> None:

@@ -68,6 +68,8 @@ from langtrace_python_sdk.instrumentation.weaviate.instrumentation import (
     WeaviateInstrumentation,
 )
 
+from colorama import Fore
+
 
 def init(
     api_key: str = None,
@@ -77,6 +79,7 @@ def init(
     api_host: Optional[str] = None,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
+    print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     provider = TracerProvider(resource=Resource.create({"service.name": sys.argv[0]}))
 
     remote_write_exporter = (
@@ -90,20 +93,24 @@ def init(
     simple_processor_console = SimpleSpanProcessor(console_exporter)
 
     if write_spans_to_console:
+        print(Fore.BLUE + "Writing spans to console" + Fore.RESET)
         provider.add_span_processor(simple_processor_console)
 
     elif custom_remote_exporter is not None:
+        print(Fore.BLUE + f"Exporting spans to custom remote exporter.." + Fore.RESET)
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
             provider.add_span_processor(simple_processor_remote)
 
     elif api_host is not None:
+        print(Fore.BLUE + f"Exporting spans to custom host: {api_host}.." + Fore.RESET)
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
             provider.add_span_processor(simple_processor_remote)
     else:
+        print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
         provider.add_span_processor(batch_processor_remote)
 
     # Initialize tracer
