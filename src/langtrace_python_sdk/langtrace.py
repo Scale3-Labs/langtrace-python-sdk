@@ -106,7 +106,6 @@ def init(
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
         "weaviate": WeaviateInstrumentation(),
-        "sqlalchemy": SQLAlchemyInstrumentor(),
     }
     if importlib.util.find_spec("sqlalchemy") is not None:
         from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
