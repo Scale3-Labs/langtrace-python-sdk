@@ -28,46 +28,22 @@ import sys
 from opentelemetry.sdk.resources import Resource
 
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
-from langtrace_python_sdk.instrumentation.anthropic.instrumentation import (
+from langtrace_python_sdk.instrumentation import (
     AnthropicInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.chroma.instrumentation import (
     ChromaInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.cohere.instrumentation import (
     CohereInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.groq.instrumentation import (
     GroqInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.langchain.instrumentation import (
     LangchainInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.langchain_community.instrumentation import (
     LangchainCommunityInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.langchain_core.instrumentation import (
     LangchainCoreInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.langgraph.instrumentation import (
     LanggraphInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.llamaindex.instrumentation import (
     LlamaindexInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.openai.instrumentation import (
     OpenAIInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.pinecone.instrumentation import (
     PineconeInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.qdrant.instrumentation import (
     QdrantInstrumentation,
-)
-from langtrace_python_sdk.instrumentation.weaviate.instrumentation import (
     WeaviateInstrumentation,
 )
-
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
 
 
@@ -97,7 +73,7 @@ def init(
         provider.add_span_processor(simple_processor_console)
 
     elif custom_remote_exporter is not None:
-        print(Fore.BLUE + f"Exporting spans to custom remote exporter.." + Fore.RESET)
+        print(Fore.BLUE + "Exporting spans to custom remote exporter.." + Fore.RESET)
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
@@ -130,6 +106,7 @@ def init(
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
         "weaviate": WeaviateInstrumentation(),
+        "sqlalchemy": SQLAlchemyInstrumentor(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
