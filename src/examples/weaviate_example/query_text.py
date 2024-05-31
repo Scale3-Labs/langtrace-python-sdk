@@ -30,7 +30,7 @@ client = weaviate.connect_to_wcs(
     headers={"X-OpenAI-Api-Key": os.environ["OPENAI_APIKEY"]},
 )
 
-langtrace.init(api_key="asdf", write_spans_to_console=True, batch=False)
+langtrace.init()
 
 
 @with_langtrace_root_span()
