@@ -43,8 +43,8 @@ from langtrace_python_sdk.instrumentation import (
     QdrantInstrumentation,
     WeaviateInstrumentation,
 )
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
+import importlib
 
 
 def init(
@@ -106,8 +106,11 @@ def init(
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
         "weaviate": WeaviateInstrumentation(),
-        "sqlalchemy": SQLAlchemyInstrumentor(),
     }
+    if importlib.util.find_spec("sqlalchemy") is not None:
+        from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+
+        all_instrumentations["sqlalchemy"] = SQLAlchemyInstrumentor()
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
 
