@@ -26,8 +26,8 @@ dependencies = [
   'opentelemetry-exporter-otlp-proto-http>=1.24.0',
   'opentelemetry-exporter-otlp-proto-grpc>=1.24.0',
   'tiktoken>=0.1.1',
-  'colorama>=0.4.6'
-
+  'colorama>=0.4.6',
+  'sqlalchemy'
 ]
 
 requires-python = ">=3.9"
