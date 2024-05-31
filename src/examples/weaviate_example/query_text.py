@@ -19,8 +19,8 @@ import langtrace_python_sdk.langtrace as langtrace
 from langtrace_python_sdk import with_langtrace_root_span
 
 # Set these environment variables
-WCS_DEMO_URL = "WEVIATE CLUSTER URL"
-WCS_DEMO_RO_KEY = "<WEAVIATE API KEY>"
+WCS_DEMO_URL = os.environ["WCS_DEMO_URL"]
+WCS_DEMO_RO_KEY = os.environ["WCS_DEMO_RO_KEY"]
 
 # Connect to a WCS instance
 client = weaviate.connect_to_wcs(
