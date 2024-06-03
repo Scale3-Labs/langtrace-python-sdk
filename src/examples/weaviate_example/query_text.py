@@ -1,4 +1,8 @@
-# export OPENAI_APIKEY=sk-<OPENAI API KEY>
+# export OPENAI_API_KEY=sk-<OPENAI API KEY>
+# export WCS_DEMO_URL=https://<CLUSTER ID>.weaviate.cloud
+# export WCS_DEMO_RO_KEY=<YOUR READ ONLY KEY>
+# export LANGTRACE_API_KEY=<YOUR LANGTRACE API KEY>
+
 # python main.py
 
 # Example taken from startup guide
@@ -27,7 +31,7 @@ client = weaviate.connect_to_wcs(
     cluster_url=WCS_DEMO_URL,
     auth_credentials=weaviate.auth.AuthApiKey(WCS_DEMO_RO_KEY),
     skip_init_checks=True,
-    headers={"X-OpenAI-Api-Key": os.environ["OPENAI_APIKEY"]},
+    headers={"X-OpenAI-Api-Key": os.environ["OPENAI_API_KEY"]},
 )
 
 langtrace.init()
