@@ -17,16 +17,16 @@ limitations under the License.
 import importlib.metadata
 import logging
 from typing import Collection
-from opentelemetry.instrumentation.utils import unwrap
+
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
+from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 from langtrace_python_sdk.instrumentation.weaviate.patch import (
     generic_collection_patch,
     generic_query_patch,
 )
-from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 
 logging.basicConfig(level=logging.DEBUG)  # Set to DEBUG for detailed logging
 
@@ -45,21 +45,18 @@ class WeaviateInstrumentation(BaseInstrumentor):
         version = importlib.metadata.version("weaviate-client")
 
         for api_name, api_config in APIS.items():
-            module_path, function_name = api_name.rsplit(".", 1)
             if api_config.get("OPERATION") == "query":
-                if getattr(api_config["MODULE"], api_config["METHOD"], None):
-                    wrap_function_wrapper(
-                        api_config["MODULE"],
-                        api_config["METHOD"],
-                        generic_query_patch(api_name, version, tracer),
-                    )
+                wrap_function_wrapper(
+                    api_config["MODULE"],
+                    api_config["METHOD"],
+                    generic_query_patch(api_name, version, tracer),
+                )
             elif api_config.get("OPERATION") == "create":
-                if getattr(api_config["MODULE"], api_config["METHOD"], None):
-                    wrap_function_wrapper(
-                        api_config["MODULE"],
-                        api_config["METHOD"],
-                        generic_collection_patch(api_name, version, tracer),
-                    )
+                wrap_function_wrapper(
+                    api_config["MODULE"],
+                    api_config["METHOD"],
+                    generic_collection_patch(api_name, version, tracer),
+                )
 
     def _instrument_module(self, module_name):
         pass
