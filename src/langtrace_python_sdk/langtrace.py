@@ -45,6 +45,7 @@ from langtrace_python_sdk.instrumentation import (
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
+from langtrace_python_sdk.utils import check_if_sdk_is_outdated
 
 
 def init(
@@ -55,6 +56,7 @@ def init(
     api_host: Optional[str] = None,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
+    check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     provider = TracerProvider(resource=Resource.create({"service.name": sys.argv[0]}))
 
