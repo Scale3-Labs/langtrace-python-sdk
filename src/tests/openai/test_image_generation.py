@@ -1,7 +1,7 @@
 import pytest
 import json
-import importlib
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
+from importlib_metadata import version as v
 
 
 @pytest.mark.vcr()
@@ -23,10 +23,8 @@ def test_image_generation(openai_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == "OpenAI"
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "openai"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("openai")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["IMAGES_GENERATION"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
@@ -66,10 +64,8 @@ async def test_async_image_generation(async_openai_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == "OpenAI"
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "openai"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("openai")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["IMAGES_GENERATION"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value

@@ -1,8 +1,8 @@
 import pytest
-import importlib
 import json
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
+from importlib_metadata import version as v
 
 
 def create_embedding(openai_client):
@@ -34,10 +34,8 @@ def test_upsert(openai_client, pinecone_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["PINECONE"]
     assert attributes.get("langtrace.service.type") == "vectordb"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "pinecone-client"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("pinecone-client")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("db.system") == "pinecone"
     assert attributes.get("db.operation") == APIS["UPSERT"]["OPERATION"]
 
@@ -69,10 +67,8 @@ def test_query(openai_client, pinecone_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["PINECONE"]
     assert attributes.get("langtrace.service.type") == "vectordb"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "pinecone-client"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("pinecone-client")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("db.system") == "pinecone"
     assert attributes.get("db.operation") == APIS["QUERY"]["OPERATION"]
     assert attributes.get("db.query.top_k") == 3
