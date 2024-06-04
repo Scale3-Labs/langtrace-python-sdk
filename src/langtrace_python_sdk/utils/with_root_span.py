@@ -34,6 +34,7 @@ from langtrace_python_sdk.utils.types import (
     LangTraceApiError,
     LangTraceEvaluation,
 )
+from colorama import Fore
 
 
 def with_langtrace_root_span(
@@ -112,63 +113,78 @@ def with_additional_attributes(attributes={}):
     return decorator
 
 
-def send_user_feedback(data: EvaluationAPIData) -> None:
-    try:
-        evaluation = _get_evaluation(data["spanId"])
-        headers = {"x-api-key": os.environ["LANGTRACE_API_KEY"]}
-        if evaluation is not None:
-            # Make a PUT request to update the evaluation
-            response = requests.put(
-                f"{LANGTRACE_REMOTE_URL}/api/evaluation",
-                json=data,
-                params={"spanId": data["spanId"]},
-                headers=headers,
+class SendUserFeedback:
+    _langtrace_host: str
+    _langtrace_api_key: str
+
+    def __init__(self):
+        host = os.environ.get("LANGTRACE_API_HOST", None)
+        api_key = os.environ.get("LANGTRACE_API_KEY", None)
+        self._langtrace_host = host if host else LANGTRACE_REMOTE_URL
+        self._langtrace_api_key = api_key if api_key else None
+
+    def evaluate(self, data: EvaluationAPIData) -> None:
+        try:
+            if self._langtrace_api_key is None:
+                print(Fore.RED)
+                print(
+                    f"Missing Langtrace API key, proceed to {self._langtrace_host} to create one"
+                )
+                print("Set the API key as an environment variable LANGTRACE_API_KEY")
+                print(Fore.RESET)
+                return
+            evaluation = self.get_evaluation(data["spanId"])
+            headers = {"x-api-key": self._langtrace_api_key}
+            if evaluation is not None:
+                # Make a PUT request to update the evaluation
+                response = requests.put(
+                    f"{self._langtrace_host}/api/evaluation",
+                    json=data,
+                    params={"spanId": data["spanId"]},
+                    headers=headers,
+                    timeout=None,
+                )
+                response.raise_for_status()
+
+            else:
+                # Make a POST request to create a new evaluation
+                response = requests.post(
+                    f"{self._langtrace_host}/api/evaluation",
+                    json=data,
+                    params={"spanId": data["spanId"]},
+                    headers=headers,
+                    timeout=None,
+                )
+                response.raise_for_status()
+
+        except requests.RequestException as err:
+            if err.response is not None:
+                message = (
+                    err.response.json().get("message", "")
+                    if err.response.json().get("message", "")
+                    else err.response.text if err.response.text else str(err)
+                )
+                raise LangTraceApiError(message, err.response.status_code)
+            raise LangTraceApiError(str(err), 500)
+
+    def get_evaluation(self, span_id: str) -> Optional[LangTraceEvaluation]:
+        try:
+            response = requests.get(
+                f"{self._langtrace_host}/api/evaluation",
+                params={"spanId": span_id},
+                headers={"x-api-key": self._langtrace_api_key},
                 timeout=None,
             )
+            evaluations = response.json().get("evaluations", [])
             response.raise_for_status()
+            return None if not evaluations else evaluations[0]
 
-        else:
-            # Make a POST request to create a new evaluation
-            response = requests.post(
-                f"{LANGTRACE_REMOTE_URL}/api/evaluation",
-                json=data,
-                params={"spanId": data["spanId"]},
-                headers=headers,
-                timeout=None,
-            )
-            response.raise_for_status()
-
-    except requests.RequestException as err:
-        # Handle specific HTTP errors or general request exceptions
-        error_msg = str(err)
-        if err.response:
-            try:
-                # Try to extract server-provided error message
-                error_msg = err.response.json().get("error", error_msg)
-            except ValueError:
-                # Fallback if response is not JSON
-                error_msg = err.response.text
-        raise Exception(f"API error: {error_msg}") from err
-
-
-def _get_evaluation(span_id: str) -> Optional[LangTraceEvaluation]:
-    try:
-        response = requests.get(
-            f"{LANGTRACE_REMOTE_URL}/api/evaluation",
-            params={"spanId": span_id},
-            headers={"x-api-key": os.environ["LANGTRACE_API_KEY"]},
-            timeout=None,
-        )
-        evaluations = response.json().get("evaluations", [])
-        response.raise_for_status()
-        return None if not evaluations else evaluations[0]
-
-    except requests.RequestException as err:
-        if err.response is not None:
-            message = (
-                err.response.json().get("message", "")
-                if err.response.json().get("message", "")
-                else err.response.text if err.response.text else str(err)
-            )
-            raise LangTraceApiError(message, err.response.status_code)
-        raise LangTraceApiError(str(err), 500)
+        except requests.RequestException as err:
+            if err.response is not None:
+                message = (
+                    err.response.json().get("message", "")
+                    if err.response.json().get("message", "")
+                    else err.response.text if err.response.text else str(err)
+                )
+                raise LangTraceApiError(message, err.response.status_code)
+            raise LangTraceApiError(str(err), 500)
