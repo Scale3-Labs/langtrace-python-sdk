@@ -7,7 +7,7 @@ from openai import OpenAI
 from pinecone import Pinecone, ServerlessSpec
 
 from langtrace_python_sdk import langtrace, with_langtrace_root_span
-from langtrace_python_sdk.utils.with_root_span import send_user_feedback
+from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
 
 _ = load_dotenv(find_dotenv())
 
@@ -48,7 +48,7 @@ def basic(span_id=None, trace_id=None):
     resp = index.query(
         vector=embedding, top_k=1, include_values=False, namespace="test-namespace"
     )
-    send_user_feedback(
+    SendUserFeedback().evaluate(
         {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
     )
     return [res, resp]
