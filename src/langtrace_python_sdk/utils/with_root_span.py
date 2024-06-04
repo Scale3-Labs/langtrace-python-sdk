@@ -118,10 +118,10 @@ class SendUserFeedback:
     _langtrace_api_key: str
 
     def __init__(self):
-        host = os.environ.get("LANGTRACE_API_HOST", None)
-        api_key = os.environ.get("LANGTRACE_API_KEY", None)
-        self._langtrace_host = host if host else LANGTRACE_REMOTE_URL
-        self._langtrace_api_key = api_key if api_key else None
+        self._langtrace_host = os.environ.get(
+            "LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL
+        )
+        self._langtrace_api_key = os.environ.get("LANGTRACE_API_KEY", None)
 
     def evaluate(self, data: EvaluationAPIData) -> None:
         try:
