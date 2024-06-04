@@ -27,6 +27,8 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 def patch_graph_methods(method_name, tracer, version):
     def traced_method(wrapped, instance, args, kwargs):
@@ -38,7 +40,7 @@ def patch_graph_methods(method_name, tracer, version):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 

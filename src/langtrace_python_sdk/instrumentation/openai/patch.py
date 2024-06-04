@@ -29,6 +29,8 @@ from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 def images_generate(original_method, version, tracer):
     """
@@ -49,7 +51,7 @@ def images_generate(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -126,7 +128,7 @@ def async_images_generate(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -236,7 +238,7 @@ def chat_completions_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),
@@ -496,7 +498,7 @@ def async_chat_completions_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),
@@ -726,7 +728,7 @@ def embeddings_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -793,7 +795,7 @@ def async_embeddings_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),

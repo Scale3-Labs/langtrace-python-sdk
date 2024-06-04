@@ -44,7 +44,7 @@ def generic_patch(
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "langchain.task.name": task,
             **(extra_attributes if extra_attributes is not None else {}),
         }

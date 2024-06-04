@@ -3,6 +3,7 @@ from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 import pytest
 import importlib
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from tests.utils import assert_response_format, assert_token_count
 from importlib_metadata import version as v
 
@@ -40,7 +41,7 @@ def test_cohere_chat(cohere_client, exporter):
         "cohere"
     )
 
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
+    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
     assert attributes.get("url.full") == APIS["CHAT_CREATE"]["URL"]
     assert attributes.get("llm.api") == APIS["CHAT_CREATE"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
@@ -98,7 +99,7 @@ def test_cohere_chat_streaming(cohere_client, exporter):
         "cohere"
     )
 
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
+    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
     assert attributes.get("url.full") == APIS["CHAT_STREAM"]["URL"]
     assert attributes.get("llm.api") == APIS["CHAT_STREAM"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value

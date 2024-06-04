@@ -25,6 +25,8 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 def generic_patch(method, task, tracer, version):
     """
@@ -39,7 +41,7 @@ def generic_patch(method, task, tracer, version):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "llamaindex.task.name": task,
             **(extra_attributes if extra_attributes is not None else {}),
         }
@@ -81,7 +83,7 @@ def async_generic_patch(method, task, tracer, version):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "llamaindex.task.name": task,
             **(extra_attributes if extra_attributes is not None else {}),
         }

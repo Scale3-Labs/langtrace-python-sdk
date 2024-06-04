@@ -28,6 +28,8 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 def rerank(original_method, version, tracer):
     """Wrap the `rerank` method."""
@@ -41,7 +43,7 @@ def rerank(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["RERANK"]["URL"],
             "llm.api": APIS["RERANK"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -133,7 +135,7 @@ def embed(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["EMBED"]["URL"],
             "llm.api": APIS["EMBED"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -243,7 +245,7 @@ def chat_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["CHAT_CREATE"]["URL"],
             "llm.api": APIS["CHAT_CREATE"]["ENDPOINT"],
             "llm.model": (
@@ -438,7 +440,7 @@ def chat_stream(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["CHAT_STREAM"]["URL"],
             "llm.api": APIS["CHAT_STREAM"]["ENDPOINT"],
             "llm.model": (

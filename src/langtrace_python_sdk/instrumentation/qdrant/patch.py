@@ -29,6 +29,8 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from langtrace_python_sdk.constants.instrumentation.qdrant import APIS
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 def collection_patch(method, version, tracer):
     """
@@ -45,7 +47,7 @@ def collection_patch(method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "qdrant",
             "db.operation": api["OPERATION"],
             "db.query": json.dumps(kwargs.get("query")),

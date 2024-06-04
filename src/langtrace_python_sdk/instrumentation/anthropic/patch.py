@@ -28,6 +28,8 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 def messages_create(original_method, version, tracer):
     """Wrap the `messages_create` method."""
@@ -55,7 +57,7 @@ def messages_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": v("langtrace-python-sdk"),
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["MESSAGES_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),

@@ -3,6 +3,8 @@ from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVID
 import pytest
 from importlib_metadata import version as v
 
+from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+
 
 @pytest.mark.vcr
 def test_cohere_embed(cohere_client, exporter):
@@ -27,7 +29,7 @@ def test_cohere_embed(cohere_client, exporter):
     assert attributes.get("langtrace.service.type") == "llm"
     assert attributes.get("langtrace.service.version") == v("cohere")
 
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
+    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
     assert attributes.get("url.full") == APIS["EMBED"]["URL"]
     assert attributes.get("llm.api") == APIS["EMBED"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
