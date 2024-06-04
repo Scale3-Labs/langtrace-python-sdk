@@ -1,10 +1,9 @@
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 import pytest
 import json
-import importlib
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
-from tests.utils import assert_response_format, assert_token_count
-import pprint
+from tests.utils import assert_token_count
+from importlib_metadata import version as v
 
 
 @pytest.mark.vcr
@@ -34,11 +33,9 @@ def test_cohere_rerank(cohere_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["COHERE"]
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "cohere"
-    )
+    assert attributes.get("langtrace.service.version") == v("cohere")
 
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == APIS["RERANK"]["URL"]
     assert attributes.get("llm.api") == APIS["RERANK"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value

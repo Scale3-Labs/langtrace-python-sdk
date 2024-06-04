@@ -27,6 +27,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from langtrace_python_sdk.constants.instrumentation.groq import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from importlib_metadata import version as v
 
 
 def chat_completions_create(original_method, version, tracer):
@@ -80,7 +81,7 @@ def chat_completions_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),
@@ -340,7 +341,7 @@ def async_chat_completions_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "url.full": base_url,
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),

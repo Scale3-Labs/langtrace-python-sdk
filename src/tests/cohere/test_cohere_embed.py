@@ -1,7 +1,7 @@
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 import pytest
-import importlib
+from importlib_metadata import version as v
 
 
 @pytest.mark.vcr
@@ -25,11 +25,9 @@ def test_cohere_embed(cohere_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["COHERE"]
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "cohere"
-    )
+    assert attributes.get("langtrace.service.version") == v("cohere")
 
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == APIS["EMBED"]["URL"]
     assert attributes.get("llm.api") == APIS["EMBED"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value

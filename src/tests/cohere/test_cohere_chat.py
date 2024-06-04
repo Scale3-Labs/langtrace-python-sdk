@@ -4,6 +4,7 @@ from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVID
 import pytest
 import importlib
 from tests.utils import assert_response_format, assert_token_count
+from importlib_metadata import version as v
 
 
 @pytest.mark.vcr
@@ -39,7 +40,7 @@ def test_cohere_chat(cohere_client, exporter):
         "cohere"
     )
 
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == APIS["CHAT_CREATE"]["URL"]
     assert attributes.get("llm.api") == APIS["CHAT_CREATE"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
@@ -97,7 +98,7 @@ def test_cohere_chat_streaming(cohere_client, exporter):
         "cohere"
     )
 
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == APIS["CHAT_STREAM"]["URL"]
     assert attributes.get("llm.api") == APIS["CHAT_STREAM"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value

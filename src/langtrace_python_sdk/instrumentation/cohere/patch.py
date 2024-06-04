@@ -26,6 +26,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
+from importlib_metadata import version as v
 
 
 def rerank(original_method, version, tracer):
@@ -40,7 +41,7 @@ def rerank(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "url.full": APIS["RERANK"]["URL"],
             "llm.api": APIS["RERANK"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -132,7 +133,7 @@ def embed(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "url.full": APIS["EMBED"]["URL"],
             "llm.api": APIS["EMBED"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -242,7 +243,7 @@ def chat_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "url.full": APIS["CHAT_CREATE"]["URL"],
             "llm.api": APIS["CHAT_CREATE"]["ENDPOINT"],
             "llm.model": (
@@ -437,7 +438,7 @@ def chat_stream(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "url.full": APIS["CHAT_STREAM"]["URL"],
             "llm.api": APIS["CHAT_STREAM"]["ENDPOINT"],
             "llm.model": (

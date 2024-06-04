@@ -1,8 +1,8 @@
 import pytest
-import importlib
 import json
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from tests.utils import assert_response_format, assert_token_count
+from importlib_metadata import version as v
 
 
 @pytest.mark.vcr()
@@ -25,10 +25,8 @@ def test_chat_completion(exporter, openai_client):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == "OpenAI"
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "openai"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("openai")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     assert attributes.get("llm.model") == "gpt-4-0613"
@@ -78,10 +76,8 @@ def test_chat_completion_streaming(exporter, openai_client):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == "OpenAI"
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "openai"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("openai")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     assert attributes.get("llm.model") == "gpt-4-0613"
@@ -135,10 +131,8 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == "OpenAI"
     assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "openai"
-    )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.service.version") == v("openai")
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.openai.com/v1/"
     assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     assert attributes.get("llm.model") == "gpt-4-0613"

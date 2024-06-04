@@ -28,6 +28,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.silently_fail import silently_fail
+from importlib_metadata import version as v
 
 
 def generic_patch(operation_name, version, tracer):
@@ -44,7 +45,7 @@ def generic_patch(operation_name, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v("langtrace-python-sdk"),
             "db.system": "pinecone",
             "db.operation": api["OPERATION"],
             "db.query": json.dumps(kwargs.get("query")),

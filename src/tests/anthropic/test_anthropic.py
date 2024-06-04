@@ -3,6 +3,7 @@ import json
 import importlib
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 from tests.utils import assert_response_format, assert_token_count
+from importlib_metadata import version as v
 
 
 @pytest.mark.vcr()
@@ -30,7 +31,7 @@ def test_anthropic(anthropic_client, exporter):
     assert attributes.get("langtrace.service.version") == importlib.metadata.version(
         "anthropic"
     )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.anthropic.com"
     assert attributes.get("llm.api") == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
@@ -72,7 +73,7 @@ def test_anthropic_streaming(anthropic_client, exporter):
     assert attributes.get("langtrace.service.version") == importlib.metadata.version(
         "anthropic"
     )
-    assert attributes.get("langtrace.version") == "1.0.0"
+    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("url.full") == "https://api.anthropic.com"
     assert attributes.get("llm.api") == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     assert attributes.get("llm.model") == llm_model_value
