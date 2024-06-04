@@ -29,7 +29,7 @@ from langtrace_python_sdk.constants.instrumentation.groq import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
 from importlib_metadata import version as v
 
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def chat_completions_create(original_method, version, tracer):

@@ -2,7 +2,7 @@ import pytest
 import json
 import importlib
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from tests.utils import assert_response_format, assert_token_count
 from importlib_metadata import version as v
 

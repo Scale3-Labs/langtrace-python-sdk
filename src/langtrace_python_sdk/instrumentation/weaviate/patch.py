@@ -29,7 +29,7 @@ from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 from langtrace_python_sdk.utils.misc import extract_input_params, to_iso_format
 from importlib_metadata import version as v
 
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 # Predefined metadata response attributes
 METADATA_ATTRIBUTES = [

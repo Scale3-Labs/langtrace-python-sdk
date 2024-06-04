@@ -29,7 +29,7 @@ from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
 from importlib_metadata import version as v
 
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def images_generate(original_method, version, tracer):

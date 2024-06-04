@@ -30,7 +30,7 @@ from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from importlib_metadata import version as v
 
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def generic_patch(operation_name, version, tracer):

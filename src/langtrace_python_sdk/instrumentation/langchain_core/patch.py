@@ -27,7 +27,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from importlib_metadata import version as v
 
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def generic_patch(

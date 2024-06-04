@@ -3,7 +3,7 @@ from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVID
 import pytest
 from importlib_metadata import version as v
 
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 @pytest.mark.vcr

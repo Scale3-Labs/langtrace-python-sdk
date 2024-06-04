@@ -3,7 +3,7 @@ from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 import pytest
 import importlib
-from src.langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from tests.utils import assert_response_format, assert_token_count
 from importlib_metadata import version as v
 
