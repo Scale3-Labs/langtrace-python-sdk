@@ -26,6 +26,9 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
+from importlib_metadata import version as v
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def messages_create(original_method, version, tracer):
@@ -54,7 +57,7 @@ def messages_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
             "llm.api": APIS["MESSAGES_CREATE"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),

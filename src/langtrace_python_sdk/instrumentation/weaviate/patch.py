@@ -27,6 +27,9 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 from langtrace_python_sdk.utils.misc import extract_input_params, to_iso_format
+from importlib_metadata import version as v
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 # Predefined metadata response attributes
 METADATA_ATTRIBUTES = [
@@ -118,7 +121,7 @@ def create_traced_method(method_name, version, tracer, get_collection_name=None)
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "vectordb",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "weaviate",
             "db.operation": api["OPERATION"],
             "db.collection.name": collection_name,
