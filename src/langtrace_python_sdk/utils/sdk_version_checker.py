@@ -16,28 +16,33 @@ class SDKVersionChecker:
         self._current_version = version("langtrace_python_sdk")
 
     def fetch_latest(self):
-        current_time = time.time()
-        if (
-            current_time - self._cache["timestamp"] < self._cache_duration
-            and self._cache["latest_version"]
-        ):
-            return self._cache["latest_version"]
+        try:
+            current_time = time.time()
+            if (
+                current_time - self._cache["timestamp"] < self._cache_duration
+                and self._cache["latest_version"]
+            ):
+                return self._cache["latest_version"]
 
-        response = requests.get(
-            "https://api.github.com/repos/Scale3-Labs/langtrace-python-sdk/releases/latest",
-            timeout=20,
-        )
-        response.raise_for_status()
-        latest_version = response.json()["tag_name"]
-        self._cache.update(
-            {"timestamp": current_time, "latest_version": latest_version}
-        )
-        self._latest_version = latest_version
-        return latest_version
+            response = requests.get(
+                "https://api.github.com/repos/Scale3-Labs/langtrace-python-sdk/releases/latest",
+                timeout=20,
+            )
+            response.raise_for_status()
+            latest_version = response.json()["tag_name"]
+            self._cache.update(
+                {"timestamp": current_time, "latest_version": latest_version}
+            )
+            self._latest_version = latest_version
+            return latest_version
+        except Exception as err:
+            return None
 
     def is_outdated(self):
         latest_version = self.fetch_latest()
-        return self._current_version < latest_version
+        if latest_version:
+            return self._current_version < latest_version
+        return False
 
     def check(self):
         if self.is_outdated():
