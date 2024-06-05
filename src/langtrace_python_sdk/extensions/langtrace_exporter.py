@@ -48,10 +48,19 @@ class LangTraceExporter(SpanExporter):
     """
 
     api_key: str
+    api_host: str
 
-    def __init__(self, api_key: str = None) -> None:
+    def __init__(
+        self,
+        api_host,
+        api_key: str = None,
+    ) -> None:
         self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
-        self.api_host = os.environ["LANGTRACE_API_HOST"]
+        self.api_host = (
+            f"{LANGTRACE_REMOTE_URL}/api/trace"
+            if api_host == LANGTRACE_REMOTE_URL
+            else api_host
+        )
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         """
@@ -86,7 +95,7 @@ class LangTraceExporter(SpanExporter):
         # Send data to remote URL
         try:
             response = requests.post(
-                url=f"{self.api_host}/api/trace",
+                url=f"{self.api_host}",
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
                 timeout=20,
@@ -96,9 +105,7 @@ class LangTraceExporter(SpanExporter):
                 raise RequestException(response.text)
 
             print(
-                Fore.GREEN
-                + f"Exported {len(spans)} spans successfully. to {self.api_host}"
-                + Fore.RESET
+                Fore.GREEN + f"Exported {len(spans)} spans successfully." + Fore.RESET
             )
             return SpanExportResult.SUCCESS
         except RequestException as err:

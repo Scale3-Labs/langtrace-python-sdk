@@ -61,18 +61,15 @@ def init(
     disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
 
-    os.environ["LANGTRACE_API_HOST"] = (
-        os.environ.get("LANGTRACE_API_HOST", None)
-        or api_host.replace("/api/trace", "")
-        or LANGTRACE_REMOTE_URL
+    host = (
+        os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
     )
-
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     provider = TracerProvider(resource=Resource.create({"service.name": sys.argv[0]}))
 
     remote_write_exporter = (
-        LangTraceExporter(api_key=api_key)
+        LangTraceExporter(api_key=api_key, api_host=host)
         if custom_remote_exporter is None
         else custom_remote_exporter
     )
@@ -81,6 +78,7 @@ def init(
     simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
     simple_processor_console = SimpleSpanProcessor(console_exporter)
 
+    os.environ["LANGTRACE_API_HOST"] = host.replace("/api/trace", "")
     # Initialize tracer
     trace.set_tracer_provider(provider)
     all_instrumentations = {
@@ -112,8 +110,8 @@ def init(
         else:
             provider.add_span_processor(simple_processor_remote)
 
-    elif api_host != LANGTRACE_REMOTE_URL:
-        print(Fore.BLUE + f"Exporting spans to custom host: {api_host}.." + Fore.RESET)
+    elif host != LANGTRACE_REMOTE_URL:
+        print(Fore.BLUE + f"Exporting spans to custom host: {host}.." + Fore.RESET)
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
