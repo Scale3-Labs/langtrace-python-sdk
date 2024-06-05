@@ -16,6 +16,9 @@ limitations under the License.
 
 from typing import Optional
 
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
+    LANGTRACE_REMOTE_URL,
+)
 from langtrace_python_sdk.types import DisableInstrumentations, InstrumentationType
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -46,6 +49,7 @@ from langtrace_python_sdk.instrumentation import (
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
 from langtrace_python_sdk.utils import check_if_sdk_is_outdated
+import os
 
 
 def init(
@@ -53,15 +57,19 @@ def init(
     batch: bool = True,
     write_spans_to_console: bool = False,
     custom_remote_exporter=None,
-    api_host: Optional[str] = None,
+    api_host: Optional[str] = LANGTRACE_REMOTE_URL,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
 ):
+
+    host = (
+        os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
+    )
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     provider = TracerProvider(resource=Resource.create({"service.name": sys.argv[0]}))
 
     remote_write_exporter = (
-        LangTraceExporter(api_key=api_key, api_host=api_host)
+        LangTraceExporter(api_key=api_key, api_host=host)
         if custom_remote_exporter is None
         else custom_remote_exporter
     )
@@ -70,6 +78,7 @@ def init(
     simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
     simple_processor_console = SimpleSpanProcessor(console_exporter)
 
+    os.environ["LANGTRACE_API_HOST"] = host.replace("/api/trace", "")
     # Initialize tracer
     trace.set_tracer_provider(provider)
     all_instrumentations = {
@@ -101,8 +110,8 @@ def init(
         else:
             provider.add_span_processor(simple_processor_remote)
 
-    elif api_host is not None:
-        print(Fore.BLUE + f"Exporting spans to custom host: {api_host}.." + Fore.RESET)
+    elif host != LANGTRACE_REMOTE_URL:
+        print(Fore.BLUE + f"Exporting spans to custom host: {host}.." + Fore.RESET)
         if batch:
             provider.add_span_processor(batch_processor_remote)
         else:
