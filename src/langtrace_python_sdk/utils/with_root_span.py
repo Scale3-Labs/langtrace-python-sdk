@@ -118,9 +118,7 @@ class SendUserFeedback:
     _langtrace_api_key: str
 
     def __init__(self):
-        self._langtrace_host = os.environ.get(
-            "LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL
-        )
+        self._langtrace_host = os.environ["LANGTRACE_API_HOST"]
         self._langtrace_api_key = os.environ.get("LANGTRACE_API_KEY", None)
 
     def evaluate(self, data: EvaluationAPIData) -> None:
@@ -137,6 +135,7 @@ class SendUserFeedback:
             headers = {"x-api-key": self._langtrace_api_key}
             if evaluation is not None:
                 # Make a PUT request to update the evaluation
+                print(Fore.BLUE + "Updating Feedback.." + Fore.RESET)
                 response = requests.put(
                     f"{self._langtrace_host}/api/evaluation",
                     json=data,
@@ -147,6 +146,7 @@ class SendUserFeedback:
                 response.raise_for_status()
 
             else:
+                print(Fore.BLUE + "Sending User Feedback.." + Fore.RESET)
                 # Make a POST request to create a new evaluation
                 response = requests.post(
                     f"{self._langtrace_host}/api/evaluation",
