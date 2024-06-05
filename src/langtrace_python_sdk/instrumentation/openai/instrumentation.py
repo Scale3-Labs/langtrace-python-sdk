@@ -38,7 +38,7 @@ logging.basicConfig(level=logging.FATAL)
 class OpenAIInstrumentation(BaseInstrumentor):
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["openai >= 0.27.0"]
+        return ["openai >= 0.27.0", "trace-attributes >= 4.0.5"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
