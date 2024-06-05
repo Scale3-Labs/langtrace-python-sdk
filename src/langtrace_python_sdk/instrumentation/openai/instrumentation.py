@@ -28,6 +28,7 @@ from langtrace_python_sdk.instrumentation.openai.patch import (
     async_images_generate,
     chat_completions_create,
     embeddings_create,
+    images_edit,
     images_generate,
 )
 
@@ -69,6 +70,13 @@ class OpenAIInstrumentation(BaseInstrumentor):
             "AsyncImages.generate",
             async_images_generate("openai.images.generate", version, tracer),
         )
+
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "Images.edit",
+            images_edit("openai.images.edit", version, tracer),
+        )
+
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "Embeddings.create",
