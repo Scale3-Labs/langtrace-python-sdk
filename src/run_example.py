@@ -26,6 +26,8 @@
 # from examples.langchain_example.basic import basic, load_and_split, rag
 from examples.pinecone_example.basic import basic
 
+# from examples.ollama_example.basic import basic
+
 # from examples.chroma_example.basic import basic
 # from examples.llamaindex_example.basic import basic
 # from examples.langchain_example.basic import basic

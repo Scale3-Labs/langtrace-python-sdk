@@ -8,10 +8,11 @@ from pinecone import Pinecone, ServerlessSpec
 
 from langtrace_python_sdk import langtrace, with_langtrace_root_span
 from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(custom_remote_exporter=ConsoleSpanExporter())
 
 client = OpenAI()
 pinecone = Pinecone()

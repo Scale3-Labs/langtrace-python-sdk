@@ -11,6 +11,7 @@ from .openai import OpenAIInstrumentation
 from .pinecone import PineconeInstrumentation
 from .qdrant import QdrantInstrumentation
 from .weaviate import WeaviateInstrumentation
+from .ollama import OllamaInstrumentor
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -26,4 +27,5 @@ __all__ = [
     "PineconeInstrumentation",
     "QdrantInstrumentation",
     "WeaviateInstrumentation",
+    "OllamaInstrumentor",
 ]

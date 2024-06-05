@@ -42,6 +42,7 @@ from langtrace_python_sdk.instrumentation import (
     PineconeInstrumentation,
     QdrantInstrumentation,
     WeaviateInstrumentation,
+    OllamaInstrumentor,
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
@@ -87,6 +88,7 @@ def init(
         "cohere": CohereInstrumentation(),
         "weaviate": WeaviateInstrumentation(),
         "sqlalchemy": SQLAlchemyInstrumentor(),
+        "ollama": OllamaInstrumentor(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)

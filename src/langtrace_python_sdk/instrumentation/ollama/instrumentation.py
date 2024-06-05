@@ -14,37 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import importlib.metadata
-import logging
-from typing import Collection
-
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
+from wrapt import wrap_function_wrapper as _W
+from typing import Collection
+from importlib_metadata import version as v
+from langtrace_python_sdk.constants.instrumentation.ollama import APIS
+from .patch import generic_patch
 
-from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
-from langtrace_python_sdk.instrumentation.ollama.patch import generic_patch
 
-logging.basicConfig(level=logging.FATAL)
-
-
-class PineconeInstrumentation(BaseInstrumentor):
+class OllamaInstrumentor(BaseInstrumentor):
     """
-    The PineconeInstrumentation class represents the Pinecone instrumentation"""
+    The OllamaInstrumentor class represents the Ollama instrumentation"""
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["pinecone-client >= 3.1.0"]
+        return ["ollama >= 0.2.0, < 1"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = importlib.metadata.version("pinecone-client")
+        version = v("pinecone-client")
         for operation_name, details in APIS.items():
-            operation = details["OPERATION"]
+            operation = details["METHOD"]
             # Dynamically creating the patching call
-            wrap_function_wrapper(
-                "pinecone.data.index",
-                f"Index.{operation}",
+            _W(
+                "ollama._client",
+                f"Client.{operation}",
                 generic_patch(operation_name, version, tracer),
             )
 
