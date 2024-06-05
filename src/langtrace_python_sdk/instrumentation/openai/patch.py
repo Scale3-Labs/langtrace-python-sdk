@@ -210,7 +210,12 @@ def images_edit(original_method, version, tracer):
             "llm.api": APIS["IMAGES_EDIT"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
             "llm.prompts": json.dumps(
-                [{"role": "user", "content": kwargs.get("prompt", [])}]
+                [
+                    {
+                        "role": kwargs.get("user", "user"),
+                        "content": kwargs.get("prompt", []),
+                    }
+                ]
             ),
             "llm.top_k": kwargs.get("n"),
             **(extra_attributes if extra_attributes is not None else {}),
@@ -227,25 +232,20 @@ def images_edit(original_method, version, tracer):
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                data = (
-                    result.data[0]
-                    if hasattr(result, "data") and len(result.data) > 0
-                    else {}
-                )
-                # Only support storing URL for now
-                response = [
-                    {
-                        "role": "assistant",
-                        "content": {
-                            "url": data.url if hasattr(data, "url") else "",
-                            "revised_prompt": (
-                                data.revised_prompt
-                                if hasattr(data, "revised_prompt")
-                                else ""
-                            ),
-                        },
-                    }
-                ]
+
+                response = []
+                for each_data in result.data:
+                    # Only support storing URL for now
+                    if hasattr(each_data, "url") and each_data.url is not None:
+                        response.append(
+                            {
+                                "role": "assistant",
+                                "content": {
+                                    "url": each_data.url,
+                                    "revised_prompt": each_data.revised_prompt,
+                                },
+                            }
+                        )
                 span.set_attribute("llm.responses", json.dumps(response))
 
                 span.set_status(StatusCode.OK)
