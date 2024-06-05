@@ -70,6 +70,26 @@ def init(
     simple_processor_remote = SimpleSpanProcessor(remote_write_exporter)
     simple_processor_console = SimpleSpanProcessor(console_exporter)
 
+    # Initialize tracer
+    trace.set_tracer_provider(provider)
+    all_instrumentations = {
+        "openai": OpenAIInstrumentation(),
+        "groq": GroqInstrumentation(),
+        "pinecone": PineconeInstrumentation(),
+        "llamaindex": LlamaindexInstrumentation(),
+        "chroma": ChromaInstrumentation(),
+        "qdrant": QdrantInstrumentation(),
+        "langchain": LangchainInstrumentation(),
+        "langchain_core": LangchainCoreInstrumentation(),
+        "langchain_community": LangchainCommunityInstrumentation(),
+        "langgraph": LanggraphInstrumentation(),
+        "anthropic": AnthropicInstrumentation(),
+        "cohere": CohereInstrumentation(),
+        "weaviate": WeaviateInstrumentation(),
+        "sqlalchemy": SQLAlchemyInstrumentor(),
+    }
+
+    init_instrumentations(disable_instrumentations, all_instrumentations)
     if write_spans_to_console:
         print(Fore.BLUE + "Writing spans to console" + Fore.RESET)
         provider.add_span_processor(simple_processor_console)
@@ -91,34 +111,12 @@ def init(
         print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
         provider.add_span_processor(batch_processor_remote)
 
-    # Initialize tracer
-    trace.set_tracer_provider(provider)
-
-    all_instrumentations = {
-        "openai": OpenAIInstrumentation(),
-        "groq": GroqInstrumentation(),
-        "pinecone": PineconeInstrumentation(),
-        "llamaindex": LlamaindexInstrumentation(),
-        "chroma": ChromaInstrumentation(),
-        "qdrant": QdrantInstrumentation(),
-        "langchain": LangchainInstrumentation(),
-        "langchain_core": LangchainCoreInstrumentation(),
-        "langchain_community": LangchainCommunityInstrumentation(),
-        "langgraph": LanggraphInstrumentation(),
-        "anthropic": AnthropicInstrumentation(),
-        "cohere": CohereInstrumentation(),
-        "weaviate": WeaviateInstrumentation(),
-        "sqlalchemy": SQLAlchemyInstrumentor(),
-    }
-
-    init_instrumentations(disable_instrumentations, all_instrumentations)
-
 
 def init_instrumentations(
     disable_instrumentations: DisableInstrumentations, all_instrumentations: dict
 ):
     if disable_instrumentations is None:
-        for _, v in all_instrumentations.items():
+        for idx, (name, v) in enumerate(all_instrumentations.items()):
             v.instrument()
     else:
 
