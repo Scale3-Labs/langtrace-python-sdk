@@ -250,8 +250,8 @@ def images_edit(original_method, version, tracer):
                     )
 
                 span.add_event(
-                    name="llm.responses",
-                    attributes={"llm.response": json.dumps(response)},
+                    name="response",
+                    attributes={"llm.responses": json.dumps(response)},
                 )
 
                 span.set_status(StatusCode.OK)
