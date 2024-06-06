@@ -209,6 +209,8 @@ def images_edit(original_method, version, tracer):
             "url.full": base_url,
             "llm.api": APIS["IMAGES_EDIT"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
+            "llm.response_format": kwargs.get("response_format"),
+            "llm.image.size": kwargs.get("size"),
             "llm.prompts": json.dumps(
                 [
                     {
@@ -234,19 +236,23 @@ def images_edit(original_method, version, tracer):
                 result = wrapped(*args, **kwargs)
 
                 response = []
+                # Parse each image object
                 for each_data in result.data:
-                    # Only support storing URL for now
-                    if hasattr(each_data, "url") and each_data.url is not None:
-                        response.append(
-                            {
-                                "role": "assistant",
-                                "content": {
-                                    "url": each_data.url,
-                                    "revised_prompt": each_data.revised_prompt,
-                                },
-                            }
-                        )
-                span.set_attribute("llm.responses", json.dumps(response))
+                    response.append(
+                        {
+                            "role": "assistant",
+                            "content": {
+                                "url": each_data.url,
+                                "revised_prompt": each_data.revised_prompt,
+                                "base64": each_data.b64_json,
+                            },
+                        }
+                    )
+
+                span.add_event(
+                    name="llm.responses",
+                    attributes={"llm.response": json.dumps(response)},
+                )
 
                 span.set_status(StatusCode.OK)
                 return result

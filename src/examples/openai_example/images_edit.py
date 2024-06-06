@@ -2,7 +2,6 @@ from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 # from PIL import Image
 
@@ -17,7 +16,7 @@ client = OpenAI()
 
 # use this to convert the image to RGBA
 # def convert_to_rgba():
-#     Image.open("./resources/ip1.png").convert("RGBA").save("./resources/ip1a.png")
+#     Image.open("./resources/image.png").convert("RGBA").save("./resources/image_with_alpha.png")
 
 
 def image_edit():
