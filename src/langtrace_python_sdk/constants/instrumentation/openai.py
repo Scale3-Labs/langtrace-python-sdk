@@ -40,6 +40,10 @@ APIS = {
         "METHOD": OpenAIMethods.IMAGES_GENERATION.value,
         "ENDPOINT": "/images/generations",
     },
+    "IMAGES_EDIT": {
+        "METHOD": OpenAIMethods.IMAGES_EDIT.value,
+        "ENDPOINT": "/images/edits",
+    },
     "EMBEDDINGS_CREATE": {
         "METHOD": OpenAIMethods.EMBEDDINGS_CREATE.value,
         "ENDPOINT": "/embeddings",
