@@ -50,7 +50,11 @@ def with_langtrace_root_span(
             span_id = None
             trace_id = None
 
-            with tracer.start_as_current_span(operation_name, kind=kind) as span:
+            with tracer.start_as_current_span(
+                operation_name,
+                kind=kind,
+                context={"id": trace.get_current_span().get_span_context().span_id},
+            ) as span:
                 span_id = str(span.get_span_context().span_id)
                 trace_id = str(span.get_span_context().trace_id)
 

@@ -19,7 +19,12 @@ from typing import Optional
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
-from langtrace_python_sdk.types import DisableInstrumentations, InstrumentationType
+from langtrace_python_sdk.types import (
+    DisableInstrumentations,
+    InstrumentationType,
+    InstrumentationMethods,
+)
+from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
@@ -59,6 +64,7 @@ def init(
     custom_remote_exporter=None,
     api_host: Optional[str] = LANGTRACE_REMOTE_URL,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
+    disable_tracing_for_methods: Optional[InstrumentationMethods] = None,
 ):
 
     host = (
@@ -66,7 +72,10 @@ def init(
     )
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
-    provider = TracerProvider(resource=Resource.create({"service.name": sys.argv[0]}))
+    provider = TracerProvider(
+        resource=Resource.create({"service.name": sys.argv[0]}),
+        sampler=LangtraceSampler(disabled_methods=disable_tracing_for_methods),
+    )
 
     remote_write_exporter = (
         LangTraceExporter(api_key=api_key, api_host=host)

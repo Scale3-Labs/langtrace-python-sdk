@@ -12,13 +12,17 @@ from langtrace_python_sdk.utils.with_root_span import (
     with_langtrace_root_span,
     with_additional_attributes,
 )
+from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(
+    write_spans_to_console=False,
+    disable_tracing_for_methods={"langchain": ["RunnableSequence.invoke"]},
+)
 
 
-@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
+# @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api_call_1():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
@@ -30,10 +34,11 @@ def api_call_1():
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
     res = chain.invoke({"input": "how can langsmith help with testing?"})
-    print(res)
+    # print(res)
+    return res
 
 
-@with_additional_attributes({"user.id": "37373", "user.feedback.rating": 1})
+# @with_additional_attributes({"user.id": "37373", "user.feedback.rating": 1})
 def api_call_2():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
@@ -45,13 +50,26 @@ def api_call_2():
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
     res = chain.invoke({"input": "how can langsmith help with testing?"})
-    print(res)
+    # print(res)
+    return res
 
 
 @with_langtrace_root_span()
 def basic():
     api_call_1()
-    api_call_2()
+    # api_call_2()
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "Talk like a pirate"},
+            {"role": "user", "content": "Tell me a story in 3 sentences or less."},
+        ],
+        # stream=True,
+        stream=False,
+    )
+
+    return response
 
 
 @with_langtrace_root_span()

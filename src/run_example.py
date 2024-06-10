@@ -8,7 +8,8 @@
 # OpenAI
 
 # from examples.openai_example.tool_calling import tool_calling
-# from examples.openai_example.chat_completion import chat_completion
+from examples.openai_example.chat_completion import chat_completion
+
 # from examples.openai_example.images_generate import images_generate
 # from examples.openai_example.embeddings_create import embeddings_create
 # from examples.openai_example.function_calling import function_calling
@@ -24,11 +25,12 @@
 
 # Rest
 # from examples.langchain_example.basic import basic, load_and_split, rag
-from examples.pinecone_example.basic import basic
+# from examples.pinecone_example.basic import basic
 
 # from examples.chroma_example.basic import basic
 # from examples.llamaindex_example.basic import basic
-# from examples.langchain_example.basic import basic
+from examples.langchain_example.basic import basic
+
 # from examples.hiveagent_example.basic import basic
 # from examples.perplexity_example.basic import basic
 
@@ -53,4 +55,5 @@ from examples.pinecone_example.basic import basic
 
 # load_and_split()
 # rag()
-basic()
+# basic()
+chat_completion()

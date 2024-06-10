@@ -11,7 +11,10 @@ from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(
+    disable_instrumentations={"all_except": ["pinecone", "openai"]},
+    disable_tracing_for_methods={"open_ai": ["openai.embeddings.create"]},
+)
 
 client = OpenAI()
 pinecone = Pinecone()
@@ -30,7 +33,6 @@ def create_index():
 
 @with_langtrace_root_span()
 def basic(span_id=None, trace_id=None):
-
     result = client.embeddings.create(
         model="text-embedding-ada-002",
         input="Some random text string goes here",
