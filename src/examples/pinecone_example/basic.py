@@ -28,7 +28,7 @@ def create_index():
     )
 
 
-@with_langtrace_root_span()
+@with_langtrace_root_span("Pinecone Basic")
 def basic(span_id=None, trace_id=None):
 
     result = client.embeddings.create(

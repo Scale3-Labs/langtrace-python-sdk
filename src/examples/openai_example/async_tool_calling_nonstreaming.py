@@ -3,13 +3,12 @@ import json
 from dotenv import find_dotenv, load_dotenv
 from openai import AsyncOpenAI
 
-from langtrace_python_sdk import langtrace
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
-# from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_spans_to_console=True)
+langtrace.init()
 
 client = AsyncOpenAI()
 
@@ -30,6 +29,7 @@ def get_current_weather(location, unit="fahrenheit"):
         return json.dumps({"location": location, "temperature": "unknown"})
 
 
+@with_langtrace_root_span("Run Conversation")
 async def run_conversation():
     # Step 1: send the conversation and available functions to the model
     messages = [

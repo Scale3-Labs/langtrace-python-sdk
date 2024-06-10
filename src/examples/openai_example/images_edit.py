@@ -8,7 +8,7 @@ from langtrace_python_sdk import langtrace
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_spans_to_console=True)
+langtrace.init(write_spans_to_console=False)
 
 
 client = OpenAI()
@@ -36,5 +36,5 @@ def image_edit():
     print(response)
 
 
-image_edit()
+# image_edit()
 # convert_to_rgba()
