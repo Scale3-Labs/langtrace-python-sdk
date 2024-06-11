@@ -3,7 +3,7 @@ import json
 from dotenv import find_dotenv, load_dotenv
 from openai import AsyncOpenAI
 
-from langtrace_python_sdk import langtrace
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
 # from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
@@ -42,6 +42,7 @@ def get_current_time(location):
         return json.dumps({"location": location, "time": "unknown"})
 
 
+@with_langtrace_root_span("Run Conversation Streaming")
 async def run_conversation():
     # Step 1: send the conversation and available functions to the model
     messages = [

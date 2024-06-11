@@ -21,7 +21,9 @@ from weaviate.collections.classes.grpc import Move
 
 import langtrace_python_sdk.langtrace as langtrace
 from langtrace_python_sdk import with_langtrace_root_span
+from dotenv import load_dotenv
 
+load_dotenv()
 # Set these environment variables
 WCS_DEMO_URL = os.environ["WCS_DEMO_URL"]
 WCS_DEMO_RO_KEY = os.environ["WCS_DEMO_RO_KEY"]
@@ -37,17 +39,19 @@ client = weaviate.connect_to_wcs(
 langtrace.init()
 
 
-@with_langtrace_root_span()
+@with_langtrace_root_span("create")
 def create():
-    questions = client.collections.create(
-        name="Question",
-        # Set the vectorizer to "text2vec-openai" to use the OpenAI API for vector-related operations
-        vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_openai(),
-        # Ensure the `generative-openai` module is used for generative queries
-        generative_config=wvc.config.Configure.Generative.openai(),
-    )
+    if not client.collections.get("Question"):
+        questions = client.collections.create(
+            name="Question",
+            # Set the vectorizer to "text2vec-openai" to use the OpenAI API for vector-related operations
+            vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_openai(),
+            # Ensure the `generative-openai` module is used for generative queries
+            generative_config=wvc.config.Configure.Generative.openai(),
+        )
 
 
+@with_langtrace_root_span("insert")
 def insert():
     resp = requests.get(
         "https://raw.githubusercontent.com/weaviate-tutorials/quickstart/main/data/jeopardy_tiny.json"
