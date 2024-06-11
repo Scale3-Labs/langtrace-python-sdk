@@ -153,7 +153,7 @@ langtrace.init(custom_remote_exporter=<your_exporter>, batch=<True or False>)
 - `@with_langtrace_root_span` - this decorator is designed to organize and relate different spans, in a hierarchical manner. When you're performing multiple operations that you want to monitor together as a unit, this function helps by establishing a "parent" (`LangtraceRootSpan` or whatever is passed to `name`) span. Then, any calls to the LLM APIs made within the given function (fn) will be considered "children" of this parent span. This setup is especially useful for tracking the performance or behavior of a group of operations collectively, rather than individually.
 
 ```python
-from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
+from langtrace_python_sdk import with_langtrace_root_span
 
 @with_langtrace_root_span()
 def example():
@@ -168,10 +168,8 @@ def example():
 - `with_additional_attributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
 
 ```python
-from langtrace_python_sdk.utils.with_root_span import (
-    with_langtrace_root_span,
-    with_additional_attributes,
-)
+from langtrace_python_sdk import with_langtrace_root_span, with_additional_attributes
+
 
 @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api_call1():
