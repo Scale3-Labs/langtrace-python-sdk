@@ -58,6 +58,7 @@ def with_langtrace_root_span(
                     "span_id" in func.__code__.co_varnames
                     and "trace_id" in func.__code__.co_varnames
                 ):
+                    attributes = {}
                     return func(*args, span_id, trace_id, **kwargs)
                 else:
                     return func(*args, **kwargs)

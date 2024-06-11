@@ -1,4 +1,8 @@
-from langtrace_python_sdk import with_langtrace_root_span
+from langtrace_python_sdk import (
+    get_prompt_from_registry,
+    with_langtrace_root_span,
+    with_additional_attributes,
+)
 
 
 class PineconeRunner:
@@ -6,4 +10,9 @@ class PineconeRunner:
     def run(self):
         from .basic import basic as basic_app
 
-        basic_app()
+        res = get_prompt_from_registry("clxadbzv6000110n5z1ym58pg")
+        main = with_additional_attributes(
+            {"prompt_id": res["id"], "version": res["version"]}
+        )(basic_app)
+        
+        main()
