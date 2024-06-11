@@ -10,7 +10,7 @@ ENABLED_EXAMPLES = {
     "hiveagent": False,
     "openai": False,
     "perplexity": False,
-    "pinecone": False,
+    "pinecone": True,
     "qdrant": False,
     "weaviate": False,
 }

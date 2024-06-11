@@ -6,7 +6,11 @@ from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 from pinecone import Pinecone, ServerlessSpec
 
-from langtrace_python_sdk import langtrace, with_langtrace_root_span
+from langtrace_python_sdk import (
+    langtrace,
+    with_langtrace_root_span,
+    with_additional_attributes,
+)
 from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
 
 _ = load_dotenv(find_dotenv())
@@ -28,6 +32,7 @@ def create_index():
     )
 
 
+@with_additional_attributes({"db.embedding_model": "text-embedding-ada-002"})
 @with_langtrace_root_span("Pinecone Basic")
 def basic(span_id=None, trace_id=None):
 
