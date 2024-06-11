@@ -16,20 +16,19 @@ limitations under the License.
 
 import json
 
+from importlib_metadata import version as v
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
-from importlib_metadata import version as v
-
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def images_generate(original_method, version, tracer):
@@ -171,6 +170,89 @@ def async_images_generate(original_method, version, tracer):
                         }
                     ]
                     span.set_attribute("llm.responses", json.dumps(response))
+
+                span.set_status(StatusCode.OK)
+                return result
+            except Exception as err:
+                # Record the exception in the span
+                span.record_exception(err)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+
+    return traced_method
+
+
+def images_edit(original_method, version, tracer):
+    """
+    Wrap the `edit` method of the `Images` class to trace it.
+    """
+
+    def traced_method(wrapped, instance, args, kwargs):
+        base_url = (
+            str(instance._client._base_url)
+            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
+            else ""
+        )
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "llm",
+            "langtrace.service.version": version,
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
+            "url.full": base_url,
+            "llm.api": APIS["IMAGES_EDIT"]["ENDPOINT"],
+            "llm.model": kwargs.get("model"),
+            "llm.response_format": kwargs.get("response_format"),
+            "llm.image.size": kwargs.get("size"),
+            "llm.prompts": json.dumps(
+                [
+                    {
+                        "role": kwargs.get("user", "user"),
+                        "content": kwargs.get("prompt", []),
+                    }
+                ]
+            ),
+            "llm.top_k": kwargs.get("n"),
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(
+            APIS["IMAGES_EDIT"]["METHOD"], kind=SpanKind.CLIENT
+        ) as span:
+            for field, value in attributes.model_dump(by_alias=True).items():
+                if value is not None:
+                    span.set_attribute(field, value)
+            try:
+                # Attempt to call the original method
+                result = wrapped(*args, **kwargs)
+
+                response = []
+                # Parse each image object
+                for each_data in result.data:
+                    response.append(
+                        {
+                            "role": "assistant",
+                            "content": {
+                                "url": each_data.url,
+                                "revised_prompt": each_data.revised_prompt,
+                                "base64": each_data.b64_json,
+                            },
+                        }
+                    )
+
+                span.add_event(
+                    name="response",
+                    attributes={"llm.responses": json.dumps(response)},
+                )
 
                 span.set_status(StatusCode.OK)
                 return result

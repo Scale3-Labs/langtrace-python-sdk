@@ -9,11 +9,11 @@ from langtrace_python_sdk.utils.with_root_span import (
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_spans_to_console=True)
+langtrace.init(write_spans_to_console=False)
 client = OpenAI()
 
 
-# @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
+@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api():
     response = client.chat.completions.create(
         model="gpt-4",
@@ -27,7 +27,7 @@ def api():
     return response
 
 
-# @with_langtrace_root_span()
+@with_langtrace_root_span("Chat Completion")
 def chat_completion():
     response = api()
     # print(response)

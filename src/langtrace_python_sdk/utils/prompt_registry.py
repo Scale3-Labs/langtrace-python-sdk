@@ -1,7 +1,4 @@
 import os
-from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL,
-)
 import requests
 from urllib.parse import urlencode
 from typing import Optional, TypedDict, Dict, List
@@ -59,7 +56,7 @@ def get_prompt_from_registry(
         print(query_params)
         # Make the GET request to the API
         response = requests.get(
-            f"{LANGTRACE_REMOTE_URL}/api/promptset?{query_string}",
+            f"{os.environ['LANGTRACE_API_HOST']}/api/promptset?{query_string}",
             headers=headers,
             timeout=None,
         )
