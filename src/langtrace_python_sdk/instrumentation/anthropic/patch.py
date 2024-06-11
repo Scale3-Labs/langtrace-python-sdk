@@ -30,6 +30,8 @@ from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
+NOT_GIVEN = object()
+
 
 def messages_create(original_method, version, tracer):
     """Wrap the `messages_create` method."""
@@ -63,33 +65,33 @@ def messages_create(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.prompts": prompts,
             "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        if kwargs.get("temperature") is not None:
+        if kwargs.get("temperature") is not None and not NOT_GIVEN:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
+        if kwargs.get("top_p") is not None and not NOT_GIVEN:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("top_k") is not None:
+        if kwargs.get("top_k") is not None and not NOT_GIVEN:
             attributes.llm_top_p = kwargs.get("top_k")
-        if kwargs.get("user") is not None:
+        if kwargs.get("user") is not None and not NOT_GIVEN:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("max_tokens") is not None:
+        if kwargs.get("max_tokens") is not None and not NOT_GIVEN:
             attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
 
         span = tracer.start_span(
             APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
+            if value is not None and not NOT_GIVEN:
                 span.set_attribute(field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False:
-                if hasattr(result, "content") and result.content is not None:
+                if hasattr(result, "content") and result.content is not None and not NOT_GIVEN:
                     span.set_attribute(
                         "llm.model",
                         result.model if result.model else kwargs.get("model"),
@@ -111,15 +113,15 @@ def messages_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
+                    and result.system_fingerprint is not None and not NOT_GIVEN
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
                     )
                 # Get the usage
-                if hasattr(result, "usage") and result.usage is not None:
+                if hasattr(result, "usage") and result.usage is not None and not NOT_GIVEN:
                     usage = result.usage
-                    if usage is not None:
+                    if usage is not None and not NOT_GIVEN:
                         usage_dict = {
                             "input_tokens": usage.input_tokens,
                             "output_tokens": usage.output_tokens,
@@ -150,13 +152,13 @@ def messages_create(original_method, version, tracer):
             for chunk in result:
                 if (
                     hasattr(chunk, "message")
-                    and chunk.message is not None
+                    and chunk.message is not None and not NOT_GIVEN
                     and hasattr(chunk.message, "model")
-                    and chunk.message.model is not None
+                    and chunk.message.model is not None and not NOT_GIVEN
                 ):
                     span.set_attribute("llm.model", chunk.message.model)
                 content = ""
-                if hasattr(chunk, "delta") and chunk.delta is not None:
+                if hasattr(chunk, "delta") and chunk.delta is not None and not NOT_GIVEN:
                     content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
                 # Assuming content needs to be aggregated before processing
                 result_content.append(content if len(content) > 0 else "")
