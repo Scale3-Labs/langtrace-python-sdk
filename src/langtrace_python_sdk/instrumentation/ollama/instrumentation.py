@@ -20,7 +20,7 @@ from wrapt import wrap_function_wrapper as _W
 from typing import Collection
 from importlib_metadata import version as v
 from langtrace_python_sdk.constants.instrumentation.ollama import APIS
-from .patch import generic_patch
+from .patch import generic_patch, ageneric_patch
 
 
 class OllamaInstrumentor(BaseInstrumentor):
@@ -33,13 +33,24 @@ class OllamaInstrumentor(BaseInstrumentor):
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = v("pinecone-client")
+        version = v("ollama")
         for operation_name, details in APIS.items():
             operation = details["METHOD"]
             # Dynamically creating the patching call
             _W(
                 "ollama._client",
                 f"Client.{operation}",
+                generic_patch(operation_name, version, tracer),
+            )
+
+            _W(
+                "ollama._client",
+                f"AsyncClient.{operation}",
+                ageneric_patch(operation_name, version, tracer),
+            )
+            _W(
+                "ollama",
+                f"{operation}",
                 generic_patch(operation_name, version, tracer),
             )
 
