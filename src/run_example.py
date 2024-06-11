@@ -51,17 +51,11 @@ if ENABLED_EXAMPLES["llamaindex"]:
     print(Fore.BLUE + "Running LlamaIndex example" + Fore.RESET)
     LlamaIndexRunner().run()
 
-if ENABLED_EXAMPLES["hiveagent"]:
-    pass
-
 if ENABLED_EXAMPLES["openai"]:
     from examples.openai_example import OpenAIRunner
 
     print(Fore.BLUE + "Running OpenAI example" + Fore.RESET)
     OpenAIRunner().run()
-
-if ENABLED_EXAMPLES["perplexity"]:
-    pass
 
 if ENABLED_EXAMPLES["pinecone"]:
     from examples.pinecone_example import PineconeRunner
