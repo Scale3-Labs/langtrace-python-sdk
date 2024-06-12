@@ -18,10 +18,12 @@ from langtrace_python_sdk import langtrace
 from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 from langtrace_python_sdk.utils.prompt_registry import get_prompt_from_registry
 from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
+from langtrace_python_sdk.extensions.langtrace_filesystem import LangTraceFileSystem
 
 __all__ = [
     "langtrace",
     "with_langtrace_root_span",
     "get_prompt_from_registry",
     "SendUserFeedback",
+    "LangTraceFileSystem",
 ]
