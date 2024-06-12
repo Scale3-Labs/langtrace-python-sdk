@@ -11,8 +11,5 @@ class PineconeRunner:
         from .basic import basic as basic_app
 
         res = get_prompt_from_registry("clxadbzv6000110n5z1ym58pg")
-        main = with_additional_attributes(
-            {"prompt_id": res["id"], "version": res["version"]}
-        )(basic_app)
-        
-        main()
+
+        with_additional_attributes(basic_app, {"prompt_id": res})

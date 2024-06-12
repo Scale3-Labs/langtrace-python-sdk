@@ -35,6 +35,7 @@ from langtrace_python_sdk.utils.types import (
     LangTraceEvaluation,
 )
 from colorama import Fore
+import inspect
 
 
 def with_langtrace_root_span(
@@ -89,29 +90,8 @@ def with_langtrace_root_span(
 
 
 def with_additional_attributes(attributes={}):
-    def decorator(func):
-        @wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            new_ctx = baggage.set_baggage(
-                LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes
-            )
-            context.attach(new_ctx)
-            return func(*args, **kwargs)
-
-        @wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            new_ctx = baggage.set_baggage(
-                LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes
-            )
-            context.attach(new_ctx)
-            return await func(*args, **kwargs)
-
-        if asyncio.iscoroutinefunction(func):
-            return async_wrapper
-        else:
-            return sync_wrapper
-
-    return decorator
+    new_ctx = baggage.set_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes)
+    context.attach(new_ctx)
 
 
 class SendUserFeedback:
