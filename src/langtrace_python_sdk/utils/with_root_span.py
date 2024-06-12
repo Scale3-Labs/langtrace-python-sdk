@@ -16,6 +16,7 @@ limitations under the License.
 
 import asyncio
 import os
+from deprecated import deprecated
 from functools import wraps
 from typing import Optional
 
@@ -23,9 +24,6 @@ import requests
 from opentelemetry import baggage, context, trace
 from opentelemetry.trace import SpanKind
 
-from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL,
-)
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
 )
@@ -87,7 +85,14 @@ def with_langtrace_root_span(
     return decorator
 
 
+@deprecated(reason="Use inject_additional_attributes instead")
 def with_additional_attributes(attributes={}):
+    print(
+        Fore.YELLOW
+        + "with_additional_attributes is deprecated, use inject_additional_attributes instead"
+        + Fore.RESET
+    )
+
     def decorator(func):
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
@@ -111,6 +116,16 @@ def with_additional_attributes(attributes={}):
             return sync_wrapper
 
     return decorator
+
+
+def inject_additional_attributes(fn, attributes=None):
+    if attributes:
+        new_ctx = baggage.set_baggage(
+            LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, attributes
+        )
+        context.attach(new_ctx)
+
+    return fn()
 
 
 class SendUserFeedback:

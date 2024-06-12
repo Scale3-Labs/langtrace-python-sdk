@@ -12,7 +12,7 @@ import nest_asyncio
 
 nest_asyncio.apply()
 
-langtrace.init(write_spans_to_console=True)
+langtrace.init(write_spans_to_console=False)
 
 
 def multiply(a: int, b: int) -> int:
@@ -82,5 +82,6 @@ class YourOpenAIAgent:
 
 
 # agent = YourOpenAIAgent(tools=[multiply_tool, add_tool])
-llm = OpenAI(model="gpt-3.5-turbo-0613")
-agent = OpenAIAgent.from_tools([multiply_tool, add_tool], llm=llm, verbose=True)
+def main():
+    llm = OpenAI(model="gpt-3.5-turbo-0613")
+    agent = OpenAIAgent.from_tools([multiply_tool, add_tool], llm=llm, verbose=True)
