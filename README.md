@@ -172,7 +172,7 @@ from langtrace_python_sdk import inject_additional_attributes
 
 
 
-def do_llm_stuff():
+def do_llm_stuff(name=""):
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Say this is a test three times"}],
@@ -182,8 +182,10 @@ def do_llm_stuff():
 
 
 def main():
-  response = inject_additional_attributes(do_llm_stuff, {'user.id': 'userId'})
+  response = inject_additional_attributes(lambda: do_llm_stuff(name="llm"), {'user.id': 'userId'})
 
+  # if the function do not take arguments then this syntax will work
+  response = inject_additional_attributes(do_llm_stuff, {'user.id': 'userId'})
 ```
 
 - `with_additional_attributes` - is behaving the same as `inject_additional_attributes` but as a decorator, this will be deprecated soon.
