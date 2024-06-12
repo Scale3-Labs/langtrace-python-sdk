@@ -139,14 +139,14 @@ langtrace.init(custom_remote_exporter=<your_exporter>, batch=<True or False>)
 
 ### Configure Langtrace
 
-| Parameter                  | Type                                | Default Value                 | Description                                                                    |
-| -------------------------- | ----------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
-| `api_key`                  | `str`                               | `LANGTRACE_API_KEY` or `None` | The API key for authentication.                                                |
-| `batch`                    | `bool`                              | `True`                        | Whether to batch spans before sending them.                                    |
-| `write_spans_to_console`   | `bool`                              | `False`                       | Whether to write spans to the console.                                         |
-| `custom_remote_exporter`   | `Optional[Exporter]`                | `None`                        | Custom remote exporter. If `None`, a default `LangTraceExporter` will be used. |
-| `api_host`                 | `Optional[str]`                     | `https://langtrace.ai/`       | The API host for the remote exporter.                                          |
-| `disable_instrumentations` | `Optional[DisableInstrumentations]` | `None`                        | You can pass an object to disable instrumentation for specific vendors ex: `{'only': ['openai']}` or `{'all_except': ['openai']}`
+| Parameter                  | Type                                | Default Value                 | Description                                                                                                                       |
+| -------------------------- | ----------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                  | `str`                               | `LANGTRACE_API_KEY` or `None` | The API key for authentication.                                                                                                   |
+| `batch`                    | `bool`                              | `True`                        | Whether to batch spans before sending them.                                                                                       |
+| `write_spans_to_console`   | `bool`                              | `False`                       | Whether to write spans to the console.                                                                                            |
+| `custom_remote_exporter`   | `Optional[Exporter]`                | `None`                        | Custom remote exporter. If `None`, a default `LangTraceExporter` will be used.                                                    |
+| `api_host`                 | `Optional[str]`                     | `https://langtrace.ai/`       | The API host for the remote exporter.                                                                                             |
+| `disable_instrumentations` | `Optional[DisableInstrumentations]` | `None`                        | You can pass an object to disable instrumentation for specific vendors ex: `{'only': ['openai']}` or `{'all_except': ['openai']}` |
 
 ### Additional Customization
 
@@ -165,7 +165,28 @@ def example():
     return response
 ```
 
-- `with_additional_attributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
+- `inject_additional_attributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
+
+```python
+from langtrace_python_sdk import inject_additional_attributes
+
+
+
+def do_llm_stuff():
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "Say this is a test three times"}],
+        stream=False,
+    )
+    return response
+
+
+def main():
+  response = inject_additional_attributes(do_llm_stuff, {'user.id': 'userId'})
+
+```
+
+- `with_additional_attributes` - is behaving the same as `inject_additional_attributes` but as a decorator, this will be deprecated soon.
 
 ```python
 from langtrace_python_sdk import with_langtrace_root_span, with_additional_attributes
@@ -236,7 +257,6 @@ Langtrace automatically captures traces from the following vendors:
 We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our [Discord](https://discord.langtrace.ai) workspace.
 
 If you want to run any of the examples go to `run_example.py` file, you will find `ENABLED_EXAMPLES`. choose the example you want to run and just toggle the flag to `True` and run the file using `python src/run_example.py`
-
 
 ---
 

@@ -15,9 +15,7 @@ from langtrace_python_sdk import (
 from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
 
 _ = load_dotenv(find_dotenv())
-langtrace.init(
-    api_host="http://localhost:3000/api/trace",
-)
+langtrace.init()
 
 client = OpenAI()
 pinecone = Pinecone()
