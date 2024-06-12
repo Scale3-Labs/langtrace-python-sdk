@@ -2,7 +2,7 @@
 
 ## Open Source & Open Telemetry(OTEL) Observability for LLM applications
 
-![Static Badge](https://img.shields.io/badge/License-AGPL--3.0-blue) ![Static Badge](https://img.shields.io/badge/npm_@langtrase/typescript--sdk-1.2.9-green) ![Static Badge](https://img.shields.io/badge/pip_langtrace--python--sdk-1.2.8-green) ![Static Badge](https://img.shields.io/badge/Development_status-Active-green)
+![Static Badge](https://img.shields.io/badge/License-Apache--2.0-blue) ![Static Badge](https://img.shields.io/badge/npm_@langtrase/typescript--sdk-1.2.9-green) ![Static Badge](https://img.shields.io/badge/pip_langtrace--python--sdk-1.2.8-green) ![Static Badge](https://img.shields.io/badge/Development_status-Active-green)
 
 ---
 
@@ -248,5 +248,5 @@ To report security vulnerabilites, email us at <security@scale3labs.com>. You ca
 
 ## License
 
-- Langtrace application(this repository) is [licensed](https://github.com/Scale3-Labs/langtrace/blob/development/LICENSE) under the AGPL 3.0 License. You can read about this license [here](https://www.gnu.org/licenses/agpl-3.0.en.html).
+- Langtrace application is [licensed](https://github.com/Scale3-Labs/langtrace/blob/development/LICENSE) under the AGPL 3.0 License. You can read about this license [here](https://www.gnu.org/licenses/agpl-3.0.en.html).
 - Langtrace SDKs are licensed under the Apache 2.0 License. You can read about this license [here](https://www.apache.org/licenses/LICENSE-2.0).
