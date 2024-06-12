@@ -32,14 +32,8 @@ def create_index():
     )
 
 
-# user_id = '123'
-# session_id = '123'
-
-
-# @with_additional_attributes({"session_id": session_id, "user_id": user_id})
 @with_langtrace_root_span("Pinecone Basic")
 def basic():
-    # global attributes = {"session_id": session_id, "user_id": user_id}
     result = client.embeddings.create(
         model="text-embedding-ada-002",
         input="Some random text string goes here",
@@ -61,12 +55,3 @@ def basic():
     #     {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
     # )
     return [res, resp]
-
-
-# # failure
-# def main():
-#     user_id = 123
-#     prompt_id = get_prompt_from_registry('clxadbzv6000110n5z1ym58pg')
-#     print(prompt_id)
-#     @with_additional_attributes({'user_id': user_id}) # this won't work
-#     fetch_prompt_id_and_openai_completion()
