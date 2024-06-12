@@ -18,7 +18,6 @@ _ = load_dotenv(find_dotenv())
 langtrace.init()
 
 
-# @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api_call_1():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
@@ -33,7 +32,6 @@ def api_call_1():
     print(res)
 
 
-# @with_additional_attributes({"user.id": "37373", "user.feedback.rating": 1})
 def api_call_2():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
