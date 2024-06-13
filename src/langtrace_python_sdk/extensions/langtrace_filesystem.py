@@ -11,11 +11,11 @@ from fsspec.spec import AbstractFileSystem
 
 OpenTextMode = Literal["r", "a", "w"]
 OpenBinaryMode = Literal["rb", "ab", "wb"]
+OpenMode = OpenTextMode | OpenBinaryMode
 
 
 class LangTraceFile(io.BytesIO):
-    def __init__(self, fs: "LangTraceFileSystem", path: str, mode: OpenTextMode | OpenBinaryMode):
-        # type: (LangTraceFileSystem, str, OpenTextMode | OpenBinaryMode) -> None
+    def __init__(self, fs: "LangTraceFileSystem", path: str, mode: OpenMode):
         super().__init__()
         self.fs = fs
         self.path = path
