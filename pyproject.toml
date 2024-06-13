@@ -27,7 +27,8 @@ dependencies = [
   'opentelemetry-exporter-otlp-proto-grpc>=1.25.0',
   'tiktoken>=0.1.1',
   'colorama>=0.4.6',
-  'sqlalchemy'
+  'sqlalchemy',
+  'fsspec>=2024.6.0'
 ]
 
 requires-python = ">=3.9"
@@ -37,11 +38,11 @@ dev = [
     "openai",
     "anthropic",
     "chromadb",
-    'qdrant-client',
+    "qdrant-client",
     "python-dotenv",
-    'pinecone-client',
+    "pinecone-client",
     "langchain",
-    'langchain-community',
+    "langchain-community",
     "langchain-openai",
     "langchain-openai",
     "chromadb",
@@ -72,6 +73,9 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/langtrace_python_sdk", "src/examples", "src/tests"]
+
+[project.entry-points."fsspec.specs"]
+langtracefs = "langtrace_python_sdk:LangTraceFileSystem"
 
 # [tool.semantic_release]
 # version_variable = "pyproject.toml:version" # version location
