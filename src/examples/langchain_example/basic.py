@@ -8,10 +8,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import (
-    with_langtrace_root_span,
-    with_additional_attributes,
-)
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())
