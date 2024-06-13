@@ -1,0 +1,136 @@
+{
+  "version": 1,
+  "status": "success",
+  "eval": {
+    "task": "security_guide",
+    "task_version": 0,
+    "task_file": "src/examples/inspect_ai_example/basic_eval.py",
+    "task_id": "U5HzKEDA7XefuRsnGcPoEG",
+    "run_id": "d2H4Wnppuy9orSYPVymTMD",
+    "created": "2024-06-12T10:06:37-07:00",
+    "dataset": {
+      "name": "golden_20240612T165506",
+      "location": "./golden_20240612T165506.csv",
+      "samples": 1,
+      "shuffled": false
+    },
+    "model": "openai/gpt-3.5-turbo",
+    "task_attribs": {},
+    "task_args": {},
+    "model_args": {},
+    "config": {},
+    "revision": {
+      "type": "git",
+      "origin": "git@github.com:Scale3-Labs/langtrace-python-sdk.git",
+      "commit": "df69f86"
+    },
+    "packages": {
+      "inspect_ai": "0.3.14"
+    }
+  },
+  "plan": {
+    "name": "plan",
+    "steps": [
+      {
+        "solver": "chain_of_thought",
+        "params": {}
+      },
+      {
+        "solver": "self_critique",
+        "params": {}
+      }
+    ],
+    "config": {}
+  },
+  "results": {
+    "scorer": {
+      "name": "model_graded_qa",
+      "params": {}
+    },
+    "metrics": {
+      "accuracy": {
+        "name": "accuracy",
+        "value": 0.0,
+        "options": {}
+      },
+      "bootstrap_std": {
+        "name": "bootstrap_std",
+        "value": 0.0,
+        "options": {}
+      }
+    }
+  },
+  "stats": {
+    "started_at": "2024-06-12T10:06:37-07:00",
+    "completed_at": "2024-06-12T10:06:41-07:00",
+    "model_usage": {
+      "openai/gpt-3.5-turbo": {
+        "input_tokens": 636,
+        "output_tokens": 155,
+        "total_tokens": 791
+      }
+    }
+  },
+  "samples": [
+    {
+      "id": 1,
+      "epoch": 1,
+      "input": "Tell me a story in 3 sentences or less.",
+      "target": "Once upon a stormy eve, we set sail for cursed treasure, led by a map found in the belly of a shark. Battling ghostly seadogs and monstrous sea beasts, we finally pulled the glittering chest from the ocean's depths. Back aboard the ship, the captain roared, \"Shiver me timbers, let it be known through all seven seas that we, the scourge of the blue, be the richest pirates beyond the horizon!\"!\"",
+      "messages": [
+        {
+          "content": "\nTell me a story in 3 sentences or less.\n\nBefore answering, reason in a step-by-step manner as to get the right answer. Provide your answer at the end on its own line in the form \"ANSWER: $ANSWER\" (without quotes) where $ANSWER is the answer to the question.\n",
+          "source": "input",
+          "role": "user"
+        },
+        {
+          "content": "\nGiven the following question, initial answer and critique please generate an improved answer to the question:\n\n[BEGIN DATA]\n***\n[Question]: Tell me a story in 3 sentences or less.\n***\n[Answer]: \n***\n[Critique]: The original answer is fully correct.\n***\n[END DATA]\n\nIf the original answer is already correct, just repeat the original answer exactly. Provide your answer at the end on its own line in the form \"ANSWER: $ANSWER\" (without quotes) where $ANSWER is the answer to the question.\n",
+          "role": "user"
+        },
+        {
+          "content": "ANSWER: \nOnce upon a time, in a deep, dark forest, a young girl discovered a secret portal to another world. Through courage and friendship, she saved both realms from impending doom. The grateful creatures bestowed upon her a magical amulet as a token of their eternal gratitude.",
+          "source": "generate",
+          "role": "assistant"
+        }
+      ],
+      "output": {
+        "model": "gpt-3.5-turbo-0125",
+        "choices": [
+          {
+            "message": {
+              "content": "ANSWER: \nOnce upon a time, in a deep, dark forest, a young girl discovered a secret portal to another world. Through courage and friendship, she saved both realms from impending doom. The grateful creatures bestowed upon her a magical amulet as a token of their eternal gratitude.",
+              "source": "generate",
+              "role": "assistant"
+            },
+            "stop_reason": "stop"
+          }
+        ],
+        "usage": {
+          "input_tokens": 187,
+          "output_tokens": 58,
+          "total_tokens": 245
+        }
+      },
+      "score": {
+        "value": "I",
+        "answer": "ANSWER: \nOnce upon a time, in a deep, dark forest, a young girl discovered a secret portal to another world. Through courage and friendship, she saved both realms from impending doom. The grateful creatures bestowed upon her a magical amulet as a token of their eternal gratitude.",
+        "explanation": "Step 1: The criterion provided is a story about pirates searching for cursed treasure and eventually finding it after facing challenges at sea.\n\nStep 2: The submission does not match the criterion as it is a story about a young girl discovering a secret portal to another world and saving both realms with the help of magical creatures, which does not involve pirates or cursed treasure.\n\nStep 3: Therefore, the submission does not meet the criterion.\n\nGRADE: I",
+        "metadata": {
+          "grading": [
+            {
+              "content": "\nYou are assessing a submitted answer on a given task based on a criterion. Here is the data:\n\n[BEGIN DATA]\n***\n[Task]: Tell me a story in 3 sentences or less.\n***\n[Submission]: ANSWER: \nOnce upon a time, in a deep, dark forest, a young girl discovered a secret portal to another world. Through courage and friendship, she saved both realms from impending doom. The grateful creatures bestowed upon her a magical amulet as a token of their eternal gratitude.\n***\n[Criterion]: Once upon a stormy eve, we set sail for cursed treasure, led by a map found in the belly of a shark. Battling ghostly seadogs and monstrous sea beasts, we finally pulled the glittering chest from the ocean's depths. Back aboard the ship, the captain roared, \"Shiver me timbers, let it be known through all seven seas that we, the scourge of the blue, be the richest pirates beyond the horizon!\"!\"\n***\n[END DATA]\n\nDoes the submission meet the criterion?\n\n\nAfter assessing the submitted answer, reply with 'GRADE: $LETTER' (without quotes) where LETTER is one of CI.  Please choose ONE option for the grade: either \"C\" for correct answers, or \"I\" for incorrect answers.\n\nFor example, after reviewing a correct answer you might write 'GRADE: C' or after reviewing an incorrect answer you might write 'GRADE: I'.\n\nFirst, write out in a step by step manner your reasoning about the criterion to be sure that your conclusion is correct. Avoid simply stating the correct answers at the outset. Then, end with your answer formatted as 'GRADE: $LETTER' (without quotes) where LETTER is one of CI.\n\n",
+              "role": "user"
+            },
+            {
+              "content": "Step 1: The criterion provided is a story about pirates searching for cursed treasure and eventually finding it after facing challenges at sea.\n\nStep 2: The submission does not match the criterion as it is a story about a young girl discovering a secret portal to another world and saving both realms with the help of magical creatures, which does not involve pirates or cursed treasure.\n\nStep 3: Therefore, the submission does not meet the criterion.\n\nGRADE: I",
+              "source": "generate",
+              "role": "assistant"
+            }
+          ]
+        }
+      },
+      "metadata": {}
+    }
+  ],
+  "logging": []
+}

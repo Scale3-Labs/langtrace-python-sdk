@@ -22,8 +22,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from langtrace_python_sdk.instrumentation.langgraph.patch import \
-    patch_graph_methods
+from langtrace_python_sdk.instrumentation.langgraph.patch import patch_graph_methods
 
 
 class LanggraphInstrumentation(BaseInstrumentor):
@@ -41,24 +40,34 @@ class LanggraphInstrumentation(BaseInstrumentor):
 
         # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
-            ("langgraph.graph.graph", ["add_node", "add_edge", "set_entry_point", "set_finish_point", "add_conditional_edges"]),
+            (
+                "langgraph.graph.graph",
+                [
+                    "add_node",
+                    "add_edge",
+                    "set_entry_point",
+                    "set_finish_point",
+                    "add_conditional_edges",
+                ],
+            ),
         ]
 
         for module_name, methods in modules_to_patch:
             module = importlib.import_module(module_name)
             for name, obj in inspect.getmembers(
                 module,
-                lambda member: inspect.isclass(member) and member.__module__ == module.__name__,
+                lambda member: inspect.isclass(member)
+                and member.__module__ == module.__name__,
             ):
-                for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
+                for method_name, _ in inspect.getmembers(
+                    obj, predicate=inspect.isfunction
+                ):
                     if method_name in methods:
                         module = f"{name}.{method_name}"
                         wrap_function_wrapper(
                             module_name,
                             module,
-                            patch_graph_methods(
-                                module, tracer, version
-                            ),
+                            patch_graph_methods(module, tracer, version),
                         )
 
     def _uninstrument(self, **kwargs):

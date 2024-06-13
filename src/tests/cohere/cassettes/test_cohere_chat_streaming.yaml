@@ -1,0 +1,213 @@
+interactions:
+- request:
+    body: '{"message": "Tell me a story in 3 sentences or less?", "stream": true,
+      "model": "command", "preamble": "answer like a pirate", "chat_history": [{"role":
+      "USER", "message": "Who discovered gravity?"}, {"role": "CHATBOT", "message":
+      "The man who is widely credited with discovering gravity is Sir Isaac Newton"}],
+      "connectors": [{"id": "web-search"}], "temperature": 0.1}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '369'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.5.3
+    method: POST
+    uri: https://api.cohere.com/v1/chat
+  response:
+    body:
+      string: '{"is_finished":false,"event_type":"stream-start","generation_id":"79644b13-2cc8-462e-93be-f03cc16aed9a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"Ar"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"gh"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" many"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" years"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ago"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" a"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" man"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" named"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Isaac"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Newton"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" sat"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" beneath"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" an"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" apple"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" tree"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" observing"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" an"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" apple"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" fall"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ground"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" This"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" inspired"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" him"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" ponder"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" upon"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" concept"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" gravity"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" and"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" eventually"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" formulated"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" his"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" theories"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" on"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" matter"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"."}
+
+        {"is_finished":false,"event_type":"text-generation","text":" Ar"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"gh"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" thus"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" began"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" the"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" world"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"''s"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" understanding"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" of"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" gravity"}
+
+        {"is_finished":false,"event_type":"text-generation","text":","}
+
+        {"is_finished":false,"event_type":"text-generation","text":" thanks"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" to"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" this"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" curious"}
+
+        {"is_finished":false,"event_type":"text-generation","text":" chap"}
+
+        {"is_finished":false,"event_type":"text-generation","text":"!"}
+
+        {"is_finished":true,"event_type":"stream-end","response":{"response_id":"7fdfb159-de9d-4cef-856b-cb2b801668db","text":"Argh,
+        many years ago, a man named Isaac Newton sat beneath an apple tree, observing
+        an apple fall to the ground. This inspired him to ponder upon the concept
+        of gravity and eventually formulated his theories on the matter. Argh, thus
+        began the world''s understanding of gravity, thanks to this curious chap!","generation_id":"79644b13-2cc8-462e-93be-f03cc16aed9a","chat_history":[{"role":"USER","message":"Who
+        discovered gravity?"},{"role":"CHATBOT","message":"The man who is widely credited
+        with discovering gravity is Sir Isaac Newton"},{"role":"USER","message":"Tell
+        me a story in 3 sentences or less?"},{"role":"CHATBOT","message":"Argh, many
+        years ago, a man named Isaac Newton sat beneath an apple tree, observing an
+        apple fall to the ground. This inspired him to ponder upon the concept of
+        gravity and eventually formulated his theories on the matter. Argh, thus began
+        the world''s understanding of gravity, thanks to this curious chap!"}],"finish_reason":"COMPLETE","meta":{"api_version":{"version":"1"},"billed_units":{"input_tokens":31,"output_tokens":63},"tokens":{"input_tokens":49,"output_tokens":63}},"documents":[]},"finish_reason":"COMPLETE"}
+
+        '
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-type:
+      - application/stream+json
+      date:
+      - Fri, 24 May 2024 09:38:03 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      transfer-encoding:
+      - chunked
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - 7a2dadc471ebb9e4e0050988183969e1
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '85'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '8'
+    status:
+      code: 200
+      message: OK
+version: 1

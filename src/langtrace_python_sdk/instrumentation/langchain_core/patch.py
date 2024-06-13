@@ -22,7 +22,12 @@ from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status
 
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
+from importlib_metadata import version as v
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def generic_patch(
@@ -47,9 +52,9 @@ def generic_patch(
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "langchain.task.name": task,
-            **(extra_attributes if extra_attributes is not None else {})
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         if len(args) > 0 and trace_input:
@@ -113,7 +118,7 @@ def runnable_patch(
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "langchain.task.name": task,
         }
 

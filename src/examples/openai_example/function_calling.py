@@ -3,11 +3,12 @@
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
 
-from langtrace_python_sdk import langtrace
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=False)
+
 
 client = OpenAI()
 
@@ -33,6 +34,7 @@ student_custom_functions = [
 ]
 
 
+@with_langtrace_root_span("Function Calling")
 def function_calling():
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",
@@ -51,11 +53,15 @@ def function_calling():
     for chunk in response:
         if chunk.choices[0].delta.function_call is not None:
             content = [
-                choice.delta.function_call.arguments if choice.delta.function_call and
-                choice.delta.function_call.arguments else ""
-                for choice in chunk.choices]
-            result.append(
-                content[0] if len(content) > 0 else "")
+                (
+                    choice.delta.function_call.arguments
+                    if choice.delta.function_call
+                    and choice.delta.function_call.arguments
+                    else ""
+                )
+                for choice in chunk.choices
+            ]
+            result.append(content[0] if len(content) > 0 else "")
 
     print("".join(result))
 

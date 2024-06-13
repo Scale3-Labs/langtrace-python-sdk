@@ -32,6 +32,3 @@ def vcr_config():
 @pytest.fixture(scope="session", autouse=True)
 def instrument():
     OpenAIInstrumentation().instrument()
-
-    yield
-    # exporter.shutdown()

@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "status": "success",
+  "eval": {
+    "task": "security_guide",
+    "task_version": 0,
+    "task_file": "src/examples/inspect_ai_example/basic_eval.py",
+    "task_id": "E56YvLVCpqFT6jCNVBWXqh",
+    "run_id": "bSL9ekLHksa5mfniUT76V9",
+    "created": "2024-06-12T10:03:40-07:00",
+    "dataset": {
+      "name": "golden_20240612T165506",
+      "location": "./golden_20240612T165506.csv",
+      "samples": 1,
+      "shuffled": false
+    },
+    "model": "openai/gpt-3.5-turbo",
+    "task_attribs": {},
+    "task_args": {},
+    "model_args": {},
+    "config": {},
+    "revision": {
+      "type": "git",
+      "origin": "git@github.com:Scale3-Labs/langtrace-python-sdk.git",
+      "commit": "df69f86"
+    },
+    "packages": {
+      "inspect_ai": "0.3.14"
+    }
+  },
+  "plan": {
+    "name": "plan",
+    "steps": [
+      {
+        "solver": "generate",
+        "params": {}
+      }
+    ],
+    "config": {}
+  },
+  "results": {
+    "scorer": {
+      "name": "model_graded_qa",
+      "params": {}
+    },
+    "metrics": {
+      "accuracy": {
+        "name": "accuracy",
+        "value": 0.0,
+        "options": {}
+      },
+      "bootstrap_std": {
+        "name": "bootstrap_std",
+        "value": 0.0,
+        "options": {}
+      }
+    }
+  },
+  "stats": {
+    "started_at": "2024-06-12T10:03:40-07:00",
+    "completed_at": "2024-06-12T10:03:44-07:00",
+    "model_usage": {
+      "openai/gpt-3.5-turbo": {
+        "input_tokens": 375,
+        "output_tokens": 180,
+        "total_tokens": 555
+      }
+    }
+  },
+  "samples": [
+    {
+      "id": 1,
+      "epoch": 1,
+      "input": "Tell me a story in 3 sentences or less.",
+      "target": "Once upon a stormy eve, we set sail for cursed treasure, led by a map found in the belly of a shark. Battling ghostly seadogs and monstrous sea beasts, we finally pulled the glittering chest from the ocean's depths. Back aboard the ship, the captain roared, \"Shiver me timbers, let it be known through all seven seas that we, the scourge of the blue, be the richest pirates beyond the horizon!\"!\"",
+      "messages": [
+        {
+          "content": "Tell me a story in 3 sentences or less.",
+          "source": "input",
+          "role": "user"
+        },
+        {
+          "content": "She wandered through the forest, enchanted by the whispering trees and dancing sunlight. Suddenly, she stumbled upon a hidden clearing filled with vibrant flowers and a delicate waterfall cascading into a crystal-clear pool. In that moment, she knew she had found her own personal paradise.",
+          "source": "generate",
+          "role": "assistant"
+        }
+      ],
+      "output": {
+        "model": "gpt-3.5-turbo-0125",
+        "choices": [
+          {
+            "message": {
+              "content": "She wandered through the forest, enchanted by the whispering trees and dancing sunlight. Suddenly, she stumbled upon a hidden clearing filled with vibrant flowers and a delicate waterfall cascading into a crystal-clear pool. In that moment, she knew she had found her own personal paradise.",
+              "source": "generate",
+              "role": "assistant"
+            },
+            "stop_reason": "stop"
+          }
+        ],
+        "usage": {
+          "input_tokens": 18,
+          "output_tokens": 54,
+          "total_tokens": 72
+        }
+      },
+      "score": {
+        "value": "I",
+        "answer": "She wandered through the forest, enchanted by the whispering trees and dancing sunlight. Suddenly, she stumbled upon a hidden clearing filled with vibrant flowers and a delicate waterfall cascading into a crystal-clear pool. In that moment, she knew she had found her own personal paradise.",
+        "explanation": "1. The criterion provided is about a pirate adventure theme where the crew goes on a journey to find cursed treasure, battles ghostly seadogs and sea beasts, finds the treasure, and declares themselves the richest pirates.\n2. The submission tells a story about a person wandering through a forest, finding a hidden paradise, and having a peaceful moment of realization.\n3. The submission does not meet the criterion as it does not match the theme of a pirate adventure with cursed treasure, battles, and declaring oneself the richest pirates.\n4. Therefore, based on the criterion given, the submission does not meet the requirements.\nGRADE: I",
+        "metadata": {
+          "grading": [
+            {
+              "content": "\nYou are assessing a submitted answer on a given task based on a criterion. Here is the data:\n\n[BEGIN DATA]\n***\n[Task]: Tell me a story in 3 sentences or less.\n***\n[Submission]: She wandered through the forest, enchanted by the whispering trees and dancing sunlight. Suddenly, she stumbled upon a hidden clearing filled with vibrant flowers and a delicate waterfall cascading into a crystal-clear pool. In that moment, she knew she had found her own personal paradise.\n***\n[Criterion]: Once upon a stormy eve, we set sail for cursed treasure, led by a map found in the belly of a shark. Battling ghostly seadogs and monstrous sea beasts, we finally pulled the glittering chest from the ocean's depths. Back aboard the ship, the captain roared, \"Shiver me timbers, let it be known through all seven seas that we, the scourge of the blue, be the richest pirates beyond the horizon!\"!\"\n***\n[END DATA]\n\nDoes the submission meet the criterion?\n\n\nAfter assessing the submitted answer, reply with 'GRADE: $LETTER' (without quotes) where LETTER is one of CI.  Please choose ONE option for the grade: either \"C\" for correct answers, or \"I\" for incorrect answers.\n\nFor example, after reviewing a correct answer you might write 'GRADE: C' or after reviewing an incorrect answer you might write 'GRADE: I'.\n\nFirst, write out in a step by step manner your reasoning about the criterion to be sure that your conclusion is correct. Avoid simply stating the correct answers at the outset. Then, end with your answer formatted as 'GRADE: $LETTER' (without quotes) where LETTER is one of CI.\n\n",
+              "role": "user"
+            },
+            {
+              "content": "1. The criterion provided is about a pirate adventure theme where the crew goes on a journey to find cursed treasure, battles ghostly seadogs and sea beasts, finds the treasure, and declares themselves the richest pirates.\n2. The submission tells a story about a person wandering through a forest, finding a hidden paradise, and having a peaceful moment of realization.\n3. The submission does not meet the criterion as it does not match the theme of a pirate adventure with cursed treasure, battles, and declaring oneself the richest pirates.\n4. Therefore, based on the criterion given, the submission does not meet the requirements.\nGRADE: I",
+              "source": "generate",
+              "role": "assistant"
+            }
+          ]
+        }
+      },
+      "metadata": {}
+    }
+  ],
+  "logging": []
+}

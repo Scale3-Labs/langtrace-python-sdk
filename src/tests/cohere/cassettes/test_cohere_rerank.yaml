@@ -1,0 +1,76 @@
+interactions:
+- request:
+    body: '{"query": "What is the capital of the United States?", "documents": ["Carson
+      City is the capital city of the American state of Nevada.", "The Commonwealth
+      of the Northern Mariana Islands is a group of islands in the Pacific Ocean.
+      Its capital is Saipan.", "Washington, D.C. (also known as simply Washington
+      or D.C., and officially as the District of Columbia) is the capital of the United
+      States. It is a federal district.", "Capital punishment (the death penalty)
+      has existed in the United States since beforethe United States was a country.
+      As of 2017, capital punishment is legal in 30 of the 50 states."], "model":
+      "rerank-english-v2.0", "top_n": 3}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '653'
+      content-type:
+      - application/json
+      host:
+      - api.cohere.com
+      user-agent:
+      - python-httpx/0.27.0
+      x-fern-language:
+      - Python
+      x-fern-sdk-name:
+      - cohere
+      x-fern-sdk-version:
+      - 5.5.3
+    method: POST
+    uri: https://api.cohere.com/v1/rerank
+  response:
+    body:
+      string: '{"id":"f176327d-f9d3-4c49-aa20-bf5e8345cf81","results":[{"index":2,"relevance_score":0.98005307},{"index":3,"relevance_score":0.27904198},{"index":0,"relevance_score":0.10194652}],"meta":{"api_version":{"version":"1"},"billed_units":{"search_units":1}}}'
+    headers:
+      Alt-Svc:
+      - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+      Via:
+      - 1.1 google
+      access-control-expose-headers:
+      - X-Debug-Trace-ID
+      cache-control:
+      - no-cache, no-store, no-transform, must-revalidate, private, max-age=0
+      content-length:
+      - '253'
+      content-type:
+      - application/json
+      date:
+      - Fri, 24 May 2024 09:38:06 GMT
+      expires:
+      - Thu, 01 Jan 1970 00:00:00 UTC
+      pragma:
+      - no-cache
+      server:
+      - envoy
+      vary:
+      - Origin
+      x-accel-expires:
+      - '0'
+      x-debug-trace-id:
+      - a3f78056e94ceceefe9d31dc8103ba2b
+      x-endpoint-monthly-call-limit:
+      - '1000'
+      x-envoy-upstream-service-time:
+      - '40'
+      x-trial-endpoint-call-limit:
+      - '10'
+      x-trial-endpoint-call-remaining:
+      - '9'
+    status:
+      code: 200
+      message: OK
+version: 1

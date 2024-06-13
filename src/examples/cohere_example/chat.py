@@ -7,7 +7,8 @@ from langtrace_python_sdk import langtrace
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init()
+
 
 co = cohere.Client()
 
@@ -17,11 +18,14 @@ def chat_comp():
     response = co.chat(
         chat_history=[
             {"role": "USER", "message": "Who discovered gravity?"},
-            {"role": "CHATBOT", "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton"}
+            {
+                "role": "CHATBOT",
+                "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
+            },
         ],
         message="Tell me a story in 3 sentences or less?",
         preamble="answer like a pirate",
         # perform web search before answering the question. You can also use your own custom connector.
-        connectors=[{"id": "web-search"}]
+        connectors=[{"id": "web-search"}],
     )
     print(response)

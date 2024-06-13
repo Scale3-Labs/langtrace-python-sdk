@@ -6,11 +6,12 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_to_langtrace_cloud=False)
+langtrace.init(write_spans_to_console=False)
+
 client = OpenAI()
 
 
-@with_langtrace_root_span()
+@with_langtrace_root_span("Embeddings Create")
 def embeddings_create():
     result = client.embeddings.create(
         model="text-embedding-ada-002",

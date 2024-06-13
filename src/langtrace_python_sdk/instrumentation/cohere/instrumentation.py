@@ -21,9 +21,12 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from langtrace_python_sdk.instrumentation.cohere.patch import (chat_create,
-                                                               chat_stream,
-                                                               embed, rerank)
+from langtrace_python_sdk.instrumentation.cohere.patch import (
+    chat_create,
+    chat_stream,
+    embed,
+    rerank,
+)
 
 
 class CohereInstrumentation(BaseInstrumentor):

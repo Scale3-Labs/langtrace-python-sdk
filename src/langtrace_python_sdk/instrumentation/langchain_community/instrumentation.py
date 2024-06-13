@@ -22,8 +22,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
-from langtrace_python_sdk.instrumentation.langchain_community.patch import \
-    generic_patch
+from langtrace_python_sdk.instrumentation.langchain_community.patch import generic_patch
 
 
 def patch_module_classes(

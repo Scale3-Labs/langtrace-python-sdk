@@ -23,7 +23,12 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
+from importlib_metadata import version as v
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
 def rerank(original_method, version, tracer):
@@ -38,7 +43,7 @@ def rerank(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["RERANK"]["URL"],
             "llm.api": APIS["RERANK"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -103,9 +108,7 @@ def rerank(original_method, version, tracer):
                                 else 0
                             ),
                         }
-                        span.set_attribute(
-                            "llm.token.counts", json.dumps(usage_dict)
-                        )
+                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
 
             span.set_status(StatusCode.OK)
             span.end()
@@ -132,7 +135,7 @@ def embed(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["EMBED"]["URL"],
             "llm.api": APIS["EMBED"]["ENDPOINT"],
             "llm.model": kwargs.get("model"),
@@ -187,9 +190,7 @@ def embed(original_method, version, tracer):
                                 else 0
                             ),
                         }
-                        span.set_attribute(
-                            "llm.token.counts", json.dumps(usage_dict)
-                        )
+                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
 
             span.set_status(StatusCode.OK)
             span.end()
@@ -226,9 +227,7 @@ def chat_create(original_method, version, tracer):
                         item.get("role") if item.get("role") is not None else "USER"
                     ),
                     "content": (
-                        item.get("message")
-                        if item.get("message") is not None
-                        else ""
+                        item.get("message") if item.get("message") is not None else ""
                     ),
                 }
                 for item in chat_history
@@ -246,7 +245,7 @@ def chat_create(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["CHAT_CREATE"]["URL"],
             "llm.api": APIS["CHAT_CREATE"]["ENDPOINT"],
             "llm.model": (
@@ -312,7 +311,11 @@ def chat_create(original_method, version, tracer):
                 span.set_attribute("llm.is_search_required", result.is_search_required)
 
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                if hasattr(result, "text") and result.text is not None and result.text != "":
+                if (
+                    hasattr(result, "text")
+                    and result.text is not None
+                    and result.text != ""
+                ):
                     if (
                         hasattr(result, "chat_history")
                         and result.chat_history is not None
@@ -321,8 +324,7 @@ def chat_create(original_method, version, tracer):
                             {
                                 "role": (
                                     item.role
-                                    if hasattr(item, "role")
-                                    and item.role is not None
+                                    if hasattr(item, "role") and item.role is not None
                                     else "USER"
                                 ),
                                 "content": (
@@ -336,9 +338,7 @@ def chat_create(original_method, version, tracer):
                         ]
                         span.set_attribute("llm.responses", json.dumps(responses))
                     else:
-                        responses = [
-                            {"role": "CHATBOT", "content": result.text}
-                        ]
+                        responses = [{"role": "CHATBOT", "content": result.text}]
                         span.set_attribute("llm.responses", json.dumps(responses))
                 elif hasattr(result, "tool_calls") and result.tool_calls is not None:
                     tool_calls = []
@@ -422,9 +422,7 @@ def chat_stream(original_method, version, tracer):
                         item.get("role") if item.get("role") is not None else "USER"
                     ),
                     "content": (
-                        item.get("message")
-                        if item.get("message") is not None
-                        else ""
+                        item.get("message") if item.get("message") is not None else ""
                     ),
                 }
                 for item in chat_history
@@ -442,7 +440,7 @@ def chat_stream(original_method, version, tracer):
             "langtrace.service.name": service_provider,
             "langtrace.service.type": "llm",
             "langtrace.service.version": version,
-            "langtrace.version": "1.0.0",
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": APIS["CHAT_STREAM"]["URL"],
             "llm.api": APIS["CHAT_STREAM"]["ENDPOINT"],
             "llm.model": (
@@ -485,7 +483,7 @@ def chat_stream(original_method, version, tracer):
             # stringify the list of objects
             attributes.llm_tool_results = json.dumps(kwargs.get("tool_results"))
 
-        span = tracer.start_span(APIS["CHAT_CREATE"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(APIS["CHAT_STREAM"]["METHOD"], kind=SpanKind.CLIENT)
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
                 span.set_attribute(field, value)
@@ -503,19 +501,28 @@ def chat_stream(original_method, version, tracer):
                         Event.STREAM_OUTPUT.value, {"response": "".join(content)}
                     )
 
-                    if hasattr(event, "finish_reason") and event.finish_reason == "COMPLETE":
+                    if (
+                        hasattr(event, "finish_reason")
+                        and event.finish_reason == "COMPLETE"
+                    ):
                         response = event.response
 
                         if (hasattr(response, "generation_id")) and (
                             response.generation_id is not None
                         ):
-                            span.set_attribute("llm.generation_id", response.generation_id)
-                        if (hasattr(response, "response_id")) and (response.response_id is not None):
+                            span.set_attribute(
+                                "llm.generation_id", response.generation_id
+                            )
+                        if (hasattr(response, "response_id")) and (
+                            response.response_id is not None
+                        ):
                             span.set_attribute("llm.response_id", response.response_id)
                         if (hasattr(response, "is_search_required")) and (
                             response.is_search_required is not None
                         ):
-                            span.set_attribute("llm.is_search_required", response.is_search_required)
+                            span.set_attribute(
+                                "llm.is_search_required", response.is_search_required
+                            )
 
                         # Set the response attributes
                         if hasattr(response, "text") and response.text is not None:
@@ -540,12 +547,16 @@ def chat_stream(original_method, version, tracer):
                                     }
                                     for item in response.chat_history
                                 ]
-                                span.set_attribute("llm.responses", json.dumps(responses))
+                                span.set_attribute(
+                                    "llm.responses", json.dumps(responses)
+                                )
                             else:
                                 responses = [
                                     {"role": "CHATBOT", "content": response.text}
                                 ]
-                                span.set_attribute("llm.responses", json.dumps(responses))
+                                span.set_attribute(
+                                    "llm.responses", json.dumps(responses)
+                                )
 
                         # Get the usage
                         if hasattr(response, "meta") and response.meta is not None:

@@ -16,10 +16,8 @@ limitations under the License.
 
 from tiktoken import get_encoding
 
-from langtrace_python_sdk.constants.instrumentation.common import \
-    TIKTOKEN_MODEL_MAPPING
-from langtrace_python_sdk.constants.instrumentation.openai import \
-    OPENAI_COST_TABLE
+from langtrace_python_sdk.constants.instrumentation.common import TIKTOKEN_MODEL_MAPPING
+from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
 
 
 def estimate_tokens(prompt):
@@ -60,3 +58,10 @@ def calculate_price_from_usage(model, usage):
             + cost_table["output"] * usage["completion_tokens"]
         ) / 1000
     return 0
+
+
+def set_span_attributes(span, name, value):
+    if value is not None:
+        if value != "":
+            span.set_attribute(name, value)
+    return

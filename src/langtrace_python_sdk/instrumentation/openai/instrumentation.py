@@ -23,9 +23,14 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.instrumentation.openai.patch import (
-    async_chat_completions_create, async_embeddings_create,
-    async_images_generate, chat_completions_create, embeddings_create,
-    images_generate)
+    async_chat_completions_create,
+    async_embeddings_create,
+    async_images_generate,
+    chat_completions_create,
+    embeddings_create,
+    images_edit,
+    images_generate,
+)
 
 logging.basicConfig(level=logging.FATAL)
 
@@ -33,7 +38,7 @@ logging.basicConfig(level=logging.FATAL)
 class OpenAIInstrumentation(BaseInstrumentor):
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["openai >= 0.27.0"]
+        return ["openai >= 0.27.0", "trace-attributes >= 4.0.5"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
@@ -65,6 +70,13 @@ class OpenAIInstrumentation(BaseInstrumentor):
             "AsyncImages.generate",
             async_images_generate("openai.images.generate", version, tracer),
         )
+
+        wrap_function_wrapper(
+            "openai.resources.images",
+            "Images.edit",
+            images_edit("openai.images.edit", version, tracer),
+        )
+
         wrap_function_wrapper(
             "openai.resources.embeddings",
             "Embeddings.create",

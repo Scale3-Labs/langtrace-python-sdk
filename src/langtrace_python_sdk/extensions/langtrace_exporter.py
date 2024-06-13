@@ -9,6 +9,8 @@ from opentelemetry.trace.span import format_trace_id
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
+from colorama import Fore
+from requests.exceptions import RequestException
 
 
 class LangTraceExporter(SpanExporter):
@@ -25,18 +27,16 @@ class LangTraceExporter(SpanExporter):
     **Attributes:**
 
     * `api_key` (str): An API key to authenticate with the LangTrace collector (required).
-    * `write_to_remote_url` (bool): A flag indicating whether to send spans to the remote URL (defaults to False).
 
     **Methods:**
 
-    * `__init__(api_key: str = None, url: str = None, write_to_remote_url: bool = False) -> None`:
+    * `__init__(api_key: str = None, url: str = None) -> None`:
         - Initializes a `LangTraceExporter` instance.
         - Retrieves the API key and URL from environment variables if not provided explicitly.
-        - Raises a `ValueError` if the API key is missing or the URL is missing when `write_to_remote_url` is True.
+        - Raises a `ValueError` if the API key is missing.
     * `export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult`:
         - Exports a batch of `opentelemetry.trace.Span` objects to LangTrace.
         - Converts each span into a dictionary representation including trace ID, instrumentation library, events, dropped data counts, duration, and other span attributes.
-        - If `write_to_remote_url` is False, returns `SpanExportResult.SUCCESS` without sending data.
         - Otherwise, sends the data to the configured URL using a POST request with JSON data and the API key in the header.
         - Returns `SpanExportResult.SUCCESS` on successful export or `SpanExportResult.FAILURE` on errors.
     * `shutdown(self) -> None`:
@@ -44,24 +44,23 @@ class LangTraceExporter(SpanExporter):
 
     **Raises:**
 
-    * `ValueError`: If the API key is not provided or the URL is missing when `write_to_remote_url` is True.
+    * `ValueError`: If the API key is not provided.
     """
 
     api_key: str
-    write_to_remote_url: bool
+    api_host: str
 
     def __init__(
         self,
+        api_host,
         api_key: str = None,
-        write_to_remote_url: bool = False,
-        api_host: typing.Optional[str] = None,
     ) -> None:
         self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
-        self.write_to_remote_url = write_to_remote_url
-        self.api_host: str = api_host or LANGTRACE_REMOTE_URL
-
-        if self.write_to_remote_url and not self.api_key:
-            raise ValueError("No API key provided")
+        self.api_host = (
+            f"{LANGTRACE_REMOTE_URL}/api/trace"
+            if api_host == LANGTRACE_REMOTE_URL
+            else api_host
+        )
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         """
@@ -73,10 +72,17 @@ class LangTraceExporter(SpanExporter):
         Returns:
             The result of the export SUCCESS or FAILURE
         """
+        if not self.api_key:
+            print(Fore.RED)
+            print(
+                "Missing Langtrace API key, proceed to https://langtrace.ai to create one"
+            )
+            print("Set the API key as an environment variable LANGTRACE_API_KEY")
+            print(Fore.RESET)
+            return
         data = [
             {
                 "traceId": format_trace_id(span.get_span_context().trace_id),
-                "instrumentationLibrary": span.instrumentation_info.__repr__(),
                 "droppedEventsCount": span.dropped_events,
                 "droppedAttributesCount": span.dropped_attributes,
                 "droppedLinksCount": span.dropped_links,
@@ -86,19 +92,25 @@ class LangTraceExporter(SpanExporter):
             for span in spans
         ]
 
-        if not self.write_to_remote_url:
-            return
-
         # Send data to remote URL
         try:
-            requests.post(
-                url=f"{self.api_host}/api/trace",
+            response = requests.post(
+                url=f"{self.api_host}",
                 data=json.dumps(data),
                 headers={"Content-Type": "application/json", "x-api-key": self.api_key},
+                timeout=20,
             )
-            print(f"sent to {self.api_host}/api/trace with {len(data)} spans")
+
+            if not response.ok:
+                raise RequestException(response.text)
+
+            print(
+                Fore.GREEN + f"Exported {len(spans)} spans successfully." + Fore.RESET
+            )
             return SpanExportResult.SUCCESS
-        except Exception as e:
+        except RequestException as err:
+            print(Fore.RED + "Failed to export spans.")
+            print(Fore.RED + f"Error: {err}" + Fore.RESET)
             return SpanExportResult.FAILURE
 
     def shutdown(self) -> None:
