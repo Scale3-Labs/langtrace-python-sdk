@@ -34,7 +34,7 @@ def generic_patch(operation_name, version, tracer):
             "llm.stream": kwargs.get("stream"),
             "url.full": base_url,
             "llm.api": api["METHOD"],
-            "llm.prompts": json.dumps(kwargs.get("messages", [])),
+            "llm.prompts": json.dumps([kwargs.get("messages", [])]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -111,7 +111,6 @@ def ageneric_patch(operation_name, version, tracer):
 
                         _set_response_attributes(span, result)
                         span.set_status(Status(StatusCode.OK))
-                    _set_response_attributes(span, result)
                 span.end()
                 return result
             except Exception as err:
@@ -140,11 +139,15 @@ def _set_response_attributes(span, response):
 
     set_span_attribute(span, "llm.token.counts", json.dumps(usage_dict))
     set_span_attribute(span, "llm.finish_reason", response.get("done_reason"))
+    print("respinse", response)
 
     if "message" in response:
-        set_span_attribute(span, "llm.responses", json.dumps(response.get("message")))
+        set_span_attribute(span, "llm.responses", json.dumps([response.get("message")]))
     if "response" in response:
-        set_span_attribute(span, "llm.responses", json.dumps(response.get("response")))
+        set_span_attribute(
+            span, "llm.responses", json.dumps([response.get("response")])
+        )
+        print(json.dumps([response.get("response")]))
 
 
 def _handle_streaming_response(span, response, api):
