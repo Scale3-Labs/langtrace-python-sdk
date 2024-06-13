@@ -2,7 +2,7 @@
 
 ## Open Source & Open Telemetry(OTEL) Observability for LLM applications
 
-![Static Badge](https://img.shields.io/badge/License-AGPL--3.0-blue) ![Static Badge](https://img.shields.io/badge/npm_@langtrase/typescript--sdk-1.2.9-green) ![Static Badge](https://img.shields.io/badge/pip_langtrace--python--sdk-1.2.8-green) ![Static Badge](https://img.shields.io/badge/Development_status-Active-green)
+![Static Badge](https://img.shields.io/badge/License-Apache--2.0-blue) ![Static Badge](https://img.shields.io/badge/npm_@langtrase/typescript--sdk-1.2.9-green) ![Static Badge](https://img.shields.io/badge/pip_langtrace--python--sdk-1.2.8-green) ![Static Badge](https://img.shields.io/badge/Development_status-Active-green)
 
 ---
 
@@ -139,14 +139,14 @@ langtrace.init(custom_remote_exporter=<your_exporter>, batch=<True or False>)
 
 ### Configure Langtrace
 
-| Parameter                  | Type                                | Default Value                 | Description                                                                    |
-| -------------------------- | ----------------------------------- | ----------------------------- | ------------------------------------------------------------------------------ |
-| `api_key`                  | `str`                               | `LANGTRACE_API_KEY` or `None` | The API key for authentication.                                                |
-| `batch`                    | `bool`                              | `True`                        | Whether to batch spans before sending them.                                    |
-| `write_spans_to_console`   | `bool`                              | `False`                       | Whether to write spans to the console.                                         |
-| `custom_remote_exporter`   | `Optional[Exporter]`                | `None`                        | Custom remote exporter. If `None`, a default `LangTraceExporter` will be used. |
-| `api_host`                 | `Optional[str]`                     | `https://langtrace.ai/`       | The API host for the remote exporter.                                          |
-| `disable_instrumentations` | `Optional[DisableInstrumentations]` | `None`                        | You can pass an object to disable instrumentation for specific vendors ex: `{'only': ['openai']}` or `{'all_except': ['openai']}`
+| Parameter                  | Type                                | Default Value                 | Description                                                                                                                       |
+| -------------------------- | ----------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `api_key`                  | `str`                               | `LANGTRACE_API_KEY` or `None` | The API key for authentication.                                                                                                   |
+| `batch`                    | `bool`                              | `True`                        | Whether to batch spans before sending them.                                                                                       |
+| `write_spans_to_console`   | `bool`                              | `False`                       | Whether to write spans to the console.                                                                                            |
+| `custom_remote_exporter`   | `Optional[Exporter]`                | `None`                        | Custom remote exporter. If `None`, a default `LangTraceExporter` will be used.                                                    |
+| `api_host`                 | `Optional[str]`                     | `https://langtrace.ai/`       | The API host for the remote exporter.                                                                                             |
+| `disable_instrumentations` | `Optional[DisableInstrumentations]` | `None`                        | You can pass an object to disable instrumentation for specific vendors ex: `{'only': ['openai']}` or `{'all_except': ['openai']}` |
 
 ### Additional Customization
 
@@ -165,7 +165,30 @@ def example():
     return response
 ```
 
-- `with_additional_attributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
+- `inject_additional_attributes` - this function is designed to enhance the traces by adding custom attributes to the current context. These custom attributes provide extra details about the operations being performed, making it easier to analyze and understand their behavior.
+
+```python
+from langtrace_python_sdk import inject_additional_attributes
+
+
+
+def do_llm_stuff(name=""):
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "Say this is a test three times"}],
+        stream=False,
+    )
+    return response
+
+
+def main():
+  response = inject_additional_attributes(lambda: do_llm_stuff(name="llm"), {'user.id': 'userId'})
+
+  # if the function do not take arguments then this syntax will work
+  response = inject_additional_attributes(do_llm_stuff, {'user.id': 'userId'})
+```
+
+- `with_additional_attributes` - is behaving the same as `inject_additional_attributes` but as a decorator, this will be deprecated soon.
 
 ```python
 from langtrace_python_sdk import with_langtrace_root_span, with_additional_attributes
@@ -237,7 +260,6 @@ We welcome contributions to this project. To get started, fork this repository a
 
 If you want to run any of the examples go to `run_example.py` file, you will find `ENABLED_EXAMPLES`. choose the example you want to run and just toggle the flag to `True` and run the file using `python src/run_example.py`
 
-
 ---
 
 ## Security
@@ -248,5 +270,5 @@ To report security vulnerabilites, email us at <security@scale3labs.com>. You ca
 
 ## License
 
-- Langtrace application(this repository) is [licensed](https://github.com/Scale3-Labs/langtrace/blob/development/LICENSE) under the AGPL 3.0 License. You can read about this license [here](https://www.gnu.org/licenses/agpl-3.0.en.html).
+- Langtrace application is [licensed](https://github.com/Scale3-Labs/langtrace/blob/development/LICENSE) under the AGPL 3.0 License. You can read about this license [here](https://www.gnu.org/licenses/agpl-3.0.en.html).
 - Langtrace SDKs are licensed under the Apache 2.0 License. You can read about this license [here](https://www.apache.org/licenses/LICENSE-2.0).

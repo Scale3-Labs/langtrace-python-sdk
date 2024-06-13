@@ -7,6 +7,7 @@ from openai import OpenAI
 from pinecone import Pinecone, ServerlessSpec
 
 from langtrace_python_sdk import (
+    get_prompt_from_registry,
     langtrace,
     with_langtrace_root_span,
     with_additional_attributes,
@@ -15,8 +16,7 @@ from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 _ = load_dotenv(find_dotenv())
-
-langtrace.init(custom_remote_exporter=ConsoleSpanExporter())
+langtrace.init()
 
 client = OpenAI()
 pinecone = Pinecone()
@@ -33,10 +33,8 @@ def create_index():
     )
 
 
-@with_additional_attributes({"db.embedding_model": "text-embedding-ada-002"})
 @with_langtrace_root_span("Pinecone Basic")
-def basic(span_id=None, trace_id=None):
-
+def basic():
     result = client.embeddings.create(
         model="text-embedding-ada-002",
         input="Some random text string goes here",
@@ -54,10 +52,7 @@ def basic(span_id=None, trace_id=None):
     resp = index.query(
         vector=embedding, top_k=1, include_values=False, namespace="test-namespace"
     )
-    SendUserFeedback().evaluate(
-        {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
-    )
+    # SendUserFeedback().evaluate(
+    #     {"spanId": span_id, "traceId": trace_id, "userScore": 1, "userId": "123"}
+    # )
     return [res, resp]
-
-
-# create_index()
