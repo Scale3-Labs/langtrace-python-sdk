@@ -30,8 +30,6 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
 
-NOT_GIVEN = object()
-
 
 def images_generate(original_method, version, tracer):
     """
@@ -60,7 +58,7 @@ def images_generate(original_method, version, tracer):
             "llm.prompts": json.dumps(
                 [{"role": "user", "content": kwargs.get("prompt", [])}]
             ),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -69,7 +67,7 @@ def images_generate(original_method, version, tracer):
             APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None and not NOT_GIVEN:
+                if value is not None:
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
@@ -137,7 +135,7 @@ def async_images_generate(original_method, version, tracer):
             "llm.prompts": json.dumps(
                 [{"role": "user", "content": kwargs.get("prompt", [])}]
             ),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -147,7 +145,7 @@ def async_images_generate(original_method, version, tracer):
         ) as span:
             items = attributes.model_dump(by_alias=True).items()
             for field, value in items:
-                if value is not None and not NOT_GIVEN:
+                if value is not None:
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
@@ -222,7 +220,7 @@ def images_edit(original_method, version, tracer):
                 ]
             ),
             "llm.top_k": kwargs.get("n"),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -231,7 +229,7 @@ def images_edit(original_method, version, tracer):
             APIS["IMAGES_EDIT"]["METHOD"], kind=SpanKind.CLIENT
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None and not NOT_GIVEN:
+                if value is not None:
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
@@ -292,7 +290,7 @@ def chat_completions_create(original_method, version, tracer):
         # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if hasattr(item, "tool_calls") and item.tool_calls is not None and not NOT_GIVEN:
+            if hasattr(item, "tool_calls") and item.tool_calls is not None:
                 tool_calls = []
                 for tool_call in item.tool_calls:
                     tool_call_dict = {
@@ -327,22 +325,22 @@ def chat_completions_create(original_method, version, tracer):
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None and not NOT_GIVEN:
+        if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None and not NOT_GIVEN:
+        if kwargs.get("top_p") is not None:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None and not NOT_GIVEN:
+        if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None and not NOT_GIVEN:
+        if kwargs.get("functions") is not None:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None and not NOT_GIVEN:
+        if kwargs.get("tools") is not None:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
             attributes.llm_tools = json.dumps(tools)
@@ -354,14 +352,14 @@ def chat_completions_create(original_method, version, tracer):
             APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None and not NOT_GIVEN:
+            if value is not None:
                 span.set_attribute(field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
                 span.set_attribute("llm.model", result.model)
-                if hasattr(result, "choices") and result.choices is not None and not NOT_GIVEN:
+                if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
                             "role": (
@@ -388,15 +386,15 @@ def chat_completions_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None and not NOT_GIVEN
+                    and result.system_fingerprint is not None
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
                     )
                 # Get the usage
-                if hasattr(result, "usage") and result.usage is not None and not NOT_GIVEN:
+                if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
-                    if usage is not None and not NOT_GIVEN:
+                    if usage is not None:
                         usage_dict = {
                             "input_tokens": result.usage.prompt_tokens,
                             "output_tokens": usage.completion_tokens,
@@ -415,7 +413,7 @@ def chat_completions_create(original_method, version, tracer):
                     )
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
-                if kwargs.get("functions") is not None and not NOT_GIVEN:
+                if kwargs.get("functions") is not None:
                     for function in kwargs.get("functions"):
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
@@ -425,8 +423,8 @@ def chat_completions_create(original_method, version, tracer):
                     result,
                     span,
                     prompt_tokens,
-                    function_call=kwargs.get("functions") is not None and not NOT_GIVEN,
-                    tool_calls=kwargs.get("tools") is not None and not NOT_GIVEN,
+                    function_call=kwargs.get("functions") is not None,
+                    tool_calls=kwargs.get("tools") is not None,
                 )
 
         except Exception as error:
@@ -444,12 +442,12 @@ def chat_completions_create(original_method, version, tracer):
         completion_tokens = 0
         try:
             for chunk in result:
-                if hasattr(chunk, "model") and chunk.model is not None and not NOT_GIVEN:
+                if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
-                if hasattr(chunk, "choices") and chunk.choices is not None and not NOT_GIVEN:
+                if hasattr(chunk, "choices") and chunk.choices is not None:
                     if not function_call and not tool_calls:
                         for choice in chunk.choices:
-                            if choice.delta and choice.delta.content is not None and not NOT_GIVEN:
+                            if choice.delta and choice.delta.content is not None:
                                 token_counts = estimate_tokens(choice.delta.content)
                                 completion_tokens += token_counts
                                 content = [choice.delta.content]
@@ -457,8 +455,8 @@ def chat_completions_create(original_method, version, tracer):
                         for choice in chunk.choices:
                             if (
                                 choice.delta
-                                and choice.delta.function_call is not None and not NOT_GIVEN
-                                and choice.delta.function_call.arguments is not None and not NOT_GIVEN
+                                and choice.delta.function_call is not None
+                                and choice.delta.function_call.arguments is not None
                             ):
                                 token_counts = estimate_tokens(
                                     choice.delta.function_call.arguments
@@ -468,14 +466,14 @@ def chat_completions_create(original_method, version, tracer):
                     elif tool_calls:
                         for choice in chunk.choices:
                             tool_call = ""
-                            if choice.delta and choice.delta.tool_calls is not None and not NOT_GIVEN:
+                            if choice.delta and choice.delta.tool_calls is not None:
                                 toolcalls = choice.delta.tool_calls
                                 content = []
                                 for tool_call in toolcalls:
                                     if (
                                         tool_call
-                                        and tool_call.function is not None and not NOT_GIVEN
-                                        and tool_call.function.arguments is not None and not NOT_GIVEN
+                                        and tool_call.function is not None
+                                        and tool_call.function.arguments is not None
                                     ):
                                         token_counts = estimate_tokens(
                                             tool_call.function.arguments
@@ -493,7 +491,7 @@ def chat_completions_create(original_method, version, tracer):
                     {
                         "response": (
                             "".join(content)
-                            if len(content) > 0 and content[0] is not None and not NOT_GIVEN
+                            if len(content) > 0 and content[0] is not None
                             else ""
                         )
                     },
@@ -552,7 +550,7 @@ def async_chat_completions_create(original_method, version, tracer):
         # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if hasattr(item, "tool_calls") and item.tool_calls is not None and not NOT_GIVEN:
+            if hasattr(item, "tool_calls") and item.tool_calls is not None:
                 tool_calls = []
                 for tool_call in item.tool_calls:
                     tool_call_dict = {
@@ -587,22 +585,22 @@ def async_chat_completions_create(original_method, version, tracer):
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None and not NOT_GIVEN:
+        if kwargs.get("temperature") is not None:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None and not NOT_GIVEN:
+        if kwargs.get("top_p") is not None:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None and not NOT_GIVEN:
+        if kwargs.get("user") is not None:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None and not NOT_GIVEN:
+        if kwargs.get("functions") is not None:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None and not NOT_GIVEN:
+        if kwargs.get("tools") is not None:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
             attributes.llm_tools = json.dumps(tools)
@@ -614,14 +612,14 @@ def async_chat_completions_create(original_method, version, tracer):
             APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None and not NOT_GIVEN:
+            if value is not None:
                 span.set_attribute(field, value)
         try:
             # Attempt to call the original method
             result = await wrapped(*args, **kwargs)
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
                 span.set_attribute("llm.model", result.model)
-                if hasattr(result, "choices") and result.choices is not None and not NOT_GIVEN:
+                if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
                             "role": (
@@ -648,15 +646,15 @@ def async_chat_completions_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None and not NOT_GIVEN
+                    and result.system_fingerprint is not None
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
                     )
                 # Get the usage
-                if hasattr(result, "usage") and result.usage is not None and not NOT_GIVEN:
+                if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
-                    if usage is not None and not NOT_GIVEN:
+                    if usage is not None:
                         usage_dict = {
                             "input_tokens": result.usage.prompt_tokens,
                             "output_tokens": usage.completion_tokens,
@@ -675,7 +673,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     )
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
-                if kwargs.get("functions") is not None and not NOT_GIVEN:
+                if kwargs.get("functions") is not None:
                     for function in kwargs.get("functions"):
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
@@ -685,8 +683,8 @@ def async_chat_completions_create(original_method, version, tracer):
                     result,
                     span,
                     prompt_tokens,
-                    function_call=kwargs.get("functions") is not None and not NOT_GIVEN,
-                    tool_calls=kwargs.get("tools") is not None and not NOT_GIVEN,
+                    function_call=kwargs.get("functions") is not None,
+                    tool_calls=kwargs.get("tools") is not None,
                 )
 
         except Exception as error:
@@ -705,12 +703,12 @@ def async_chat_completions_create(original_method, version, tracer):
         try:
             content = []
             async for chunk in result:
-                if hasattr(chunk, "model") and chunk.model is not None and not NOT_GIVEN:
+                if hasattr(chunk, "model") and chunk.model is not None:
                     span.set_attribute("llm.model", chunk.model)
-                if hasattr(chunk, "choices") and chunk.choices is not None and not NOT_GIVEN:
+                if hasattr(chunk, "choices") and chunk.choices is not None:
                     if not function_call and not tool_calls:
                         for choice in chunk.choices:
-                            if choice.delta and choice.delta.content is not None and not NOT_GIVEN:
+                            if choice.delta and choice.delta.content is not None:
                                 token_counts = estimate_tokens(choice.delta.content)
                                 completion_tokens += token_counts
                                 content = [choice.delta.content]
@@ -719,7 +717,7 @@ def async_chat_completions_create(original_method, version, tracer):
                             if (
                                 choice.delta
                                 and choice.delta.function_call
-                                and choice.delta.function_call.arguments is not None and not NOT_GIVEN
+                                and choice.delta.function_call.arguments is not None
                             ):
                                 token_counts = estimate_tokens(
                                     choice.delta.function_call.arguments
@@ -729,14 +727,14 @@ def async_chat_completions_create(original_method, version, tracer):
                     elif tool_calls:
                         for choice in chunk.choices:
                             tool_call = ""
-                            if choice.delta and choice.delta.tool_calls is not None and not NOT_GIVEN:
+                            if choice.delta and choice.delta.tool_calls is not None:
                                 toolcalls = choice.delta.tool_calls
                                 content = []
                                 for tool_call in toolcalls:
                                     if (
                                         tool_call
-                                        and tool_call.function is not None and not NOT_GIVEN
-                                        and tool_call.function.arguments is not None and not NOT_GIVEN
+                                        and tool_call.function is not None
+                                        and tool_call.function.arguments is not None
                                     ):
                                         token_counts = estimate_tokens(
                                             tool_call.function.arguments
@@ -754,7 +752,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     {
                         "response": (
                             "".join(content)
-                            if len(content) > 0 and content[0] is not None and not NOT_GIVEN
+                            if len(content) > 0 and content[0] is not None
                             else ""
                         )
                     },
@@ -818,10 +816,10 @@ def embeddings_create(original_method, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.prompts": "",
             "llm.embedding_inputs": json.dumps([kwargs.get("input", "")]),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        if kwargs.get("encoding_format") is not None and not NOT_GIVEN:
+        if kwargs.get("encoding_format") is not None:
             span_attributes["llm.encoding.formats"] = json.dumps(
                 [kwargs.get("encoding_format")]
             )
@@ -829,9 +827,9 @@ def embeddings_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
         kwargs.get("encoding_format")
 
-        if kwargs.get("dimensions") is not None and not NOT_GIVEN:
+        if kwargs.get("dimensions") is not None:
             attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None and not NOT_GIVEN:
+        if kwargs.get("user") is not None:
             attributes["llm.user"] = kwargs.get("user")
 
         with tracer.start_as_current_span(
@@ -839,7 +837,7 @@ def embeddings_create(original_method, version, tracer):
         ) as span:
 
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None and not NOT_GIVEN:
+                if value is not None:
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
@@ -886,17 +884,17 @@ def async_embeddings_create(original_method, version, tracer):
             "llm.prompts": json.dumps(
                 [{"role": "user", "content": kwargs.get("input", "")}]
             ),
-            **(extra_attributes if extra_attributes is not None and not NOT_GIVEN else {}),
+            **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
         kwargs.get("encoding_format")
 
-        if kwargs.get("encoding_format") is not None and not NOT_GIVEN:
+        if kwargs.get("encoding_format") is not None:
             attributes.llm_encoding_format = kwargs.get("encoding_format")
-        if kwargs.get("dimensions") is not None and not NOT_GIVEN:
+        if kwargs.get("dimensions") is not None:
             attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None and not NOT_GIVEN:
+        if kwargs.get("user") is not None:
             attributes["llm.user"] = kwargs.get("user")
 
         with tracer.start_as_current_span(
@@ -904,7 +902,7 @@ def async_embeddings_create(original_method, version, tracer):
         ) as span:
 
             async for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None and not NOT_GIVEN:
+                if value is not None:
                     span.set_attribute(field, value)
             try:
                 # Attempt to call the original method
@@ -929,7 +927,7 @@ def extract_content(choice):
     if (
         hasattr(choice, "message")
         and hasattr(choice.message, "content")
-        and choice.message.content is not None and not NOT_GIVEN
+        and choice.message.content is not None
     ):
         return choice.message.content
 
@@ -937,7 +935,7 @@ def extract_content(choice):
     elif (
         hasattr(choice, "message")
         and hasattr(choice.message, "tool_calls")
-        and choice.message.tool_calls is not None and not NOT_GIVEN
+        and choice.message.tool_calls is not None
     ):
         result = [
             {
@@ -956,7 +954,7 @@ def extract_content(choice):
     elif (
         hasattr(choice, "message")
         and hasattr(choice.message, "function_call")
-        and choice.message.function_call is not None and not NOT_GIVEN
+        and choice.message.function_call is not None
     ):
         return {
             "name": choice.message.function_call.name,
