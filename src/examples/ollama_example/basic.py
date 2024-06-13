@@ -9,7 +9,7 @@ langtrace.init(write_spans_to_console=True)
 
 
 @with_langtrace_root_span("Ollama")
-def basic():
+def chat():
     response = ollama.chat(
         model="llama3",
         messages=[
@@ -20,12 +20,11 @@ def basic():
         ],
         stream=True,
     )
-    print("", response)
 
-    # return response["message"]["content"]
+    return response
 
 
-async def async_basic():
+async def async_chat():
     message = {"role": "user", "content": "Why is the sky blue?"}
     response = await AsyncClient().chat(model="llama3", messages=[message])
     return response
@@ -33,3 +32,7 @@ async def async_basic():
 
 def generate():
     return ollama.generate(model="llama3", prompt="Why is the sky blue?")
+
+
+def async_generate():
+    return AsyncClient().generate(model="llama3", prompt="Why is the sky blue?")

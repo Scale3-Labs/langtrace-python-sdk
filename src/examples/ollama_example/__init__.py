@@ -1,10 +1,11 @@
-from .basic import basic as basic_app, async_basic, generate
+from .basic import chat, async_chat, async_generate, generate
 
 import asyncio
 
 
 class OllamaRunner:
     def run(self):
-        basic_app()
+        chat()
         generate()
-        asyncio.run(async_basic())
+        asyncio.run(async_chat())
+        asyncio.run(async_generate())
