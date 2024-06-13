@@ -22,7 +22,6 @@ langtrace.init(
 )
 
 
-# @with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
 def api_call_1():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
@@ -38,7 +37,6 @@ def api_call_1():
     return res
 
 
-# @with_additional_attributes({"user.id": "37373", "user.feedback.rating": 1})
 def api_call_2():
     llm = ChatOpenAI()
     prompt = ChatPromptTemplate.from_messages(
@@ -55,7 +53,7 @@ def api_call_2():
 
 
 @with_langtrace_root_span()
-def basic():
+def basic_app():
     api_call_1()
     # api_call_2()
     client = OpenAI()
