@@ -16,6 +16,7 @@ class InstrumentationType(Enum):
     LANGCHAIN_COMMUNITY = "langchain_community"
     LANGGRAPH = "langgraph"
     WEAVIATE = "weaviate"
+    OLLAMA = "ollama"
 
     @staticmethod
     def from_string(value: str):
