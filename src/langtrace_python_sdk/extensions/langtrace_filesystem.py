@@ -2,7 +2,7 @@ import json
 import io
 import os
 import requests
-from typing import Iterator, Literal
+from typing import Iterator, Literal, Union
 from colorama import Fore
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
@@ -11,7 +11,10 @@ from fsspec.spec import AbstractFileSystem
 
 OpenTextMode = Literal["r", "a", "w"]
 OpenBinaryMode = Literal["rb", "ab", "wb"]
-OpenMode = OpenTextMode | OpenBinaryMode
+
+
+class OpenMode(str, Union[OpenTextMode, OpenBinaryMode]):
+    pass
 
 
 class LangTraceFile(io.BytesIO):
