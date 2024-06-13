@@ -50,13 +50,17 @@ class LangTraceFile(io.BytesIO):
             log = file_data.decode("utf-8")
             eval_log = json.loads(log)
             data = {
-                "runId": eval_log['eval']['run_id'],
-                "taskId": eval_log['eval']['task_id'],
+                "runId": eval_log["eval"]["run_id"],
+                "taskId": eval_log["eval"]["task_id"],
                 "log": log,
             }
             if self.path is not None:
                 dataset_id = self.path.split("/")[0]
-                print(Fore.GREEN + f"Sending results to Langtrace for dataset: {dataset_id}" + Fore.RESET)
+                print(
+                    Fore.GREEN
+                    + f"Sending results to Langtrace for dataset: {dataset_id}"
+                    + Fore.RESET
+                )
                 data["datasetId"] = dataset_id
             else:
                 print(Fore.GREEN + "Sending results to Langtrace" + Fore.RESET)
@@ -65,14 +69,12 @@ class LangTraceFile(io.BytesIO):
                 data=json.dumps(data),
                 headers={
                     "Content-Type": "application/json",
-                    "x-api-key": os.environ.get("LANGTRACE_API_KEY")
+                    "x-api-key": os.environ.get("LANGTRACE_API_KEY"),
                 },
                 timeout=20,
             )
             response.raise_for_status()
-            print(
-                Fore.GREEN + "Results sent to Langtrace successfully." + Fore.RESET
-            )
+            print(Fore.GREEN + "Results sent to Langtrace successfully." + Fore.RESET)
         except requests.exceptions.RequestException as error:
             print(Fore.RED + f"Error reporting results: {error}" + Fore.RESET)
 
@@ -89,7 +91,7 @@ class LangTraceFileSystem(AbstractFileSystem):
     def open(
         self,
         path: str,
-        mode: OpenTextMode | OpenBinaryMode = "rb",
+        mode: Union[OpenTextMode, OpenBinaryMode] = "rb",
         **kwargs,
     ) -> Iterator[LangTraceFile | io.BytesIO]:
         if "r" in mode:
@@ -104,21 +106,33 @@ class LangTraceFileSystem(AbstractFileSystem):
 
     def fetch_file_from_api(self, dataset_id: str) -> bytes:
         try:
-            print(Fore.GREEN + f"Fetching dataset with id: {dataset_id} from Langtrace" + Fore.RESET)
+            print(
+                Fore.GREEN
+                + f"Fetching dataset with id: {dataset_id} from Langtrace"
+                + Fore.RESET
+            )
             response = requests.get(
                 url=f"{LANGTRACE_REMOTE_URL}/api/dataset/download?id={dataset_id}",
                 headers={
                     "Content-Type": "application/json",
-                    "x-api-key": os.environ.get("LANGTRACE_API_KEY")
+                    "x-api-key": os.environ.get("LANGTRACE_API_KEY"),
                 },
                 timeout=20,
             )
-            print(Fore.GREEN + f"Successfully fetched dataset with id: {dataset_id} from Langtrace" + Fore.RESET)
+            print(
+                Fore.GREEN
+                + f"Successfully fetched dataset with id: {dataset_id} from Langtrace"
+                + Fore.RESET
+            )
             response.raise_for_status()
             file_data = response.content
             return file_data
         except requests.exceptions.RequestException as error:
-            print(Fore.RED + f"Error fetching dataset with id: {dataset_id} from Langtrace: {error}" + Fore.RESET)
+            print(
+                Fore.RED
+                + f"Error fetching dataset with id: {dataset_id} from Langtrace: {error}"
+                + Fore.RESET
+            )
             return b""
 
     def makedirs(self, path: str, exist_ok: bool = False) -> None:
@@ -167,7 +181,9 @@ class LangTraceFileSystem(AbstractFileSystem):
         if path in self.dirs:
             dirs = [d for d in self.dirs if d.startswith(path + self.sep)]
             files = [f for f in self.files if f.startswith(path + self.sep)]
-            yield path, [d.split(self.sep)[-1] for d in dirs], [f.split(self.sep)[-1] for f in files]
+            yield path, [d.split(self.sep)[-1] for d in dirs], [
+                f.split(self.sep)[-1] for f in files
+            ]
             for d in dirs:
                 yield from self._walk(d)
 
