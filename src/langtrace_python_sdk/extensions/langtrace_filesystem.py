@@ -15,6 +15,7 @@ OpenBinaryMode = Literal["rb", "ab", "wb"]
 
 class LangTraceFile(io.BytesIO):
     def __init__(self, fs: "LangTraceFileSystem", path: str, mode: OpenTextMode | OpenBinaryMode):
+        # type: (LangTraceFileSystem, str, OpenTextMode | OpenBinaryMode) -> None
         super().__init__()
         self.fs = fs
         self.path = path
