@@ -1,8 +1,8 @@
 # langtrace.init(write_spans_to_console=True)
 import fsspec
 from inspect_ai import Task, task
-from inspect_ai.dataset import example_dataset
-from inspect_ai.scorer import model_graded_fact
+from inspect_ai.dataset import csv_dataset
+from inspect_ai.scorer import model_graded_qa
 from inspect_ai.solver import chain_of_thought, generate, self_critique
 
 from langtrace_python_sdk.extensions.langtrace_filesystem import \
@@ -19,11 +19,10 @@ fsspec.register_implementation(LangTraceFileSystem.protocol, LangTraceFileSystem
 @task
 def security_guide():
     return Task(
-        dataset=example_dataset("security_guide"),
+        dataset=csv_dataset("langtracefs://clxc2mxu6000lpc7ntsvcjvp9"),
         plan=[
             chain_of_thought(),
-            generate(),
             self_critique()
         ],
-        scorer=model_graded_fact()
+        scorer=model_graded_qa()
     )

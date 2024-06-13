@@ -41,6 +41,12 @@ class LangTraceFile(io.BytesIO):
                 "taskId": eval_log['eval']['task_id'],
                 "log": log,
             }
+            if self.path is not None:
+                dataset_id = self.path.split("/")[0]
+                print(Fore.GREEN + f"Sending results to Langtrace for dataset: {dataset_id}" + Fore.RESET)
+                data["datasetId"] = dataset_id
+            else:
+                print(Fore.GREEN + "Sending results to Langtrace" + Fore.RESET)
             response = requests.post(
                 url=f"{LANGTRACE_REMOTE_URL}/api/run",
                 data=json.dumps(data),
@@ -52,7 +58,7 @@ class LangTraceFile(io.BytesIO):
             )
             response.raise_for_status()
             print(
-                Fore.GREEN + "Reported results successfully." + Fore.RESET
+                Fore.GREEN + "Results sent to Langtrace successfully." + Fore.RESET
             )
         except requests.exceptions.RequestException as error:
             print(Fore.RED + f"Error reporting results: {error}" + Fore.RESET)
@@ -72,13 +78,35 @@ class LangTraceFileSystem(AbstractFileSystem):
         path: str,
         mode: OpenTextMode | OpenBinaryMode = "rb",
         **kwargs,
-    ) -> Iterator[LangTraceFile]:
-        if "w" in mode or "a" in mode:
+    ) -> Iterator[LangTraceFile | io.BytesIO]:
+        if "r" in mode:
+            dataset_id = path
+            # Fetch file from API and return a BytesIO object
+            file_data = self.fetch_file_from_api(dataset_id)
+            return io.BytesIO(file_data)
+        elif "w" in mode or "a" in mode:
             return LangTraceFile(self, path, mode)
-        elif "r" in mode:
-            return io.BytesIO(self.files.get(path, b""))
         else:
             raise ValueError(f"Unsupported mode: {mode}")
+
+    def fetch_file_from_api(self, dataset_id: str) -> bytes:
+        try:
+            print(Fore.GREEN + f"Fetching dataset with id: {dataset_id} from Langtrace" + Fore.RESET)
+            response = requests.get(
+                url=f"{LANGTRACE_REMOTE_URL}/api/dataset/download?id={dataset_id}",
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": os.environ.get("LANGTRACE_API_KEY")
+                },
+                timeout=20,
+            )
+            print(Fore.GREEN + f"Successfully fetched dataset with id: {dataset_id} from Langtrace" + Fore.RESET)
+            response.raise_for_status()
+            file_data = response.content
+            return file_data
+        except requests.exceptions.RequestException as error:
+            print(Fore.RED + f"Error fetching dataset with id: {dataset_id} from Langtrace: {error}" + Fore.RESET)
+            return b""
 
     def makedirs(self, path: str, exist_ok: bool = False) -> None:
         if not exist_ok and path in self.dirs:
