@@ -74,7 +74,7 @@ include = [
 packages = ["src/langtrace_python_sdk", "src/examples", "src/tests"]
 
 [project.entry-points."fsspec.specs"]
-langtracefs = "langtrace-python-sdk:LangTraceFileSystem"
+langtracefs="langtrace-python-sdk:LangTraceFileSystem"
 
 # [tool.semantic_release]
 # version_variable = "pyproject.toml:version" # version location
