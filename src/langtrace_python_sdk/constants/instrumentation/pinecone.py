@@ -12,7 +12,7 @@ APIS = {
         "OPERATION": "query",
     },
     "DELETE": {
-        "METHOD": PineconeMethods.DELETE,
+        "METHOD": PineconeMethods.DELETE.value,
         "ENDPOINT": "/vectors/delete",
         "OPERATION": "delete",
     },

@@ -13,6 +13,7 @@ from langtrace_python_sdk import (
     with_additional_attributes,
 )
 from langtrace_python_sdk.utils.with_root_span import SendUserFeedback
+from opentelemetry.sdk.trace.export import ConsoleSpanExporter
 
 _ = load_dotenv(find_dotenv())
 langtrace.init()
