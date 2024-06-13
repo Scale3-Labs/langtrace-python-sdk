@@ -17,10 +17,10 @@ limitations under the License.
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from langtrace_python_sdk.utils.llm import set_span_attributes
 from langtrace_python_sdk.utils.silently_fail import silently_fail
-from opentelemetry import baggage
+from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry.trace.propagation import set_span_in_context
 from langtrace_python_sdk.constants.instrumentation.chroma import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -59,7 +59,11 @@ def collection_patch(method, version, tracer):
 
         attributes = DatabaseSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            api["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
+        ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)

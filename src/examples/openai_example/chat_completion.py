@@ -40,5 +40,5 @@ def chat_completion():
             ]
             result.append(content[0] if len(content) > 0 else "")
 
-    print("".join(result))
+    # print("".join(result))
     return response

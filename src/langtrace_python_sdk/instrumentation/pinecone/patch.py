@@ -17,10 +17,10 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import DatabaseSpanAttributes
-from opentelemetry import baggage
+from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry.trace.propagation import set_span_in_context
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
@@ -56,7 +56,11 @@ def generic_patch(operation_name, version, tracer):
 
         attributes = DatabaseSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            api["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
+        ) as span:
 
             if span.is_recording():
                 set_span_attribute(span, "server.address", instance._config.host)

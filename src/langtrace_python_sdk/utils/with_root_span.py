@@ -23,6 +23,7 @@ from typing import Optional
 import requests
 from opentelemetry import baggage, context, trace
 from opentelemetry.trace import SpanKind
+from opentelemetry.trace.propagation import set_span_in_context
 
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -48,7 +49,11 @@ def with_langtrace_root_span(
             span_id = None
             trace_id = None
 
-            with tracer.start_as_current_span(operation_name, kind=kind) as span:
+            with tracer.start_as_current_span(
+                operation_name,
+                kind=kind,
+                context=set_span_in_context(trace.get_current_span()),
+            ) as span:
                 span_id = str(span.get_span_context().span_id)
                 trace_id = str(span.get_span_context().trace_id)
 
@@ -66,7 +71,11 @@ def with_langtrace_root_span(
             trace_id = None
             tracer = trace.get_tracer(__name__)
             operation_name = name if name else func.__name__
-            with tracer.start_as_current_span(operation_name, kind=kind) as span:
+            with tracer.start_as_current_span(
+                operation_name,
+                kind=kind,
+                context=set_span_in_context(trace.get_current_span()),
+            ) as span:
                 span_id = span.get_span_context().span_id
                 trace_id = span.get_span_context().trace_id
                 if (

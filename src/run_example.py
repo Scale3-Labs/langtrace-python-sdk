@@ -6,7 +6,7 @@ ENABLED_EXAMPLES = {
     "cohere": False,
     "fastapi": False,
     "langchain": False,
-    "llamaindex": False,
+    "llamaindex": True,
     "hiveagent": False,
     "openai": False,
     "perplexity": False,
