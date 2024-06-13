@@ -15,16 +15,12 @@ limitations under the License.
 """
 
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import (
-    with_langtrace_root_span,
-    with_additional_attributes,
-)
-
+from langtrace_python_sdk.extensions.langtrace_filesystem import \
+    LangTraceFileSystem
 from langtrace_python_sdk.utils.prompt_registry import get_prompt_from_registry
 from langtrace_python_sdk.utils.with_root_span import (
-    SendUserFeedback,
-    inject_additional_attributes,
-)
+    SendUserFeedback, inject_additional_attributes, with_additional_attributes,
+    with_langtrace_root_span)
 
 __all__ = [
     "langtrace",
@@ -33,4 +29,5 @@ __all__ = [
     "inject_additional_attributes",
     "get_prompt_from_registry",
     "SendUserFeedback",
+    "LangTraceFileSystem",
 ]
