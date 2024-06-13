@@ -13,8 +13,17 @@ OpenTextMode = Literal["r", "a", "w"]
 OpenBinaryMode = Literal["rb", "ab", "wb"]
 
 
-class OpenMode(str, Union[OpenTextMode, OpenBinaryMode]):
-    pass
+class OpenMode(str):
+    def __init_subclass__(cls, **kwargs):
+        allowed_values = set(OpenTextMode.__args__) | set(OpenBinaryMode.__args__)
+        super().__init_subclass__(**kwargs)
+
+        def __new__(cls, value):
+            if value not in allowed_values:
+                raise ValueError(f"Invalid value for OpenMode: {value}")
+            return super().__new__(cls, value)
+
+        cls.__new__ = __new__
 
 
 class LangTraceFile(io.BytesIO):
