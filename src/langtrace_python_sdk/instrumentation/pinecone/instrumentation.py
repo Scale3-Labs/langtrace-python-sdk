@@ -23,7 +23,7 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.constants.instrumentation.pinecone import APIS
-from langtrace_python_sdk.instrumentation.ollama.patch import generic_patch
+from langtrace_python_sdk.instrumentation.pinecone.patch import generic_patch
 
 logging.basicConfig(level=logging.FATAL)
 
