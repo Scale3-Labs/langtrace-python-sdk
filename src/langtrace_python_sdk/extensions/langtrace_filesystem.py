@@ -15,7 +15,7 @@ OpenBinaryMode = Literal["rb", "ab", "wb"]
 
 class OpenMode(str):
     def __init_subclass__(cls, **kwargs):
-        allowed_values = set(OpenTextMode.__args__) | set(OpenBinaryMode.__args__)
+        allowed_values = Union[set(OpenTextMode.__args__), set(OpenBinaryMode.__args__)]
         super().__init_subclass__(**kwargs)
 
         def __new__(cls, value):
@@ -93,7 +93,7 @@ class LangTraceFileSystem(AbstractFileSystem):
         path: str,
         mode: Union[OpenTextMode, OpenBinaryMode] = "rb",
         **kwargs,
-    ) -> Iterator[LangTraceFile | io.BytesIO]:
+    ) -> Iterator[Union[LangTraceFile, io.BytesIO]]:
         if "r" in mode:
             dataset_id = path
             # Fetch file from API and return a BytesIO object
