@@ -12,7 +12,7 @@ import nest_asyncio
 
 nest_asyncio.apply()
 
-langtrace.init(write_spans_to_console=False)
+langtrace.init()
 
 
 def multiply(a: int, b: int) -> int:

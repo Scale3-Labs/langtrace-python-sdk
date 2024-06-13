@@ -12,7 +12,6 @@ from opentelemetry import trace
 
 class LangtraceSampler(Sampler):
     _disabled_methods_names: set
-    _seen: set = set()
 
     def __init__(
         self,
@@ -42,7 +41,10 @@ class LangtraceSampler(Sampler):
             return SamplingResult(decision=Decision.RECORD_AND_SAMPLE)
 
         if parent_context:
-            if parent_span_context.trace_flags != TraceFlags.SAMPLED:
+            if (
+                parent_span_context.span_id != 0
+                and parent_span_context.trace_flags != TraceFlags.SAMPLED
+            ):
                 return SamplingResult(decision=Decision.DROP)
 
         if name in self._disabled_methods_names:
