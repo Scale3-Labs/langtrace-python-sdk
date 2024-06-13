@@ -64,7 +64,7 @@ def init(
     custom_remote_exporter=None,
     api_host: Optional[str] = LANGTRACE_REMOTE_URL,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
-    disable_tracing_for_methods: Optional[InstrumentationMethods] = None,
+    disable_tracing_for_functions: Optional[InstrumentationMethods] = None,
 ):
 
     host = (
@@ -72,7 +72,7 @@ def init(
     )
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
-    sampler = LangtraceSampler(disabled_methods=disable_tracing_for_methods)
+    sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
     provider = TracerProvider(
         resource=Resource.create({"service.name": sys.argv[0]}),
         sampler=sampler,

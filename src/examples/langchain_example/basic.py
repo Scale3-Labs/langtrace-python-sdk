@@ -15,7 +15,7 @@ _ = load_dotenv(find_dotenv())
 
 langtrace.init(
     write_spans_to_console=False,
-    disable_tracing_for_methods={"langchain": ["RunnableSequence.invoke"]},
+    disable_tracing_for_functions={"langchain": ["RunnableSequence.invoke"]},
 )
 
 

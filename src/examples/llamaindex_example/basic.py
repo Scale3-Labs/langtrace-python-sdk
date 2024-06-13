@@ -8,7 +8,7 @@ _ = load_dotenv(find_dotenv())
 
 
 langtrace.init(
-    disable_tracing_for_methods={
+    disable_tracing_for_functions={
         "open_ai": ["openai.chat.completions.create"],
     }
 )
