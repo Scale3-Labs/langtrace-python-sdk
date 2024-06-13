@@ -17,7 +17,8 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
-from opentelemetry import baggage
+from opentelemetry import baggage, trace
+from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -112,7 +113,9 @@ def chat_completions_create(original_method, version, tracer):
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["CHAT_COMPLETION"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:

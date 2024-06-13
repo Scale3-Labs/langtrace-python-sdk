@@ -72,9 +72,10 @@ def init(
     )
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
+    sampler = LangtraceSampler(disabled_methods=disable_tracing_for_methods)
     provider = TracerProvider(
         resource=Resource.create({"service.name": sys.argv[0]}),
-        sampler=LangtraceSampler(disabled_methods=disable_tracing_for_methods),
+        sampler=sampler,
     )
 
     remote_write_exporter = (

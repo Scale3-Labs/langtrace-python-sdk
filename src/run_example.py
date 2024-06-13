@@ -6,11 +6,11 @@ ENABLED_EXAMPLES = {
     "cohere": False,
     "fastapi": False,
     "langchain": False,
-    "llamaindex": False,
+    "llamaindex": True,
     "hiveagent": False,
     "openai": False,
     "perplexity": False,
-    "pinecone": True,
+    "pinecone": False,
     "qdrant": False,
     "weaviate": False,
 }
