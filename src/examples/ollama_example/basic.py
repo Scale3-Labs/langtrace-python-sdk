@@ -5,10 +5,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-langtrace.init(write_spans_to_console=True)
+langtrace.init(write_spans_to_console=False)
 
 
-@with_langtrace_root_span("Ollama")
 def chat():
     response = ollama.chat(
         model="llama3",
@@ -26,8 +25,7 @@ def chat():
 
 async def async_chat():
     message = {"role": "user", "content": "Why is the sky blue?"}
-    response = await AsyncClient().chat(model="llama3", messages=[message])
-    return response
+    return await AsyncClient().chat(model="llama3", messages=[message])
 
 
 def generate():
@@ -36,3 +34,17 @@ def generate():
 
 def async_generate():
     return AsyncClient().generate(model="llama3", prompt="Why is the sky blue?")
+
+
+def embed():
+    return ollama.embeddings(
+        model="llama3",
+        prompt="cat",
+    )
+
+
+async def async_embed():
+    return await AsyncClient().embeddings(
+        model="llama3",
+        prompt="cat",
+    )

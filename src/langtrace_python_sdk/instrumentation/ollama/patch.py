@@ -34,7 +34,6 @@ def generic_patch(operation_name, version, tracer):
             "llm.stream": kwargs.get("stream"),
             "url.full": base_url,
             "llm.api": api["METHOD"],
-            "llm.prompts": json.dumps([kwargs.get("messages", [])]),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -42,9 +41,8 @@ def generic_patch(operation_name, version, tracer):
         with tracer.start_as_current_span(
             f'ollama.{api["METHOD"]}', kind=SpanKind.CLIENT
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            _set_input_attributes(span, kwargs, attributes)
+
             try:
                 result = wrapped(*args, **kwargs)
                 if result:
@@ -59,8 +57,8 @@ def generic_patch(operation_name, version, tracer):
                         span.set_status(Status(StatusCode.OK))
 
                 span.end()
-
                 return result
+
             except Exception as err:
                 # Record the exception in the span
                 span.record_exception(err)
@@ -89,17 +87,12 @@ def ageneric_patch(operation_name, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps(
-                [{"role": "user", "content": kwargs.get("prompt", [])}]
-            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
         with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            _set_input_attributes(span, kwargs, attributes)
             try:
                 result = await wrapped(*args, **kwargs)
                 if result:
@@ -126,6 +119,7 @@ def ageneric_patch(operation_name, version, tracer):
     return traced_method
 
 
+@silently_fail
 def _set_response_attributes(span, response):
 
     input_tokens = response.get("prompt_eval_count") or 0
@@ -137,17 +131,36 @@ def _set_response_attributes(span, response):
         "total_tokens": total_tokens,
     }
 
-    set_span_attribute(span, "llm.token.counts", json.dumps(usage_dict))
+    if total_tokens > 0:
+        set_span_attribute(span, "llm.token.counts", json.dumps(usage_dict))
     set_span_attribute(span, "llm.finish_reason", response.get("done_reason"))
-    print("respinse", response)
 
     if "message" in response:
         set_span_attribute(span, "llm.responses", json.dumps([response.get("message")]))
+
     if "response" in response:
         set_span_attribute(
             span, "llm.responses", json.dumps([response.get("response")])
         )
-        print(json.dumps([response.get("response")]))
+
+
+@silently_fail
+def _set_input_attributes(span, kwargs, attributes):
+    for field, value in attributes.model_dump(by_alias=True).items():
+        set_span_attribute(span, field, value)
+
+    if "messages" in kwargs:
+        set_span_attribute(
+            span,
+            "llm.prompts",
+            json.dumps([kwargs.get("messages", [])]),
+        )
+    if "prompt" in kwargs:
+        set_span_attribute(
+            span,
+            "llm.prompts",
+            json.dumps([{"role": "user", "content": kwargs.get("prompt", [])}]),
+        )
 
 
 def _handle_streaming_response(span, response, api):
