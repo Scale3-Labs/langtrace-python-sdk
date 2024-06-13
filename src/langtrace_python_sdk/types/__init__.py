@@ -80,12 +80,20 @@ class VendorMethods(TypedDict):
         "cohere.client.chat_stream",
     ]
 
+    LlamaIndexMethods = Literal[
+        "llamaindex.OpenAI.chat",
+        "llamaindex.RetrieverQueryEngine.query",
+        "llamaindex.VectorIndexRetriever.retrieve",
+        "llamaindex.SimpleVectorStore.query",
+        "llamaindex.RetrieverQueryEngine.retrieve",
+    ]
+
 
 class InstrumentationMethods(TypedDict):
     open_ai: List[VendorMethods.OpenaiMethods]
     groq: List[VendorMethods.GroqMethods]
     pinecone: List[VendorMethods.PineconeMethods]
-    llamaindex: List[str]
+    llamaindex: List[VendorMethods.LlamaIndexMethods]
     chromadb: List[VendorMethods.ChromadbMethods]
     qdrant: List[VendorMethods.QdrantMethods]
     langchain: List[str]
