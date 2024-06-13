@@ -49,6 +49,7 @@ dev = [
     "cohere",
     "qdrant_client",
     "weaviate-client",
+    "ollama"
 ]
 
 test = [
