@@ -27,6 +27,8 @@ class OpenMode(str):
 
 
 class LangTraceFile(io.BytesIO):
+    _host: str = os.environ.get("LANGTRACE_API_HOST", None) or LANGTRACE_REMOTE_URL
+
     def __init__(self, fs: "LangTraceFileSystem", path: str, mode: OpenMode):
         super().__init__()
         self.fs = fs
@@ -65,7 +67,7 @@ class LangTraceFile(io.BytesIO):
             else:
                 print(Fore.GREEN + "Sending results to Langtrace" + Fore.RESET)
             response = requests.post(
-                url=f"{LANGTRACE_REMOTE_URL}/api/run",
+                url=f"{self._host}/api/run",
                 data=json.dumps(data),
                 headers={
                     "Content-Type": "application/json",
@@ -80,6 +82,7 @@ class LangTraceFile(io.BytesIO):
 
 
 class LangTraceFileSystem(AbstractFileSystem):
+    _host: str = os.environ.get("LANGTRACE_API_HOST", None) or LANGTRACE_REMOTE_URL
     protocol = "langtracefs"
     sep = "/"
 
@@ -112,7 +115,7 @@ class LangTraceFileSystem(AbstractFileSystem):
                 + Fore.RESET
             )
             response = requests.get(
-                url=f"{LANGTRACE_REMOTE_URL}/api/dataset/download?id={dataset_id}",
+                url=f"{self._host}/api/dataset/download?id={dataset_id}",
                 headers={
                     "Content-Type": "application/json",
                     "x-api-key": os.environ.get("LANGTRACE_API_KEY"),
