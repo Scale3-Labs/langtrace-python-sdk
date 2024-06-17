@@ -1,17 +1,13 @@
-import sys
-import os
 import dspy
 from dspy.datasets.gsm8k import GSM8K, gsm8k_metric
 from dspy.teleprompt import BootstrapFewShot
 
-# Add the local src folder to the Python path
-sys.path.insert(0, os.path.abspath('/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src'))
-
 # flake8: noqa
 from langtrace_python_sdk import langtrace, with_langtrace_root_span
+
 langtrace.init()
 
-turbo = dspy.OpenAI(model='gpt-3.5-turbo', max_tokens=250)
+turbo = dspy.OpenAI(model="gpt-3.5-turbo", max_tokens=250)
 dspy.settings.configure(lm=turbo)
 
 # Load math questions from the GSM8K dataset
@@ -38,9 +34,9 @@ def example():
     teleprompter = BootstrapFewShot(metric=gsm8k_metric, **config)
     optimized_cot = teleprompter.compile(CoT(), trainset=gsm8k_trainset)
 
-    ans = optimized_cot(question='What is the sqrt of 345?')
+    ans = optimized_cot(question="What is the sqrt of 345?")
     print(ans)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     example()

@@ -1,18 +1,8 @@
 import dspy
 import json
-import os
-import sys
 from dspy.datasets import HotPotQA
 from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate.evaluate import Evaluate
-
-# Add the local src folder to the Python path
-sys.path.insert(
-    0,
-    os.path.abspath(
-        "/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src"
-    ),
-)
 
 # flake8: noqa
 from langtrace_python_sdk import langtrace, with_langtrace_root_span
