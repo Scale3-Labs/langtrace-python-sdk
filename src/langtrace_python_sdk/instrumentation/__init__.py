@@ -12,6 +12,7 @@ from .pinecone import PineconeInstrumentation
 from .qdrant import QdrantInstrumentation
 from .weaviate import WeaviateInstrumentation
 from .ollama import OllamaInstrumentor
+from .dspy import DspyInstrumentor
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -28,4 +29,5 @@ __all__ = [
     "QdrantInstrumentation",
     "WeaviateInstrumentation",
     "OllamaInstrumentor",
+    "DspyInstrumentor",
 ]
