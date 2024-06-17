@@ -7,7 +7,11 @@ from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 _ = load_dotenv(find_dotenv())
 
 
-langtrace.init(write_spans_to_console=False)
+langtrace.init(
+    disable_tracing_for_functions={
+        "open_ai": ["openai.chat.completions.create"],
+    }
+)
 
 
 @with_langtrace_root_span()

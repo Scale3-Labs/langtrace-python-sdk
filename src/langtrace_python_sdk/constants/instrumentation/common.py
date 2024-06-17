@@ -23,6 +23,7 @@ SERVICE_PROVIDERS = {
     "PPLX": "Perplexity",
     "QDRANT": "Qdrant",
     "WEAVIATE": "Weaviate",
+    "OLLAMA": "Ollama",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

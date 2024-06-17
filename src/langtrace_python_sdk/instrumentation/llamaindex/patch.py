@@ -15,10 +15,10 @@ limitations under the License.
 """
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
-from opentelemetry import baggage
+from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry.trace.propagation import set_span_in_context
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
@@ -48,7 +48,11 @@ def generic_patch(method, task, tracer, version):
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            method,
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
+        ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)

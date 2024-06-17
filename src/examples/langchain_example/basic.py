@@ -8,14 +8,15 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import (
-    with_langtrace_root_span,
-    with_additional_attributes,
-)
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
+from openai import OpenAI
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(
+    write_spans_to_console=False,
+    disable_tracing_for_functions={"langchain": ["RunnableSequence.invoke"]},
+)
 
 
 def api_call_1():
@@ -29,7 +30,8 @@ def api_call_1():
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
     res = chain.invoke({"input": "how can langsmith help with testing?"})
-    print(res)
+    # print(res)
+    return res
 
 
 def api_call_2():
@@ -43,13 +45,26 @@ def api_call_2():
     output_parser = StrOutputParser()
     chain = prompt | llm | output_parser
     res = chain.invoke({"input": "how can langsmith help with testing?"})
-    print(res)
+    # print(res)
+    return res
 
 
 @with_langtrace_root_span()
 def basic_app():
     api_call_1()
-    api_call_2()
+    # api_call_2()
+    client = OpenAI()
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "Talk like a pirate"},
+            {"role": "user", "content": "Tell me a story in 3 sentences or less."},
+        ],
+        # stream=True,
+        stream=False,
+    )
+
+    return response
 
 
 @with_langtrace_root_span()

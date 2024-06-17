@@ -18,10 +18,10 @@ import json
 
 from importlib_metadata import version as v
 from langtrace.trace_attributes import Event, LLMSpanAttributes
-from opentelemetry import baggage
+from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
-
+from opentelemetry.trace.propagation import set_span_in_context
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -64,7 +64,9 @@ def images_generate(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["IMAGES_GENERATION"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
@@ -141,7 +143,9 @@ def async_images_generate(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["IMAGES_GENERATION"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         ) as span:
             items = attributes.model_dump(by_alias=True).items()
             for field, value in items:
@@ -226,7 +230,9 @@ def images_edit(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_EDIT"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["IMAGES_EDIT"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
@@ -349,7 +355,9 @@ def chat_completions_create(original_method, version, tracer):
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["CHAT_COMPLETION"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             if value is not None:
@@ -833,7 +841,9 @@ def embeddings_create(original_method, version, tracer):
             attributes["llm.user"] = kwargs.get("user")
 
         with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["EMBEDDINGS_CREATE"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
             for field, value in attributes.model_dump(by_alias=True).items():
@@ -898,7 +908,9 @@ def async_embeddings_create(original_method, version, tracer):
             attributes["llm.user"] = kwargs.get("user")
 
         with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["EMBEDDINGS_CREATE"]["METHOD"],
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
             async for field, value in attributes.model_dump(by_alias=True).items():

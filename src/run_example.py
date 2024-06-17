@@ -6,13 +6,15 @@ ENABLED_EXAMPLES = {
     "cohere": False,
     "fastapi": False,
     "langchain": False,
-    "llamaindex": False,
+    "llamaindex": True,
     "hiveagent": False,
     "openai": False,
     "perplexity": False,
-    "pinecone": True,
+    "pinecone": False,
     "qdrant": False,
     "weaviate": False,
+    "ollama": True,
+    "groq": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -74,3 +76,9 @@ if ENABLED_EXAMPLES["weaviate"]:
 
     print(Fore.BLUE + "Running Weaviate example" + Fore.RESET)
     WeaviateRunner().run()
+
+if ENABLED_EXAMPLES["ollama"]:
+    from examples.ollama_example import OllamaRunner
+
+    print(Fore.BLUE + "Running Ollama example" + Fore.RESET)
+    OllamaRunner().run()
