@@ -13,7 +13,7 @@ ENABLED_EXAMPLES = {
     "pinecone": False,
     "qdrant": False,
     "weaviate": False,
-    "ollama": True,
+    "ollama": False,
     "groq": False,
 }
 
