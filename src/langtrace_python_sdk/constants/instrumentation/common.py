@@ -11,6 +11,7 @@ SERVICE_PROVIDERS = {
     "ANTHROPIC": "Anthropic",
     "AZURE": "Azure",
     "CHROMA": "Chroma",
+    "DSPY": "DSPy",
     "GROQ": "Groq",
     "LANGCHAIN": "Langchain",
     "LANGCHAIN_COMMUNITY": "Langchain Community",
