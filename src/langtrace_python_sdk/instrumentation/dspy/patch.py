@@ -89,12 +89,6 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
 def patch_signature(operation_name, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
 
-        print("Tracing Signature")
-        print(f"Wrapped: {wrapped}")
-        print(f"Instance: {instance}")
-        print(f"Args: {args}")
-        print(f"Kwargs: {kwargs}")
-
         service_provider = SERVICE_PROVIDERS["DSPY"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
@@ -123,6 +117,71 @@ def patch_signature(operation_name, version, tracer):
                 result = wrapped(*args, **kwargs)
                 if result:
                     set_span_attribute(span, "dspy.signature.result", str(result))
+                    span.set_status(Status(StatusCode.OK))
+
+                span.end()
+                return result
+
+            except Exception as err:
+                # Record the exception in the span
+                span.record_exception(err)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+
+    return traced_method
+
+
+def patch_evaluate(operation_name, version, tracer):
+    def traced_method(wrapped, instance, args, kwargs):
+
+        service_provider = SERVICE_PROVIDERS["DSPY"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "framework",
+            "langtrace.service.version": version,
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
+
+        if instance.devset is not None:
+            span_attributes["dspy.evaluate.devset"] = str(instance.devset)
+        if instance.display is not None:
+            span_attributes["dspy.evaluate.display"] = str(instance.display)
+        if instance.num_threads is not None:
+            span_attributes["dspy.evaluate.num_threads"] = str(instance.num_threads)
+        if instance.return_outputs is not None:
+            span_attributes["dspy.evaluate.return_outputs"] = str(instance.return_outputs)
+        if instance.display_table is not None:
+            span_attributes["dspy.evaluate.display_table"] = str(instance.display_table)
+        if instance.display_progress is not None:
+            span_attributes["dspy.evaluate.display_progress"] = str(instance.display_progress)
+        if instance.metric is not None:
+            span_attributes["dspy.evaluate.metric"] = instance.metric.__name__
+        if instance.error_count is not None:
+            span_attributes["dspy.evaluate.error_count"] = str(instance.error_count)
+        if instance.error_lock is not None:
+            span_attributes["dspy.evaluate.error_lock"] = str(instance.error_lock)
+        if instance.max_errors is not None:
+            span_attributes["dspy.evaluate.max_errors"] = str(instance.max_errors)
+        if args and len(args) > 0:
+            span_attributes["dspy.evaluate.args"] = str(args)
+
+        attributes = FrameworkSpanAttributes(**span_attributes)
+        with tracer.start_as_current_span(
+            operation_name, kind=SpanKind.CLIENT
+        ) as span:
+            _set_input_attributes(span, kwargs, attributes)
+
+            try:
+                result = wrapped(*args, **kwargs)
+                if result is not None:
+                    set_span_attribute(span, "dspy.evaluate.result", str(result))
                     span.set_status(Status(StatusCode.OK))
 
                 span.end()

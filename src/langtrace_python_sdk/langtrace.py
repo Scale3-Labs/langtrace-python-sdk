@@ -73,7 +73,7 @@ def init(
         os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
     )
     check_if_sdk_is_outdated()
-    print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
+    print(Fore.GREEN + "Initializing Langtrace SDK123.." + Fore.RESET)
     sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
     provider = TracerProvider(
         resource=Resource.create({"service.name": sys.argv[0]}),
