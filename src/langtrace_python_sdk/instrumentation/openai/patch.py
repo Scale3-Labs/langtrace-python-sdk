@@ -275,6 +275,110 @@ def images_edit(original_method, version, tracer):
     return traced_method
 
 
+class StreamWrapper:
+    def __init__(self, stream, span, prompt_tokens, function_call=False, tool_calls=False):
+        self.stream = stream
+        self.span = span
+        self.prompt_tokens = prompt_tokens
+        self.function_call = function_call
+        self.tool_calls = tool_calls
+        self.result_content = []
+        self.completion_tokens = 0
+
+    def __enter__(self):
+        self.span.add_event(Event.STREAM_START.value)
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.span.add_event(Event.STREAM_END.value)
+        self.span.set_attribute(
+            "llm.token.counts",
+            json.dumps(
+                {
+                    "input_tokens": self.prompt_tokens,
+                    "output_tokens": self.completion_tokens,
+                    "total_tokens": self.prompt_tokens + self.completion_tokens,
+                }
+            ),
+        )
+        self.span.set_attribute(
+            "llm.responses",
+            json.dumps(
+                [
+                    {
+                        "role": "assistant",
+                        "content": "".join(self.result_content),
+                    }
+                ]
+            ),
+        )
+        self.span.set_status(StatusCode.OK)
+        self.span.end()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            chunk = next(self.stream)
+            self.process_chunk(chunk)
+            return chunk
+        except StopIteration:
+            raise
+
+    def process_chunk(self, chunk):
+        if hasattr(chunk, "model") and chunk.model is not None:
+            self.span.set_attribute("llm.model", chunk.model)
+        if hasattr(chunk, "choices") and chunk.choices is not None:
+            content = []
+            if not self.function_call and not self.tool_calls:
+                for choice in chunk.choices:
+                    if choice.delta and choice.delta.content is not None:
+                        token_counts = estimate_tokens(choice.delta.content)
+                        self.completion_tokens += token_counts
+                        content = [choice.delta.content]
+            elif self.function_call:
+                for choice in chunk.choices:
+                    if (
+                        choice.delta
+                        and choice.delta.function_call is not None
+                        and choice.delta.function_call.arguments is not None
+                    ):
+                        token_counts = estimate_tokens(
+                            choice.delta.function_call.arguments
+                        )
+                        self.completion_tokens += token_counts
+                        content = [choice.delta.function_call.arguments]
+            elif self.tool_calls:
+                for choice in chunk.choices:
+                    if choice.delta and choice.delta.tool_calls is not None:
+                        toolcalls = choice.delta.tool_calls
+                        content = []
+                        for tool_call in toolcalls:
+                            if (
+                                tool_call
+                                and tool_call.function is not None
+                                and tool_call.function.arguments is not None
+                            ):
+                                token_counts = estimate_tokens(
+                                    tool_call.function.arguments
+                                )
+                                self.completion_tokens += token_counts
+                                content.append(tool_call.function.arguments)
+            self.span.add_event(
+                Event.STREAM_OUTPUT.value,
+                {
+                    "response": (
+                        "".join(content)
+                        if len(content) > 0 and content[0] is not None
+                        else ""
+                    )
+                },
+            )
+            if content:
+                self.result_content.append(content[0])
+
+
 def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
@@ -427,7 +531,7 @@ def chat_completions_create(original_method, version, tracer):
                             json.dumps(function), kwargs.get("model")
                         )
 
-                return handle_streaming_response(
+                return StreamWrapper(
                     result,
                     span,
                     prompt_tokens,
@@ -440,98 +544,6 @@ def chat_completions_create(original_method, version, tracer):
             span.set_status(Status(StatusCode.ERROR, str(error)))
             span.end()
             raise
-
-    def handle_streaming_response(
-        result, span, prompt_tokens, function_call=False, tool_calls=False
-    ):
-        """Process and yield streaming response chunks."""
-        result_content = []
-        span.add_event(Event.STREAM_START.value)
-        completion_tokens = 0
-        try:
-            for chunk in result:
-                if hasattr(chunk, "model") and chunk.model is not None:
-                    span.set_attribute("llm.model", chunk.model)
-                if hasattr(chunk, "choices") and chunk.choices is not None:
-                    if not function_call and not tool_calls:
-                        for choice in chunk.choices:
-                            if choice.delta and choice.delta.content is not None:
-                                token_counts = estimate_tokens(choice.delta.content)
-                                completion_tokens += token_counts
-                                content = [choice.delta.content]
-                    elif function_call:
-                        for choice in chunk.choices:
-                            if (
-                                choice.delta
-                                and choice.delta.function_call is not None
-                                and choice.delta.function_call.arguments is not None
-                            ):
-                                token_counts = estimate_tokens(
-                                    choice.delta.function_call.arguments
-                                )
-                                completion_tokens += token_counts
-                                content = [choice.delta.function_call.arguments]
-                    elif tool_calls:
-                        for choice in chunk.choices:
-                            tool_call = ""
-                            if choice.delta and choice.delta.tool_calls is not None:
-                                toolcalls = choice.delta.tool_calls
-                                content = []
-                                for tool_call in toolcalls:
-                                    if (
-                                        tool_call
-                                        and tool_call.function is not None
-                                        and tool_call.function.arguments is not None
-                                    ):
-                                        token_counts = estimate_tokens(
-                                            tool_call.function.arguments
-                                        )
-                                        completion_tokens += token_counts
-                                        content = content + [
-                                            tool_call.function.arguments
-                                        ]
-                                    else:
-                                        content = content + []
-                else:
-                    content = []
-                span.add_event(
-                    Event.STREAM_OUTPUT.value,
-                    {
-                        "response": (
-                            "".join(content)
-                            if len(content) > 0 and content[0] is not None
-                            else ""
-                        )
-                    },
-                )
-                result_content.append(content[0] if len(content) > 0 else "")
-                yield chunk
-        finally:
-            # Finalize span after processing all chunks
-            span.add_event(Event.STREAM_END.value)
-            span.set_attribute(
-                "llm.token.counts",
-                json.dumps(
-                    {
-                        "input_tokens": prompt_tokens,
-                        "output_tokens": completion_tokens,
-                        "total_tokens": prompt_tokens + completion_tokens,
-                    }
-                ),
-            )
-            span.set_attribute(
-                "llm.responses",
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(result_content),
-                        }
-                    ]
-                ),
-            )
-            span.set_status(StatusCode.OK)
-            span.end()
 
     # return the wrapped method
     return traced_method
@@ -687,7 +699,7 @@ def async_chat_completions_create(original_method, version, tracer):
                             json.dumps(function), kwargs.get("model")
                         )
 
-                return ahandle_streaming_response(
+                return StreamWrapper(
                     result,
                     span,
                     prompt_tokens,
@@ -700,99 +712,6 @@ def async_chat_completions_create(original_method, version, tracer):
             span.set_status(Status(StatusCode.ERROR, str(error)))
             span.end()
             raise
-
-    async def ahandle_streaming_response(
-        result, span, prompt_tokens, function_call=False, tool_calls=False
-    ):
-        """Process and yield streaming response chunks."""
-        result_content = []
-        span.add_event(Event.STREAM_START.value)
-        completion_tokens = 0
-        try:
-            content = []
-            async for chunk in result:
-                if hasattr(chunk, "model") and chunk.model is not None:
-                    span.set_attribute("llm.model", chunk.model)
-                if hasattr(chunk, "choices") and chunk.choices is not None:
-                    if not function_call and not tool_calls:
-                        for choice in chunk.choices:
-                            if choice.delta and choice.delta.content is not None:
-                                token_counts = estimate_tokens(choice.delta.content)
-                                completion_tokens += token_counts
-                                content = [choice.delta.content]
-                    elif function_call:
-                        for choice in chunk.choices:
-                            if (
-                                choice.delta
-                                and choice.delta.function_call
-                                and choice.delta.function_call.arguments is not None
-                            ):
-                                token_counts = estimate_tokens(
-                                    choice.delta.function_call.arguments
-                                )
-                                completion_tokens += token_counts
-                                content = [choice.delta.function_call.arguments]
-                    elif tool_calls:
-                        for choice in chunk.choices:
-                            tool_call = ""
-                            if choice.delta and choice.delta.tool_calls is not None:
-                                toolcalls = choice.delta.tool_calls
-                                content = []
-                                for tool_call in toolcalls:
-                                    if (
-                                        tool_call
-                                        and tool_call.function is not None
-                                        and tool_call.function.arguments is not None
-                                    ):
-                                        token_counts = estimate_tokens(
-                                            tool_call.function.arguments
-                                        )
-                                        completion_tokens += token_counts
-                                        content = content + [
-                                            tool_call.function.arguments
-                                        ]
-                                    else:
-                                        content = content + []
-                else:
-                    content = []
-                span.add_event(
-                    Event.STREAM_OUTPUT.value,
-                    {
-                        "response": (
-                            "".join(content)
-                            if len(content) > 0 and content[0] is not None
-                            else ""
-                        )
-                    },
-                )
-                result_content.append(content[0] if len(content) > 0 else "")
-                yield chunk
-        finally:
-            # Finalize span after processing all chunks
-            span.add_event(Event.STREAM_END.value)
-            span.set_attribute(
-                "llm.token.counts",
-                json.dumps(
-                    {
-                        "input_tokens": prompt_tokens,
-                        "output_tokens": completion_tokens,
-                        "total_tokens": prompt_tokens + completion_tokens,
-                    }
-                ),
-            )
-            span.set_attribute(
-                "llm.responses",
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(result_content),
-                        }
-                    ]
-                ),
-            )
-            span.set_status(StatusCode.OK)
-            span.end()
 
     # return the wrapped method
     return traced_method
