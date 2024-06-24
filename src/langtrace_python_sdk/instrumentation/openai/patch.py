@@ -276,7 +276,9 @@ def images_edit(original_method, version, tracer):
 
 
 class StreamWrapper:
-    def __init__(self, stream, span, prompt_tokens, function_call=False, tool_calls=False):
+    def __init__(
+        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
+    ):
         self.stream = stream
         self.span = span
         self.prompt_tokens = prompt_tokens
@@ -284,39 +286,65 @@ class StreamWrapper:
         self.tool_calls = tool_calls
         self.result_content = []
         self.completion_tokens = 0
+        self._span_started = False
+        self._start_span()
+
+    def _start_span(self):
+        if not self._span_started:
+            self.span.add_event(Event.STREAM_START.value)
+            self._span_started = True
+
+    def _end_span(self):
+        if self._span_started:
+            self.span.add_event(Event.STREAM_END.value)
+            self.span.set_attribute(
+                "llm.token.counts",
+                json.dumps(
+                    {
+                        "input_tokens": self.prompt_tokens,
+                        "output_tokens": self.completion_tokens,
+                        "total_tokens": self.prompt_tokens + self.completion_tokens,
+                    }
+                ),
+            )
+            self.span.set_attribute(
+                "llm.responses",
+                json.dumps(
+                    [
+                        {
+                            "role": "assistant",
+                            "content": "".join(self.result_content),
+                        }
+                    ]
+                ),
+            )
+            self.span.set_status(StatusCode.OK)
+            self.span.end()
+            self._span_started = False
 
     def __enter__(self):
-        self.span.add_event(Event.STREAM_START.value)
+        self._start_span()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.span.add_event(Event.STREAM_END.value)
-        self.span.set_attribute(
-            "llm.token.counts",
-            json.dumps(
-                {
-                    "input_tokens": self.prompt_tokens,
-                    "output_tokens": self.completion_tokens,
-                    "total_tokens": self.prompt_tokens + self.completion_tokens,
-                }
-            ),
-        )
-        self.span.set_attribute(
-            "llm.responses",
-            json.dumps(
-                [
-                    {
-                        "role": "assistant",
-                        "content": "".join(self.result_content),
-                    }
-                ]
-            ),
-        )
-        self.span.set_status(StatusCode.OK)
-        self.span.end()
+        self._end_span()
 
     def __iter__(self):
+        self._start_span()
         return self
+
+    def __aiter__(self):
+        self._start_span()
+        return self
+
+    async def __anext__(self):
+        try:
+            chunk = await self.stream.__anext__()
+            self.process_chunk(chunk)
+            return chunk
+        except StopIteration:
+            self._end_span()
+            raise
 
     def __next__(self):
         try:
@@ -324,6 +352,7 @@ class StreamWrapper:
             self.process_chunk(chunk)
             return chunk
         except StopIteration:
+            self._end_span()
             raise
 
     def process_chunk(self, chunk):
