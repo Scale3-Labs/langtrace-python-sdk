@@ -92,12 +92,6 @@ agent_properties = {
 def patch_crew(operation_name, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
 
-        print("CrewAI Patched")
-        print("\n")
-        print(instance)
-        print("\n")
-        print(instance.__dict__.items())
-
         service_provider = SERVICE_PROVIDERS["CREWAI"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
@@ -149,9 +143,7 @@ def patch_crew(operation_name, version, tracer):
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(
-            operation_name, kind=SpanKind.CLIENT
-        ) as span:
+        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:

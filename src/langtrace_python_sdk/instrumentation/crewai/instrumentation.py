@@ -36,23 +36,17 @@ class CrewAIInstrumentation(BaseInstrumentor):
         _W(
             "crewai.crew",
             "Crew.kickoff",
-            patch_crew(
-                "Crew.kickoff", version, tracer
-            ),
+            patch_crew("Crew.kickoff", version, tracer),
         )
         _W(
             "crewai.agent",
             "Agent.execute_task",
-            patch_crew(
-                "Agent.execute_task", version, tracer
-            ),
+            patch_crew("Agent.execute_task", version, tracer),
         )
         _W(
             "crewai.task",
             "Task.execute",
-            patch_crew(
-                "Task.execute", version, tracer
-            ),
+            patch_crew("Task.execute", version, tracer),
         )
 
     def _uninstrument(self, **kwargs):
