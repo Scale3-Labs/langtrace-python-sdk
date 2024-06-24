@@ -1,3 +1,3 @@
-from .instrumentation import DspyInstrumentor
+from .instrumentation import DspyInstrumentation
 
-__all__ = ["DspyInstrumentor"]
+__all__ = ["DspyInstrumentation"]

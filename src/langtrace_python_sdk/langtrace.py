@@ -40,6 +40,7 @@ from langtrace_python_sdk.instrumentation import (
     AnthropicInstrumentation,
     ChromaInstrumentation,
     CohereInstrumentation,
+    CrewAIInstrumentation,
     GroqInstrumentation,
     LangchainInstrumentation,
     LangchainCommunityInstrumentation,
@@ -51,7 +52,7 @@ from langtrace_python_sdk.instrumentation import (
     QdrantInstrumentation,
     WeaviateInstrumentation,
     OllamaInstrumentor,
-    DspyInstrumentor,
+    DspyInstrumentation,
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
@@ -109,7 +110,8 @@ def init(
         "weaviate": WeaviateInstrumentation(),
         "sqlalchemy": SQLAlchemyInstrumentor(),
         "ollama": OllamaInstrumentor(),
-        "dspy": DspyInstrumentor(),
+        "dspy": DspyInstrumentation(),
+        "crewai": CrewAIInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
