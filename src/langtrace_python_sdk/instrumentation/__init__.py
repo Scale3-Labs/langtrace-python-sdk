@@ -1,6 +1,7 @@
 from .anthropic import AnthropicInstrumentation
 from .chroma import ChromaInstrumentation
 from .cohere import CohereInstrumentation
+from .crewai import CrewAIInstrumentation
 from .groq import GroqInstrumentation
 from .langchain import LangchainInstrumentation
 from .langchain_community import LangchainCommunityInstrumentation
@@ -12,12 +13,13 @@ from .pinecone import PineconeInstrumentation
 from .qdrant import QdrantInstrumentation
 from .weaviate import WeaviateInstrumentation
 from .ollama import OllamaInstrumentor
-from .dspy import DspyInstrumentor
+from .dspy import DspyInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
     "ChromaInstrumentation",
     "CohereInstrumentation",
+    "CrewAIInstrumentation",
     "GroqInstrumentation",
     "LangchainInstrumentation",
     "LangchainCommunityInstrumentation",
@@ -29,5 +31,5 @@ __all__ = [
     "QdrantInstrumentation",
     "WeaviateInstrumentation",
     "OllamaInstrumentor",
-    "DspyInstrumentor",
+    "DspyInstrumentation",
 ]

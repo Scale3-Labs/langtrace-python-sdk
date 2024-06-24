@@ -22,7 +22,7 @@ from importlib_metadata import version as v
 from .patch import patch_bootstrapfewshot_optimizer, patch_signature, patch_evaluate
 
 
-class DspyInstrumentor(BaseInstrumentor):
+class DspyInstrumentation(BaseInstrumentor):
     """
     The DspyInstrumentor class represents the DSPy instrumentation"""
 
