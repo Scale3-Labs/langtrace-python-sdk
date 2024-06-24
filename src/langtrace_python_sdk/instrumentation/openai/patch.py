@@ -339,7 +339,7 @@ class StreamWrapper:
 
     async def __anext__(self):
         try:
-            chunk = await anext(self.stream)
+            chunk = await self.stream.__anext__()
             self.process_chunk(chunk)
             return chunk
         except StopIteration:
