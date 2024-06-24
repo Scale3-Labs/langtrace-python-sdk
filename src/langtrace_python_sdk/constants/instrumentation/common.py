@@ -11,6 +11,7 @@ SERVICE_PROVIDERS = {
     "ANTHROPIC": "Anthropic",
     "AZURE": "Azure",
     "CHROMA": "Chroma",
+    "CREWAI": "CrewAI",
     "DSPY": "DSPy",
     "GROQ": "Groq",
     "LANGCHAIN": "Langchain",
