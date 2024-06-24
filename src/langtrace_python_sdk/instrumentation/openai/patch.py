@@ -276,7 +276,9 @@ def images_edit(original_method, version, tracer):
 
 
 class StreamWrapper:
-    def __init__(self, stream, span, prompt_tokens, function_call=False, tool_calls=False):
+    def __init__(
+        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
+    ):
         self.stream = stream
         self.span = span
         self.prompt_tokens = prompt_tokens
@@ -317,6 +319,17 @@ class StreamWrapper:
 
     def __iter__(self):
         return self
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            chunk = await self.stream.__anext__()
+            self.process_chunk(chunk)
+            return chunk
+        except StopIteration:
+            raise
 
     def __next__(self):
         try:
