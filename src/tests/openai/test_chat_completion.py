@@ -62,10 +62,10 @@ def test_chat_completion_streaming(exporter, openai_client):
         "stream": True,
     }
 
-    response = openai_client.chat.completions.create(**kwargs)
     chunk_count = 0
-    for _ in response:
-        chunk_count += 1
+    with openai_client.chat.completions.create(**kwargs) as response:
+        for _ in response:
+            chunk_count += 1
 
     spans = exporter.get_finished_spans()
     streaming_span = spans[-1]
@@ -117,10 +117,10 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
         "stream": True,
     }
 
-    response = await async_openai_client.chat.completions.create(**kwargs)
     chunk_count = 0
-    async for _ in response:
-        chunk_count += 1
+    with await async_openai_client.chat.completions.create(**kwargs) as response:
+        async for _ in response:
+            chunk_count += 1
 
     spans = exporter.get_finished_spans()
     streaming_span = spans[-1]
