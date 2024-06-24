@@ -287,6 +287,7 @@ class StreamWrapper:
         self.result_content = []
         self.completion_tokens = 0
         self._span_started = False
+        self._start_span()
 
     def _start_span(self):
         if not self._span_started:
@@ -338,7 +339,7 @@ class StreamWrapper:
 
     async def __anext__(self):
         try:
-            chunk = await self.stream.__anext__()
+            chunk = await anext(self.stream)
             self.process_chunk(chunk)
             return chunk
         except StopIteration:
