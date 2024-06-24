@@ -29,6 +29,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from openai._types import NOT_GIVEN
 
 
 def images_generate(original_method, version, tracer):
@@ -470,16 +471,16 @@ def chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None:
+        if kwargs.get("temperature") is not None and kwargs.get("temperature") != NOT_GIVEN:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
+        if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None:
+        if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None:
+        if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None:
+        if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
             attributes.llm_tools = json.dumps(tools)
@@ -498,7 +499,7 @@ def chat_completions_create(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            if kwargs.get("stream") is False or kwargs.get("stream") is None:
+            if kwargs.get("stream") is False or kwargs.get("stream") is None or kwargs.get("stream") == NOT_GIVEN:
                 span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
@@ -527,7 +528,7 @@ def chat_completions_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
+                    and result.system_fingerprint is not None and result.system_fingerprint != NOT_GIVEN
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
@@ -554,7 +555,7 @@ def chat_completions_create(original_method, version, tracer):
                     )
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
-                if kwargs.get("functions") is not None:
+                if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
                     for function in kwargs.get("functions"):
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
@@ -640,16 +641,16 @@ def async_chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None:
+        if kwargs.get("temperature") is not None and kwargs.get("temperature") != NOT_GIVEN:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
+        if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None:
+        if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None:
+        if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None:
+        if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
             attributes.llm_tools = json.dumps(tools)
@@ -666,7 +667,7 @@ def async_chat_completions_create(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = await wrapped(*args, **kwargs)
-            if kwargs.get("stream") is False or kwargs.get("stream") is None:
+            if kwargs.get("stream") is False or kwargs.get("stream") is None or kwargs.get("stream") == NOT_GIVEN:
                 span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
@@ -695,7 +696,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
+                    and result.system_fingerprint is not None and result.system_fingerprint != NOT_GIVEN
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
@@ -722,7 +723,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     )
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
-                if kwargs.get("functions") is not None:
+                if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
                     for function in kwargs.get("functions"):
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
