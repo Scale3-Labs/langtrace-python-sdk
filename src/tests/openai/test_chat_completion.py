@@ -63,9 +63,9 @@ def test_chat_completion_streaming(exporter, openai_client):
     }
 
     chunk_count = 0
-    with openai_client.chat.completions.create(**kwargs) as response:
-        for _ in response:
-            chunk_count += 1
+    response = openai_client.chat.completions.create(**kwargs)
+    for _ in response:
+        chunk_count += 1
 
     spans = exporter.get_finished_spans()
     streaming_span = spans[-1]
