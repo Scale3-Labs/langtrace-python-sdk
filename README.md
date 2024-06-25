@@ -240,11 +240,14 @@ Langtrace automatically captures traces from the following vendors:
 | Cohere       | LLM             | :white_check_mark: | :white_check_mark: |
 | Groq         | LLM             | :x:                | :white_check_mark: |
 | Langchain    | Framework       | :x:                | :white_check_mark: |
+| Langgraph    | Framework       | :x:                | :white_check_mark: |
 | LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark: |
 | DSPy         | Framework       | :x:                | :white_check_mark: |
 | CrewAI       | Framework       | :x:                | :white_check_mark: |
+| Ollama       | Framework       | :x:                | :white_check_mark: |
 | Pinecone     | Vector Database | :white_check_mark: | :white_check_mark: |
 | ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark: |
+| Weaviate     | Vector Database | :white_check_mark: | :white_check_mark: |
 | QDrant       | Vector Database | :x:                | :white_check_mark: |
 
 ---
@@ -260,7 +263,19 @@ Langtrace automatically captures traces from the following vendors:
 
 We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our [Discord](https://discord.langtrace.ai) workspace.
 
-If you want to run any of the examples go to `run_example.py` file, you will find `ENABLED_EXAMPLES`. choose the example you want to run and just toggle the flag to `True` and run the file using `python src/run_example.py`
+- If you want to run any of the examples go to `run_example.py` file, you will find `ENABLED_EXAMPLES`. choose the example you want to run and just toggle the flag to `True` and run the file using `python src/run_example.py`
+
+- If you want to run tests, make sure to install dev & test dependencies:
+
+  ```python
+  pip install '.[test]' && pip install '.[dev]'
+  ```
+
+  then run `pytest` using:
+
+  ```python
+  pytest -v
+  ```
 
 ---
 
