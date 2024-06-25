@@ -29,6 +29,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from openai._types import NOT_GIVEN
 
 
 def images_generate(original_method, version, tracer):
@@ -276,7 +277,9 @@ def images_edit(original_method, version, tracer):
 
 
 class StreamWrapper:
-    def __init__(self, stream, span, prompt_tokens, function_call=False, tool_calls=False):
+    def __init__(
+        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
+    ):
         self.stream = stream
         self.span = span
         self.prompt_tokens = prompt_tokens
@@ -284,39 +287,65 @@ class StreamWrapper:
         self.tool_calls = tool_calls
         self.result_content = []
         self.completion_tokens = 0
+        self._span_started = False
+        self._start_span()
+
+    def _start_span(self):
+        if not self._span_started:
+            self.span.add_event(Event.STREAM_START.value)
+            self._span_started = True
+
+    def _end_span(self):
+        if self._span_started:
+            self.span.add_event(Event.STREAM_END.value)
+            self.span.set_attribute(
+                "llm.token.counts",
+                json.dumps(
+                    {
+                        "input_tokens": self.prompt_tokens,
+                        "output_tokens": self.completion_tokens,
+                        "total_tokens": self.prompt_tokens + self.completion_tokens,
+                    }
+                ),
+            )
+            self.span.set_attribute(
+                "llm.responses",
+                json.dumps(
+                    [
+                        {
+                            "role": "assistant",
+                            "content": "".join(self.result_content),
+                        }
+                    ]
+                ),
+            )
+            self.span.set_status(StatusCode.OK)
+            self.span.end()
+            self._span_started = False
 
     def __enter__(self):
-        self.span.add_event(Event.STREAM_START.value)
+        self._start_span()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.span.add_event(Event.STREAM_END.value)
-        self.span.set_attribute(
-            "llm.token.counts",
-            json.dumps(
-                {
-                    "input_tokens": self.prompt_tokens,
-                    "output_tokens": self.completion_tokens,
-                    "total_tokens": self.prompt_tokens + self.completion_tokens,
-                }
-            ),
-        )
-        self.span.set_attribute(
-            "llm.responses",
-            json.dumps(
-                [
-                    {
-                        "role": "assistant",
-                        "content": "".join(self.result_content),
-                    }
-                ]
-            ),
-        )
-        self.span.set_status(StatusCode.OK)
-        self.span.end()
+        self._end_span()
 
     def __iter__(self):
+        self._start_span()
         return self
+
+    def __aiter__(self):
+        self._start_span()
+        return self
+
+    async def __anext__(self):
+        try:
+            chunk = await self.stream.__anext__()
+            self.process_chunk(chunk)
+            return chunk
+        except StopIteration:
+            self._end_span()
+            raise
 
     def __next__(self):
         try:
@@ -324,6 +353,7 @@ class StreamWrapper:
             self.process_chunk(chunk)
             return chunk
         except StopIteration:
+            self._end_span()
             raise
 
     def process_chunk(self, chunk):
@@ -441,16 +471,16 @@ def chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None:
+        if kwargs.get("temperature") is not None and kwargs.get("temperature") != NOT_GIVEN:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
+        if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None:
+        if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None:
+        if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None:
+        if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
             attributes.llm_tools = json.dumps(tools)
@@ -469,7 +499,7 @@ def chat_completions_create(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            if kwargs.get("stream") is False or kwargs.get("stream") is None:
+            if kwargs.get("stream") is False or kwargs.get("stream") is None or kwargs.get("stream") == NOT_GIVEN:
                 span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
@@ -498,7 +528,7 @@ def chat_completions_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
+                    and result.system_fingerprint is not None and result.system_fingerprint != NOT_GIVEN
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
@@ -525,7 +555,7 @@ def chat_completions_create(original_method, version, tracer):
                     )
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
-                if kwargs.get("functions") is not None:
+                if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
                     for function in kwargs.get("functions"):
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
@@ -611,16 +641,16 @@ def async_chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None:
+        if kwargs.get("temperature") is not None and kwargs.get("temperature") != NOT_GIVEN:
             attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
+        if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
             attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None:
+        if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
             attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None:
+        if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None:
+        if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
             attributes.llm_tools = json.dumps(tools)
@@ -637,7 +667,7 @@ def async_chat_completions_create(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = await wrapped(*args, **kwargs)
-            if kwargs.get("stream") is False or kwargs.get("stream") is None:
+            if kwargs.get("stream") is False or kwargs.get("stream") is None or kwargs.get("stream") == NOT_GIVEN:
                 span.set_attribute("llm.model", result.model)
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
@@ -666,7 +696,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     span.set_attribute("llm.responses", json.dumps(responses))
                 if (
                     hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
+                    and result.system_fingerprint is not None and result.system_fingerprint != NOT_GIVEN
                 ):
                     span.set_attribute(
                         "llm.system.fingerprint", result.system_fingerprint
@@ -693,7 +723,7 @@ def async_chat_completions_create(original_method, version, tracer):
                     )
 
                 # iterate over kwargs.get("functions") and calculate the prompt tokens
-                if kwargs.get("functions") is not None:
+                if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
                     for function in kwargs.get("functions"):
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
