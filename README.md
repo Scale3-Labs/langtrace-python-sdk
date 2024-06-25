@@ -260,7 +260,19 @@ Langtrace automatically captures traces from the following vendors:
 
 We welcome contributions to this project. To get started, fork this repository and start developing. To get involved, join our [Discord](https://discord.langtrace.ai) workspace.
 
-If you want to run any of the examples go to `run_example.py` file, you will find `ENABLED_EXAMPLES`. choose the example you want to run and just toggle the flag to `True` and run the file using `python src/run_example.py`
+- If you want to run any of the examples go to `run_example.py` file, you will find `ENABLED_EXAMPLES`. choose the example you want to run and just toggle the flag to `True` and run the file using `python src/run_example.py`
+
+- If you want to run tests, make sure to install dev & test dependencies:
+
+  ```python
+  pip install '.[test]' && pip install '.[dev]'
+  ```
+
+  then run `pytest` using:
+
+  ```python
+  pytest -v
+  ```
 
 ---
 
