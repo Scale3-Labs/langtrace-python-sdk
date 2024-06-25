@@ -142,7 +142,8 @@ def create_traced_method(method_name, version, tracer, get_collection_name=None)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                if api["OPERATION"] == "query":
+                print(result)
+                if api["OPERATION"] in ["query", "generate"]:
                     span.add_event(
                         name="db.response",
                         attributes={"db.response": aggregate_responses(result)},

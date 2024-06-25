@@ -33,7 +33,8 @@ def generic_patch(operation_name, version, tracer):
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
             "url.full": base_url,
-            "llm.api": api["METHOD"],
+            "llm.api": api["ENDPOINT"],
+            "llm.response_format": kwargs.get("format"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -87,6 +88,10 @@ def ageneric_patch(operation_name, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "llm.model": kwargs.get("model"),
             "llm.stream": kwargs.get("stream"),
+            "llm.response_format": kwargs.get("format"),
+            "http.timeout": (
+                kwargs.get("keep_alive") if "keep_alive" in kwargs else None
+            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -134,32 +139,43 @@ def _set_response_attributes(span, response):
     if total_tokens > 0:
         set_span_attribute(span, "llm.token.counts", json.dumps(usage_dict))
     set_span_attribute(span, "llm.finish_reason", response.get("done_reason"))
-
     if "message" in response:
         set_span_attribute(span, "llm.responses", json.dumps([response.get("message")]))
 
     if "response" in response:
         set_span_attribute(
-            span, "llm.responses", json.dumps([response.get("response")])
+            span,
+            "llm.responses",
+            json.dumps([{"role": "assistant", "content": response.get("response")}]),
         )
 
 
 @silently_fail
 def _set_input_attributes(span, kwargs, attributes):
+    options = kwargs.get("options")
+
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
-
     if "messages" in kwargs:
         set_span_attribute(
             span,
             "llm.prompts",
-            json.dumps([kwargs.get("messages", [])]),
+            json.dumps(kwargs.get("messages", [])),
         )
     if "prompt" in kwargs:
         set_span_attribute(
             span,
             "llm.prompts",
-            json.dumps([{"role": "user", "content": kwargs.get("prompt", [])}]),
+            json.dumps([{"role": "user", "content": kwargs.get("prompt", "")}]),
+        )
+    if "options" in kwargs:
+        set_span_attribute(span, "llm.temperature", options.get("temperature"))
+        set_span_attribute(span, "llm.top_p", options.get("top_p"))
+        set_span_attribute(
+            span, "llm.frequency_penalty", options.get("frequency_penalty")
+        )
+        set_span_attribute(
+            span, "llm.presence_penalty", options.get("presence_penalty")
         )
 
 
@@ -169,7 +185,6 @@ def _handle_streaming_response(span, response, api):
         accumulated_tokens = {"message": {"content": "", "role": ""}}
     if api == "completion":
         accumulated_tokens = {"response": ""}
-
     span.add_event(Event.STREAM_START.value)
     try:
         for chunk in response:

@@ -45,7 +45,7 @@ class WeaviateInstrumentation(BaseInstrumentor):
         version = importlib.metadata.version("weaviate-client")
 
         for api_name, api_config in APIS.items():
-            if api_config.get("OPERATION") == "query":
+            if api_config.get("OPERATION") in ["query", "generate"]:
                 wrap_function_wrapper(
                     api_config["MODULE"],
                     api_config["METHOD"],
