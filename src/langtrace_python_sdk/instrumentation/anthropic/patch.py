@@ -17,6 +17,7 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
+from langtrace_python_sdk.utils import set_span_attribute
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -29,6 +30,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace.trace_attributes import SpanAttributes
 
 
 def messages_create(original_method, version, tracer):
@@ -53,49 +55,42 @@ def messages_create(original_method, version, tracer):
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["MESSAGES_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": prompts,
-            "llm.stream": kwargs.get("stream"),
+            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
+            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
+            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            SpanAttributes.LLM_URL.value: base_url,
+            SpanAttributes.LLM_PATH.value: APIS["MESSAGES_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+            SpanAttributes.LLM_PROMPTS.value: prompts,
+            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
+            SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
+            SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("top_p"),
+            SpanAttributes.LLM_TOP_K.value: kwargs.get("top_k"),
+            SpanAttributes.LLM_USER.value: kwargs.get("user"),
+            SpanAttributes.LLM_REQUEST_MAX_TOKENS.value: str(kwargs.get("max_tokens")),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        if kwargs.get("temperature") is not None:
-            attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
-            attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("top_k") is not None:
-            attributes.llm_top_p = kwargs.get("top_k")
-        if kwargs.get("user") is not None:
-            attributes.llm_user = kwargs.get("user")
-        if kwargs.get("max_tokens") is not None:
-            attributes.llm_max_tokens = str(kwargs.get("max_tokens"))
-
         span = tracer.start_span(
             APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
-                span.set_attribute(field, value)
+            set_span_attribute(span, field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False:
                 if hasattr(result, "content") and result.content is not None:
                     span.set_attribute(
-                        "llm.model",
+                        SpanAttributes.LLM_RESPONSE_MODEL.value,
                         result.model if result.model else kwargs.get("model"),
                     )
                     span.set_attribute(
-                        "llm.responses",
+                        SpanAttributes.LLM_COMPLETIONS.value,
                         json.dumps(
                             [
                                 {
@@ -108,24 +103,34 @@ def messages_create(original_method, version, tracer):
                     )
                 else:
                     responses = []
-                    span.set_attribute("llm.responses", json.dumps(responses))
+                    span.set_attribute(
+                        SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
+                    )
                 if (
                     hasattr(result, "system_fingerprint")
                     and result.system_fingerprint is not None
                 ):
                     span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
+                        SpanAttributes.LLM_SYSTEM_FINGERPRINT.value,
+                        result.system_fingerprint,
                     )
                 # Get the usage
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
                     if usage is not None:
-                        usage_dict = {
-                            "input_tokens": usage.input_tokens,
-                            "output_tokens": usage.output_tokens,
-                            "total_tokens": usage.input_tokens + usage.output_tokens,
-                        }
-                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+                            usage.output_tokens,
+                        )
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+                            usage.input_tokens,
+                        )
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                            usage.input_tokens + usage.output_tokens,
+                        )
+
                 span.set_status(StatusCode.OK)
                 span.end()
                 return result
@@ -154,7 +159,9 @@ def messages_create(original_method, version, tracer):
                     and hasattr(chunk.message, "model")
                     and chunk.message.model is not None
                 ):
-                    span.set_attribute("llm.model", chunk.message.model)
+                    span.set_attribute(
+                        SpanAttributes.LLM_RESPONSE_MODEL.value, chunk.message.model
+                    )
                 content = ""
                 if hasattr(chunk, "delta") and chunk.delta is not None:
                     content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
@@ -187,17 +194,18 @@ def messages_create(original_method, version, tracer):
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
             span.set_attribute(
-                "llm.token.counts",
-                json.dumps(
-                    {
-                        "input_tokens": input_tokens,
-                        "output_tokens": output_tokens,
-                        "total_tokens": input_tokens + output_tokens,
-                    }
-                ),
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value, input_tokens
             )
             span.set_attribute(
-                "llm.responses",
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value, output_tokens
+            )
+            span.set_attribute(
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                input_tokens + output_tokens,
+            )
+
+            span.set_attribute(
+                SpanAttributes.LLM_COMPLETIONS.value,
                 json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
             )
             span.set_status(StatusCode.OK)

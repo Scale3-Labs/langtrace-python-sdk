@@ -6,6 +6,8 @@ from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from tests.utils import assert_response_format, assert_token_count
 from importlib_metadata import version as v
 
+from langtrace.trace_attributes import SpanAttributes
+
 
 @pytest.mark.vcr()
 def test_anthropic(anthropic_client, exporter):
@@ -26,18 +28,25 @@ def test_anthropic(anthropic_client, exporter):
     assert completion_span.name == "anthropic.messages.create"
     attributes = completion_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == "Anthropic"
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Anthropic"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v(
         "anthropic"
     )
-    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
-    assert attributes.get("url.full") == "https://api.anthropic.com"
-    assert attributes.get("llm.api") == APIS["MESSAGES_CREATE"]["ENDPOINT"]
-    assert attributes.get("llm.model") == llm_model_value
-    assert attributes.get("llm.prompts") == json.dumps(messages_value)
-    assert attributes.get("llm.stream") is False
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
+        LANGTRACE_SDK_NAME
+    )
+    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.anthropic.com"
+    assert (
+        attributes.get(SpanAttributes.LLM_PATH.value)
+        == APIS["MESSAGES_CREATE"]["ENDPOINT"]
+    )
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
+    assert attributes.get(SpanAttributes.LLM_PROMPTS.value) == json.dumps(
+        messages_value
+    )
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is False
 
     assert_token_count(attributes)
     assert_response_format(attributes)
@@ -68,18 +77,27 @@ def test_anthropic_streaming(anthropic_client, exporter):
     assert streaming_span.name == "anthropic.messages.create"
     attributes = streaming_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == "Anthropic"
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Anthropic"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v(
         "anthropic"
     )
-    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
-    assert attributes.get("url.full") == "https://api.anthropic.com"
-    assert attributes.get("llm.api") == APIS["MESSAGES_CREATE"]["ENDPOINT"]
-    assert attributes.get("llm.model") == llm_model_value
-    assert attributes.get("llm.prompts") == json.dumps(messages_value)
-    assert attributes.get("llm.stream") is True
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
+        LANGTRACE_SDK_NAME
+    )
+
+    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.anthropic.com"
+    assert (
+        attributes.get(SpanAttributes.LLM_PATH.value)
+        == APIS["MESSAGES_CREATE"]["ENDPOINT"]
+    )
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
+    assert attributes.get(SpanAttributes.LLM_PROMPTS.value) == json.dumps(
+        messages_value
+    )
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is True
+
     events = streaming_span.events
 
     assert len(events) - 2 == chunk_count  # -2 for start and end events
