@@ -212,17 +212,17 @@ def images_edit(original_method, version, tracer):
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["IMAGES_EDIT"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.response_format": kwargs.get("response_format"),
-            "llm.image.size": kwargs.get("size"),
-            "llm.prompts": json.dumps(
+            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
+            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
+            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            SpanAttributes.LLM_URL.value: base_url,
+            SpanAttributes.LLM_PATH.value: APIS["IMAGES_EDIT"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+            SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("response_format"),
+            SpanAttributes.LLM_IMAGE_SIZE.value: kwargs.get("size"),
+            SpanAttributes.LLM_PROMPTS.value: json.dumps(
                 [
                     {
                         "role": kwargs.get("user", "user"),
@@ -230,7 +230,7 @@ def images_edit(original_method, version, tracer):
                     }
                 ]
             ),
-            "llm.top_k": kwargs.get("n"),
+            SpanAttributes.LLM_TOP_K.value: kwargs.get("n"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -263,8 +263,10 @@ def images_edit(original_method, version, tracer):
                     )
 
                 span.add_event(
-                    name="response",
-                    attributes={"llm.responses": json.dumps(response)},
+                    Event.RESPONSE.value,
+                    attributes={
+                        SpanAttributes.LLM_COMPLETIONS.value: json.dumps(response)
+                    },
                 )
 
                 span.set_status(StatusCode.OK)
@@ -663,31 +665,28 @@ def embeddings_create(original_method, version, tracer):
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": "",
-            "llm.embedding_inputs": json.dumps([kwargs.get("input", "")]),
+            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
+            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
+            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            SpanAttributes.LLM_URL.value: base_url,
+            SpanAttributes.LLM_PATH.value: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+            SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
+            SpanAttributes.LLM_USER.value: kwargs.get("user"),
+            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value: json.dumps(
+                [kwargs.get("input", "")]
+            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        if kwargs.get("encoding_format") is not None:
-            span_attributes["llm.encoding.formats"] = json.dumps(
-                [kwargs.get("encoding_format")]
-            )
-
         attributes = LLMSpanAttributes(**span_attributes)
-        kwargs.get("encoding_format")
 
-        if kwargs.get("dimensions") is not None:
-            attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None:
-            attributes["llm.user"] = kwargs.get("user")
+        if kwargs.get("encoding_format") is not None:
+            attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = json.dumps(
+                [kwargs.get("encoding_format", "")]
+            )
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
@@ -696,8 +695,7 @@ def embeddings_create(original_method, version, tracer):
         ) as span:
 
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -732,29 +730,26 @@ def async_embeddings_create(original_method, version, tracer):
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": json.dumps(
-                [{"role": "user", "content": kwargs.get("input", "")}]
+            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
+            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
+            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            SpanAttributes.LLM_URL.value: base_url,
+            SpanAttributes.LLM_PATH.value: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+            SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
+            SpanAttributes.LLM_USER.value: kwargs.get("user"),
+            SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value: json.dumps(
+                [kwargs.get("encoding_format", "")]
+            ),
+            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value: json.dumps(
+                [kwargs.get("input", "")]
             ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
-        kwargs.get("encoding_format")
-
-        if kwargs.get("encoding_format") is not None:
-            attributes.llm_encoding_format = kwargs.get("encoding_format")
-        if kwargs.get("dimensions") is not None:
-            attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None:
-            attributes["llm.user"] = kwargs.get("user")
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
@@ -762,9 +757,8 @@ def async_embeddings_create(original_method, version, tracer):
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
-            async for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            for field, value in attributes.model_dump(by_alias=True).items():
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
