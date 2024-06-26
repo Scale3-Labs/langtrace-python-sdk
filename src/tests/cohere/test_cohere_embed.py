@@ -4,6 +4,7 @@ import pytest
 from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace.trace_attributes import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -24,12 +25,16 @@ def test_cohere_embed(cohere_client, exporter):
     assert cohere_span.name == APIS["EMBED"]["METHOD"]
     attributes = cohere_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["COHERE"]
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == v("cohere")
-
-    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
-    assert attributes.get("url.full") == APIS["EMBED"]["URL"]
-    assert attributes.get("llm.api") == APIS["EMBED"]["ENDPOINT"]
-    assert attributes.get("llm.model") == llm_model_value
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
+    assert (
+        attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value)
+        == SERVICE_PROVIDERS["COHERE"]
+    )
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("cohere")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
+        LANGTRACE_SDK_NAME
+    )
+    assert attributes.get(SpanAttributes.LLM_URL.value) == APIS["EMBED"]["URL"]
+    assert attributes.get(SpanAttributes.LLM_PATH.value) == APIS["EMBED"]["ENDPOINT"]
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value

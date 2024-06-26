@@ -1,9 +1,11 @@
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 import pytest
 import json
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from tests.utils import assert_token_count
 from importlib_metadata import version as v
+from langtrace.trace_attributes import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -30,17 +32,24 @@ def test_cohere_rerank(cohere_client, exporter):
     assert cohere_span.name == APIS["RERANK"]["METHOD"]
     attributes = cohere_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["COHERE"]
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == v("cohere")
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
 
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
-    assert attributes.get("url.full") == APIS["RERANK"]["URL"]
-    assert attributes.get("llm.api") == APIS["RERANK"]["ENDPOINT"]
-    assert attributes.get("llm.model") == llm_model_value
+    assert (
+        attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value)
+        == SERVICE_PROVIDERS["COHERE"]
+    )
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("cohere")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
+        LANGTRACE_SDK_NAME
+    )
+    assert attributes.get(SpanAttributes.LLM_URL.value) == APIS["RERANK"]["URL"]
+    assert attributes.get(SpanAttributes.LLM_PATH.value) == APIS["RERANK"]["ENDPOINT"]
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
 
-    langtrace_results = json.loads(attributes.get("llm.retrieval.results"))
+    langtrace_results = json.loads(
+        attributes.get(SpanAttributes.LLM_COHERE_RERANK_RESULTS.value)
+    )
     for idx, res in enumerate(results.results):
         lang_res = json.loads(langtrace_results[idx])
         assert lang_res["index"] == res.index
