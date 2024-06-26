@@ -18,10 +18,12 @@ import json
 
 from importlib_metadata import version as v
 from langtrace.trace_attributes import Event, LLMSpanAttributes
+from openai._types import NOT_GIVEN
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
-from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.status import Status, StatusCode
+
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -29,7 +31,6 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
-from openai._types import NOT_GIVEN
 
 
 def images_generate(original_method, version, tracer):
@@ -462,9 +463,18 @@ def chat_completions_create(original_method, version, tracer):
             "langtrace.service.version": version,
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "url.full": base_url,
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(llm_prompts),
-            "llm.stream": kwargs.get("stream"),
+            "gen_ai.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            "gen_ai.prompt": json.dumps(llm_prompts),
+            "gen_ai.request.stream": kwargs.get("stream"),
+            "gen_ai.request.max_tokens": kwargs.get("max_tokens"),
+            "gen_ai.request.frequency_penalty": kwargs.get("frequency_penalty"),
+            "gen_ai.request.presence_penalty": kwargs.get("presence_penalty"),
+            "gen_ai.request.logit_bias": json.dumps(kwargs.get("logit_bias")),
+            "gen_ai.request.seed": kwargs.get("seed"),
+            "gen_ai.request.top_k": kwargs.get("n"),
+            "gen_ai.request.tool_choice": kwargs.get("tool_choice"),
+            "gen_ai.request.logprobs": kwargs.get("logprobs"),
+            "gen_ai.request.top_logprobs": kwargs.get("top_logprobs"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -486,14 +496,14 @@ def chat_completions_create(original_method, version, tracer):
         if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
             tools.append(json.dumps(kwargs.get("tools")))
         if len(tools) > 0:
-            attributes.llm_tools = json.dumps(tools)
+            attributes.gen_ai_request_tools = json.dumps(tools)
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
@@ -646,6 +656,9 @@ def async_chat_completions_create(original_method, version, tracer):
             "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
             "llm.prompts": json.dumps(llm_prompts),
             "llm.stream": kwargs.get("stream"),
+            "llm.max_tokens": kwargs.get("max_tokens"),
+            "gen_ai.openai.frequency_penalty": kwargs.get("frequency_penalty"),
+            "gen_ai.openai.presence_penalty": kwargs.get("presence_penalty"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
