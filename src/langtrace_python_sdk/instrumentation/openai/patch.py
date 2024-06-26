@@ -424,7 +424,7 @@ class StreamWrapper:
             self.span.add_event(
                 Event.RESPONSE.value,
                 {
-                    SpanAttributes.LLM_COMPLETIONS.value: (
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
                         "".join(content)
                         if len(content) > 0 and content[0] is not None
                         else ""
