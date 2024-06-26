@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 import json
+from langtrace.trace_attributes import SpanAttributes
 
 
 def common_setup(data, method_to_mock=None):
@@ -22,10 +23,9 @@ def common_setup(data, method_to_mock=None):
 
 
 def assert_token_count(attributes):
-    tokens = json.loads(attributes.get("llm.token.counts"))
-    output_tokens = tokens.get("output_tokens")
-    prompt_tokens = tokens.get("input_tokens")
-    total_tokens = tokens.get("total_tokens")
+    output_tokens = attributes.get(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value)
+    prompt_tokens = attributes.get(SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value)
+    total_tokens = attributes.get(SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value)
 
     assert (
         output_tokens is not None
@@ -36,7 +36,11 @@ def assert_token_count(attributes):
 
 
 def assert_response_format(attributes):
-    langtrace_responses = json.loads(attributes.get("llm.responses"))
+
+    langtrace_responses = json.loads(
+        attributes.get(SpanAttributes.LLM_COMPLETIONS.value)
+    )
+
     assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
         assert isinstance(langtrace_response, dict)
