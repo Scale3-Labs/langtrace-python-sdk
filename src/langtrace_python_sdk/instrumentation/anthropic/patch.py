@@ -119,7 +119,12 @@ def messages_create(original_method, version, tracer):
                 # Add event for each chunk of content
                 if content:
                     span.add_event(
-                        Event.STREAM_OUTPUT.value, {"response": "".join(content)}
+                        Event.STREAM_OUTPUT.value,
+                        {
+                            SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: "".join(
+                                content
+                            )
+                        },
                     )
 
                 # Assuming this is part of a generator, yield chunk or aggregated content

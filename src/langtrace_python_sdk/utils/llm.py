@@ -136,7 +136,6 @@ def set_usage_attributes(span, usage):
     if usage is None:
         return
 
-    print(usage)
     set_span_attributes(
         span,
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
