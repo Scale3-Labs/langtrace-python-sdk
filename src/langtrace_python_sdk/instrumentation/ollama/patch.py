@@ -12,6 +12,7 @@ from langtrace.trace_attributes import LLMSpanAttributes, Event
 from opentelemetry.trace import SpanKind
 import json
 from opentelemetry.trace.status import Status, StatusCode
+from langtrace.trace_attributes import SpanAttributes
 
 
 def generic_patch(operation_name, version, tracer):
@@ -25,16 +26,16 @@ def generic_patch(operation_name, version, tracer):
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "llm.model": kwargs.get("model"),
-            "llm.stream": kwargs.get("stream"),
-            "url.full": base_url,
-            "llm.api": api["ENDPOINT"],
-            "llm.response_format": kwargs.get("format"),
+            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
+            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
+            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            SpanAttributes.LLM_URL.value: base_url,
+            SpanAttributes.LLM_PATH.value: api["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
+            SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("format"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
@@ -75,26 +76,27 @@ def generic_patch(operation_name, version, tracer):
 
 def ageneric_patch(operation_name, version, tracer):
     async def traced_method(wrapped, instance, args, kwargs):
+        base_url = (
+            str(instance._client._base_url)
+            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
+            else ""
+        )
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "url.full": "",
-            "llm.api": "",
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "llm.model": kwargs.get("model"),
-            "llm.stream": kwargs.get("stream"),
-            "llm.response_format": kwargs.get("format"),
-            "http.timeout": (
-                kwargs.get("keep_alive") if "keep_alive" in kwargs else None
-            ),
+            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
+            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
+            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            SpanAttributes.LLM_URL.value: base_url,
+            SpanAttributes.LLM_PATH.value: api["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
+            SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("format"),
             **(extra_attributes if extra_attributes is not None else {}),
         }
-
         attributes = LLMSpanAttributes(**span_attributes)
         with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
@@ -130,22 +132,34 @@ def _set_response_attributes(span, response):
     input_tokens = response.get("prompt_eval_count") or 0
     output_tokens = response.get("eval_count") or 0
     total_tokens = input_tokens + output_tokens
-    usage_dict = {
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens": total_tokens,
-    }
 
     if total_tokens > 0:
-        set_span_attribute(span, "llm.token.counts", json.dumps(usage_dict))
-    set_span_attribute(span, "llm.finish_reason", response.get("done_reason"))
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value, input_tokens
+        )
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value, output_tokens
+        )
+        set_span_attribute(
+            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value, total_tokens
+        )
+
+    set_span_attribute(
+        span,
+        SpanAttributes.LLM_RESPONSE_FINISH_REASON.value,
+        response.get("done_reason"),
+    )
     if "message" in response:
-        set_span_attribute(span, "llm.responses", json.dumps([response.get("message")]))
+        set_span_attribute(
+            span,
+            SpanAttributes.LLM_COMPLETIONS.value,
+            json.dumps([response.get("message")]),
+        )
 
     if "response" in response:
         set_span_attribute(
             span,
-            "llm.responses",
+            SpanAttributes.LLM_COMPLETIONS.value,
             json.dumps([{"role": "assistant", "content": response.get("response")}]),
         )
 
@@ -159,23 +173,33 @@ def _set_input_attributes(span, kwargs, attributes):
     if "messages" in kwargs:
         set_span_attribute(
             span,
-            "llm.prompts",
+            SpanAttributes.LLM_PROMPTS.value,
             json.dumps(kwargs.get("messages", [])),
         )
     if "prompt" in kwargs:
         set_span_attribute(
             span,
-            "llm.prompts",
+            SpanAttributes.LLM_PROMPTS.value,
             json.dumps([{"role": "user", "content": kwargs.get("prompt", "")}]),
         )
     if "options" in kwargs:
-        set_span_attribute(span, "llm.temperature", options.get("temperature"))
-        set_span_attribute(span, "llm.top_p", options.get("top_p"))
         set_span_attribute(
-            span, "llm.frequency_penalty", options.get("frequency_penalty")
+            span,
+            SpanAttributes.LLM_REQUEST_TEMPERATURE.value,
+            options.get("temperature"),
         )
         set_span_attribute(
-            span, "llm.presence_penalty", options.get("presence_penalty")
+            span, SpanAttributes.LLM_REQUEST_TOP_P.value, options.get("top_p")
+        )
+        set_span_attribute(
+            span,
+            SpanAttributes.LLM_FREQUENCY_PENALTY.value,
+            options.get("frequency_penalty"),
+        )
+        set_span_attribute(
+            span,
+            SpanAttributes.LLM_PRESENCE_PENALTY.value,
+            options.get("presence_penalty"),
         )
 
 
@@ -193,6 +217,14 @@ def _handle_streaming_response(span, response, api):
                 accumulated_tokens["message"]["role"] = chunk["message"]["role"]
             if api == "generate":
                 accumulated_tokens["response"] += chunk["response"]
+            span.add_event(
+                Event.RESPONSE,
+                {
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
+                        accumulated_tokens
+                    )
+                },
+            )
 
         _set_response_attributes(span, chunk | accumulated_tokens)
     finally:
@@ -220,6 +252,14 @@ async def _ahandle_streaming_response(span, response, api):
             if api == "generate":
                 accumulated_tokens["response"] += chunk["response"]
 
+            span.add_event(
+                Event.RESPONSE,
+                {
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: json.dumps(
+                        chunk
+                    ),
+                },
+            )
         _set_response_attributes(span, chunk | accumulated_tokens)
     finally:
         # Finalize span after processing all chunks
