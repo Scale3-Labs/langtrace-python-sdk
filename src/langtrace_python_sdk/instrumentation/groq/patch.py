@@ -23,6 +23,14 @@ from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
+from langtrace_python_sdk.utils.llm import (
+    get_base_url,
+    get_extra_attributes,
+    get_llm_request_attributes,
+    get_llm_url,
+    get_langtrace_attributes,
+    set_usage_attributes,
+)
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
@@ -39,19 +47,12 @@ def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["GROQ"]
         # If base url contains perplexity or azure, set the service provider accordingly
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         # handle tool calls in the kwargs
         llm_prompts = []
@@ -82,19 +83,11 @@ def chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(llm_prompts),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-            SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
-            SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("top_p"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -110,10 +103,10 @@ def chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT) as span:
+        #                                   kind=SpanKind.CLIENT.value) as span:
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
@@ -171,23 +164,7 @@ def chat_completions_create(original_method, version, tracer):
                 # Get the usage
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
-                    if usage is not None:
-                        set_span_attribute(
-                            span,
-                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
-                            result.usage.prompt_tokens,
-                        )
-
-                        set_span_attribute(
-                            span,
-                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
-                            usage.completion_tokens,
-                        )
-                        set_span_attribute(
-                            span,
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-                            usage.total_tokens,
-                        )
+                    set_usage_attributes(span, dict(usage))
 
                 span.set_status(StatusCode.OK)
                 span.end()
@@ -289,22 +266,9 @@ def chat_completions_create(original_method, version, tracer):
         finally:
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
-            set_span_attribute(
+            set_usage_attributes(
                 span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
-                prompt_tokens,
-            )
-
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
-                completion_tokens,
-            )
-
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-                prompt_tokens + completion_tokens,
+                {"input_tokens": prompt_tokens, "output_tokens": completion_tokens},
             )
 
             set_span_attribute(
@@ -324,19 +288,12 @@ def async_chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["GROQ"]
         # If base url contains perplexity or azure, set the service provider accordingly
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         # handle tool calls in the kwargs
         llm_prompts = []
@@ -367,19 +324,11 @@ def async_chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(llm_prompts),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-            SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
-            SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("top_p"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -396,9 +345,9 @@ def async_chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT) as span:
+        #                                   kind=SpanKind.CLIENT.value) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT.value
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
@@ -456,22 +405,8 @@ def async_chat_completions_create(original_method, version, tracer):
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
                     if usage is not None:
-                        set_span_attribute(
-                            span,
-                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
-                            result.usage.prompt_tokens,
-                        )
+                        set_usage_attributes(span, dict(usage))
 
-                        set_span_attribute(
-                            span,
-                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
-                            usage.completion_tokens,
-                        )
-                        set_span_attribute(
-                            span,
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-                            usage.total_tokens,
-                        )
                 span.set_status(StatusCode.OK)
                 span.end()
                 return result
@@ -576,23 +511,10 @@ def async_chat_completions_create(original_method, version, tracer):
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
 
-            set_span_attribute(
+            set_usage_attributes(
                 span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
-                prompt_tokens,
+                {"input_tokens": prompt_tokens, "output_tokens": completion_tokens},
             )
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
-                completion_tokens,
-            )
-
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-                prompt_tokens + completion_tokens,
-            )
-
             set_span_attribute(
                 span,
                 SpanAttributes.LLM_COMPLETIONS.value,
