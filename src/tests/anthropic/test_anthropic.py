@@ -43,7 +43,7 @@ def test_anthropic(anthropic_client, exporter):
         == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
-    assert attributes.get(SpanAttributes.LLM_PROMPTS.value) == json.dumps(
+    assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value)) == json.dumps(
         messages_value
     )
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is False
@@ -93,7 +93,7 @@ def test_anthropic_streaming(anthropic_client, exporter):
         == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
-    assert attributes.get(SpanAttributes.LLM_PROMPTS.value) == json.dumps(
+    assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value)) == json.dumps(
         messages_value
     )
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is True

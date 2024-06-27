@@ -11,12 +11,12 @@ class OpenAIRunner:
         )
         from .chat_completion import chat_completion as chat_completion_example
 
-        # from .embeddings_create import embeddings_create as embeddings_create_example
-        # from .function_calling import function_calling as function_example
-        # from .images_edit import image_edit
+        from .embeddings_create import embeddings_create as embeddings_create_example
+        from .function_calling import function_calling as function_example
+        from .images_edit import image_edit
 
-        # asyncio.run(run_conversation())
-        # asyncio.run(run_conversation_streaming())
+        asyncio.run(run_conversation())
+        asyncio.run(run_conversation_streaming())
         chat_completion_example()
-        # embeddings_create_example()
-        # function_example()
+        embeddings_create_example()
+        function_example()

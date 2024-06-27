@@ -100,6 +100,8 @@ def get_llm_request_attributes(kwargs, prompts=None):
         SpanAttributes.LLM_PROMPTS.value: json.dumps(prompts),
         SpanAttributes.LLM_USER.value: user,
         SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("top_p"),
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS.value: kwargs.get("max_tokens"),
+        SpanAttributes.LLM_SYSTEM_FINGERPRINT.value: kwargs.get("system_fingerprint"),
     }
 
 
@@ -128,3 +130,32 @@ def is_streaming(kwargs):
         or kwargs.get("stream") is None
         or kwargs.get("stream") == NOT_GIVEN
     )
+
+
+def set_usage_attributes(span, usage):
+    if usage is None:
+        return
+
+    print(usage)
+    set_span_attributes(
+        span,
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+        usage["input_tokens"] or 0,
+    )
+
+    set_span_attributes(
+        span,
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+        usage["output_tokens"] or 0,
+    )
+
+    set_span_attributes(
+        span,
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+        usage["input_tokens"] + usage["output_tokens"],
+    )
+
+    if "search_units" in usage:
+        set_span_attributes(
+            span, SpanAttributes.LLM_USAGE_SEARCH_UNITS.value, usage.search_units
+        )

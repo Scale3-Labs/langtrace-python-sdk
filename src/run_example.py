@@ -3,12 +3,12 @@ from colorama import Fore
 ENABLED_EXAMPLES = {
     "anthropic": False,
     "chroma": False,
-    "cohere": True,
+    "cohere": False,
     "fastapi": False,
     "langchain": False,
     "llamaindex": False,
     "hiveagent": False,
-    "openai": False,
+    "openai": True,
     "perplexity": False,
     "pinecone": False,
     "qdrant": False,
@@ -82,3 +82,9 @@ if ENABLED_EXAMPLES["ollama"]:
 
     print(Fore.BLUE + "Running Ollama example" + Fore.RESET)
     OllamaRunner().run()
+
+if ENABLED_EXAMPLES["groq"]:
+    from examples.langchain_example import GroqRunner
+
+    print(Fore.BLUE + "Running Groq example" + Fore.RESET)
+    GroqRunner().run()
