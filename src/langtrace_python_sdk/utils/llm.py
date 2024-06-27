@@ -148,22 +148,25 @@ def set_usage_attributes(span, usage):
     if usage is None:
         return
 
+    input_tokens = usage.get("input_tokens") or usage.get("prompt_tokens") or 0
+    output_tokens = usage.get("output_tokens") or usage.get("completion_tokens") or 0
+
     set_span_attributes(
         span,
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
-        usage["input_tokens"] or 0,
+        input_tokens,
     )
 
     set_span_attributes(
         span,
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
-        usage["output_tokens"] or 0,
+        output_tokens,
     )
 
     set_span_attributes(
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-        (usage["input_tokens"] or 0) + (usage["output_tokens"] or 0),
+        input_tokens + output_tokens,
     )
 
     if "search_units" in usage:
