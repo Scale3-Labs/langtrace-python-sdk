@@ -18,6 +18,7 @@ import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.llm import get_langtrace_attributes
 from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -55,11 +56,7 @@ def messages_create(original_method, version, tracer):
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            **get_langtrace_attributes(version, service_provider),
             SpanAttributes.LLM_URL.value: base_url,
             SpanAttributes.LLM_PATH.value: APIS["MESSAGES_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),

@@ -16,21 +16,32 @@ limitations under the License.
 
 import json
 
-from importlib_metadata import version as v
-from langtrace.trace_attributes import Event, LLMSpanAttributes, SpanAttributes
+from langtrace.trace_attributes import (
+    Event,
+    LLMSpanAttributes,
+    SpanAttributes,
+)
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from langtrace_python_sdk.utils.llm import (
+    calculate_prompt_tokens,
+    estimate_tokens,
+    get_base_url,
+    get_extra_attributes,
+    get_langtrace_attributes,
+    get_llm_request_attributes,
+    get_llm_url,
+    is_streaming,
+)
 from openai._types import NOT_GIVEN
 from opentelemetry.trace.span import Span
 
@@ -41,44 +52,28 @@ def images_generate(original_method, version, tracer):
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["IMAGES_GENERATION"]["ENDPOINT"],
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(
-                [{"role": "user", "content": kwargs.get("prompt", [])}]
-            ),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                if kwargs.get("stream") is False or kwargs.get("stream") is None:
+                if not is_streaming(kwargs):
                     data = (
                         result.data[0]
                         if hasattr(result, "data") and len(result.data) > 0
@@ -122,44 +117,29 @@ def async_images_generate(original_method, version, tracer):
     """
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["IMAGES_GENERATION"]["ENDPOINT"],
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(
-                [{"role": "user", "content": kwargs.get("prompt", [])}]
-            ),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
-                if kwargs.get("stream") is False or kwargs.get("stream") is None:
+                if not is_streaming(kwargs):
                     data = (
                         result.data[0]
                         if hasattr(result, "data") and len(result.data) > 0
@@ -203,42 +183,23 @@ def images_edit(original_method, version, tracer):
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["IMAGES_EDIT"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
             SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("response_format"),
             SpanAttributes.LLM_IMAGE_SIZE.value: kwargs.get("size"),
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(
-                [
-                    {
-                        "role": kwargs.get("user", "user"),
-                        "content": kwargs.get("prompt", []),
-                    }
-                ]
-            ),
-            SpanAttributes.LLM_TOP_K.value: kwargs.get("n"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["IMAGES_EDIT"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
@@ -441,18 +402,11 @@ def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         llm_prompts = []
         for item in kwargs.get("messages", []):
@@ -482,23 +436,18 @@ def chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(llm_prompts),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         )
         _set_input_attributes(span, kwargs, attributes)
@@ -547,18 +496,11 @@ def async_chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         llm_prompts = []
         for item in kwargs.get("messages", []):
@@ -588,23 +530,18 @@ def async_chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            SpanAttributes.LLM_PROMPTS.value: json.dumps(llm_prompts),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         )
         _set_input_attributes(span, kwargs, attributes)
@@ -655,27 +592,15 @@ def embeddings_create(original_method, version, tracer):
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
-
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
             SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         encoding_format = kwargs.get("encoding_format")
@@ -695,7 +620,7 @@ def embeddings_create(original_method, version, tracer):
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
@@ -725,44 +650,35 @@ def async_embeddings_create(original_method, version, tracer):
     """
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
 
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: "langtrace-python-sdk",
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
             SpanAttributes.LLM_PATH.value: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
             SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        if kwargs.get("encoding_format") is not None:
-            attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = json.dumps(
-                [kwargs.get("encoding_format", "")]
+        encoding_format = kwargs.get("encoding_format")
+        if encoding_format is not None:
+            if not isinstance(encoding_format, list):
+                encoding_format = [encoding_format]
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = (
+                encoding_format
             )
 
         if kwargs.get("input") is not None:
-            attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value] = json.dumps(
-                [kwargs.get("input", "")]
+            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value] = (
+                json.dumps([kwargs.get("input", "")])
             )
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
@@ -836,21 +752,6 @@ def _set_input_attributes(span, kwargs, attributes):
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
 
-    if kwargs.get("temperature") is not None and kwargs.get("temperature") != NOT_GIVEN:
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_REQUEST_TEMPERATURE.value,
-            kwargs.get("temperature"),
-        )
-
-    if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
-        set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_TOP_P.value, kwargs.get("top_p")
-        )
-
-    if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
-        set_span_attribute(span, SpanAttributes.LLM_USER.value, kwargs.get("user"))
-
     if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
         tools = []
         for function in kwargs.get("functions"):
@@ -920,11 +821,3 @@ def _set_response_attributes(span, kwargs, result):
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
                 result.usage.total_tokens,
             )
-
-
-def is_streaming(kwargs):
-    return not (
-        kwargs.get("stream") is False
-        or kwargs.get("stream") is None
-        or kwargs.get("stream") == NOT_GIVEN
-    )

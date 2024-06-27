@@ -14,10 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from openai import NOT_GIVEN
 from tiktoken import get_encoding
 
-from langtrace_python_sdk.constants.instrumentation.common import TIKTOKEN_MODEL_MAPPING
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    TIKTOKEN_MODEL_MAPPING,
+)
 from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
+from langtrace.trace_attributes import SpanAttributes
+from importlib_metadata import version as v
+import json
+from opentelemetry import baggage
 
 
 def estimate_tokens(prompt):
@@ -65,3 +74,57 @@ def set_span_attributes(span, name, value):
         if value != "":
             span.set_attribute(name, value)
     return
+
+
+def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
+    return {
+        SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
+        SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+        SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
+        SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
+        SpanAttributes.LANGTRACE_SERVICE_TYPE.value: vendor_type,
+    }
+
+
+def get_llm_request_attributes(kwargs, prompts=None):
+
+    user = kwargs.get("user", "user")
+    if prompts is None:
+        prompts = [{"role": user, "content": kwargs.get("prompt", [])}]
+
+    return {
+        SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
+        SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
+        SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
+        SpanAttributes.LLM_TOP_K.value: kwargs.get("n"),
+        SpanAttributes.LLM_PROMPTS.value: json.dumps(prompts),
+        SpanAttributes.LLM_USER.value: user,
+        SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("top_p"),
+    }
+
+
+def get_extra_attributes():
+    extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+    return extra_attributes or {}
+
+
+def get_llm_url(instance):
+    return {
+        SpanAttributes.LLM_URL.value: get_base_url(instance),
+    }
+
+
+def get_base_url(instance):
+    return (
+        str(instance._client._base_url)
+        if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
+        else ""
+    )
+
+
+def is_streaming(kwargs):
+    return not (
+        kwargs.get("stream") is False
+        or kwargs.get("stream") is None
+        or kwargs.get("stream") == NOT_GIVEN
+    )
