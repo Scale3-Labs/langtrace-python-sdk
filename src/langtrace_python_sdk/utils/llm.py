@@ -92,16 +92,28 @@ def get_llm_request_attributes(kwargs, prompts=None):
     if prompts is None:
         prompts = [{"role": user, "content": kwargs.get("prompt", [])}]
 
+    top_k = (
+        kwargs.get("n", None)
+        or kwargs.get("k", None)
+        or kwargs.get("top_k", None)
+        or kwargs.get("top_n", None)
+    )
+
+    top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
+
     return {
         SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
         SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
-        SpanAttributes.LLM_TOP_K.value: kwargs.get("n"),
+        SpanAttributes.LLM_TOP_K.value: top_k,
         SpanAttributes.LLM_PROMPTS.value: json.dumps(prompts),
         SpanAttributes.LLM_USER.value: user,
-        SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("top_p"),
+        SpanAttributes.LLM_REQUEST_TOP_P.value: top_p,
         SpanAttributes.LLM_REQUEST_MAX_TOKENS.value: kwargs.get("max_tokens"),
         SpanAttributes.LLM_SYSTEM_FINGERPRINT.value: kwargs.get("system_fingerprint"),
+        SpanAttributes.LLM_PRESENCE_PENALTY.value: kwargs.get("presence_penalty"),
+        SpanAttributes.LLM_FREQUENCY_PENALTY.value: kwargs.get("frequency_penalty"),
+        SpanAttributes.LLM_REQUEST_SEED.value: kwargs.get("seed"),
     }
 
 
@@ -151,10 +163,10 @@ def set_usage_attributes(span, usage):
     set_span_attributes(
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-        usage["input_tokens"] + usage["output_tokens"],
+        (usage["input_tokens"] or 0) + (usage["output_tokens"] or 0),
     )
 
     if "search_units" in usage:
         set_span_attributes(
-            span, SpanAttributes.LLM_USAGE_SEARCH_UNITS.value, usage.search_units
+            span, SpanAttributes.LLM_USAGE_SEARCH_UNITS.value, usage["search_units"]
         )

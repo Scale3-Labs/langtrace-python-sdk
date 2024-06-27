@@ -16,6 +16,13 @@ limitations under the License.
 
 import json
 
+from langtrace_python_sdk.utils.llm import (
+    get_langtrace_attributes,
+    get_llm_request_attributes,
+    get_extra_attributes,
+    get_llm_url,
+    set_usage_attributes,
+)
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
 from opentelemetry import baggage
@@ -38,24 +45,18 @@ def rerank(original_method, version, tracer):
 
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["COHERE"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_URL.value: APIS["RERANK"]["URL"],
             SpanAttributes.LLM_PATH.value: APIS["RERANK"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-            SpanAttributes.LLM_TOP_K.value: kwargs.get("top_n"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
             SpanAttributes.LLM_REQUEST_DOCUMENTS.value: json.dumps(
                 kwargs.get("documents")
             ),
             SpanAttributes.LLM_COHERE_RERANK_QUERY.value: kwargs.get("query"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -124,18 +125,13 @@ def embed(original_method, version, tracer):
 
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["COHERE"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_URL.value: APIS["EMBED"]["URL"],
             SpanAttributes.LLM_PATH.value: APIS["EMBED"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
             SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value: json.dumps(
                 kwargs.get("texts")
             ),
@@ -146,7 +142,7 @@ def embed(original_method, version, tracer):
                 "input_type"
             ),
             SpanAttributes.LLM_REQUEST_EMBEDDING_JOB_NAME.value: kwargs.get("name"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -164,25 +160,7 @@ def embed(original_method, version, tracer):
                     and result.meta.billed_units is not None
                 ):
                     usage = result.meta.billed_units
-                    if usage is not None:
-                        span.set_attribute(
-                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
-                            usage.input_tokens or 0,
-                        )
-                        span.set_attribute(
-                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
-                            usage.output_tokens or 0,
-                        )
-
-                        span.set_attribute(
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
-                            (usage.input_tokens or 0) + (usage.output_tokens or 0),
-                        )
-
-                        span.set_attribute(
-                            "search_units",
-                            usage.search_units or 0,
-                        )
+                    set_usage_attributes(span, dict(usage))
 
             span.set_status(StatusCode.OK)
             span.end()
@@ -204,7 +182,7 @@ def chat_create(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["COHERE"]
 
         message = kwargs.get("message", "")
-        prompts = [{"role": "USER", "content": message}]
+        prompts = [{"role": "user", "content": message}]
         system_prompts = []
         history = []
         preamble = kwargs.get("preamble")
@@ -216,7 +194,7 @@ def chat_create(original_method, version, tracer):
             history = [
                 {
                     "role": (
-                        item.get("role") if item.get("role") is not None else "USER"
+                        item.get("role") if item.get("role") is not None else "user"
                     ),
                     "content": (
                         item.get("message") if item.get("message") is not None else ""
@@ -228,32 +206,14 @@ def chat_create(original_method, version, tracer):
             prompts = history + prompts
         if len(system_prompts) > 0:
             prompts = system_prompts + prompts
-        prompts = json.dumps(prompts)
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=prompts),
+            **get_llm_url(instance),
             SpanAttributes.LLM_URL.value: APIS["CHAT_CREATE"]["URL"],
             SpanAttributes.LLM_PATH.value: APIS["CHAT_CREATE"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: (
-                kwargs.get("model", None) or "command-r"
-            ),
-            SpanAttributes.LLM_IS_STREAMING.value: False,
-            SpanAttributes.LLM_PROMPTS.value: prompts,
-            SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
-            SpanAttributes.LLM_REQUEST_MAX_TOKENS.value: kwargs.get("max_tokens"),
-            SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("p"),
-            SpanAttributes.LLM_TOP_K.value: kwargs.get("k"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            SpanAttributes.LLM_REQUEST_SEED.value: kwargs.get("seed"),
-            SpanAttributes.LLM_FREQUENCY_PENALTY.value: kwargs.get("frequency_penalty"),
-            SpanAttributes.LLM_PRESENCE_PENALTY.value: kwargs.get("presence_penalty"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -278,8 +238,7 @@ def chat_create(original_method, version, tracer):
 
         # Set the attributes on the span
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
-                span.set_attribute(field, value)
+            set_span_attribute(span, field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
@@ -318,7 +277,7 @@ def chat_create(original_method, version, tracer):
                                 "role": (
                                     item.role
                                     if hasattr(item, "role") and item.role is not None
-                                    else "USER"
+                                    else "user"
                                 ),
                                 "content": (
                                     item.message
@@ -402,7 +361,7 @@ def chat_stream(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["COHERE"]
 
         message = kwargs.get("message", "")
-        prompts = [{"role": "USER", "content": message}]
+        prompts = [{"role": "user", "content": message}]
         system_prompts = []
         history = []
         preamble = kwargs.get("preamble")
@@ -414,7 +373,7 @@ def chat_stream(original_method, version, tracer):
             history = [
                 {
                     "role": (
-                        item.get("role") if item.get("role") is not None else "USER"
+                        item.get("role") if item.get("role") is not None else "user"
                     ),
                     "content": (
                         item.get("message") if item.get("message") is not None else ""
@@ -426,32 +385,15 @@ def chat_stream(original_method, version, tracer):
             prompts = history + prompts
         if len(system_prompts) > 0:
             prompts = system_prompts + prompts
-        prompts = json.dumps(prompts)
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=prompts),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_IS_STREAMING.value: True,
             SpanAttributes.LLM_URL.value: APIS["CHAT_STREAM"]["URL"],
             SpanAttributes.LLM_PATH.value: APIS["CHAT_STREAM"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: (
-                kwargs.get("model", None) or "command-r"
-            ),
-            SpanAttributes.LLM_PROMPTS.value: prompts,
-            SpanAttributes.LLM_IS_STREAMING.value: True,
-            SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
-            SpanAttributes.LLM_REQUEST_MAX_TOKENS.value: kwargs.get("max_tokens"),
-            SpanAttributes.LLM_REQUEST_TOP_P.value: kwargs.get("p"),
-            SpanAttributes.LLM_TOP_K.value: kwargs.get("k"),
-            SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            SpanAttributes.LLM_REQUEST_SEED.value: kwargs.get("seed"),
-            SpanAttributes.LLM_FREQUENCY_PENALTY.value: kwargs.get("frequency_penalty"),
-            SpanAttributes.LLM_PRESENCE_PENALTY.value: kwargs.get("presence_penalty"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -530,7 +472,7 @@ def chat_stream(original_method, version, tracer):
                                             item.role
                                             if hasattr(item, "role")
                                             and item.role is not None
-                                            else "USER"
+                                            else "user"
                                         ),
                                         "content": (
                                             item.message

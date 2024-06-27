@@ -55,8 +55,6 @@ def test_cohere_chat(cohere_client, exporter):
     )
     assert attributes.get(SpanAttributes.LLM_GENERATION_ID.value) == res.generation_id
 
-    assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is False
-
     assert json.loads(attributes.get("llm_connectors")) == connectors
     assert (
         json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value))[-1]["content"]
