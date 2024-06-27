@@ -2,6 +2,12 @@ from langtrace_python_sdk.constants.instrumentation.ollama import APIS
 from importlib_metadata import version as v
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.llm import (
+    get_extra_attributes,
+    get_langtrace_attributes,
+    get_llm_request_attributes,
+    get_llm_url,
+)
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -17,26 +23,15 @@ from langtrace.trace_attributes import SpanAttributes
 
 def generic_patch(operation_name, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: api["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
             SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("format"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -76,26 +71,15 @@ def generic_patch(operation_name, version, tracer):
 
 def ageneric_patch(operation_name, version, tracer):
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
-            SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-            SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-            SpanAttributes.LANGTRACE_SERVICE_TYPE.value: "llm",
-            SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-            SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-            SpanAttributes.LLM_URL.value: base_url,
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH.value: api["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-            SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
             SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("format"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_extra_attributes(),
         }
         attributes = LLMSpanAttributes(**span_attributes)
         with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
@@ -170,6 +154,7 @@ def _set_input_attributes(span, kwargs, attributes):
 
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
+
     if "messages" in kwargs:
         set_span_attribute(
             span,
@@ -217,12 +202,14 @@ def _handle_streaming_response(span, response, api):
                 accumulated_tokens["message"]["role"] = chunk["message"]["role"]
             if api == "generate":
                 accumulated_tokens["response"] += chunk["response"]
+
             span.add_event(
                 Event.STREAM_OUTPUT.value,
                 {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
-                        accumulated_tokens
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: chunk.get(
+                        "response"
                     )
+                    or chunk.get("message").get("content"),
                 },
             )
 
