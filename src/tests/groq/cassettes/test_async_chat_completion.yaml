@@ -1,0 +1,111 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Explain the importance of low
+      latency LLMs"}], "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate, br
+      connection:
+      - keep-alive
+      content-length:
+      - '116'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - AsyncGroq/Python 0.9.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - async:asyncio
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.9.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.12.3
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 89a4ffb33c750da8-MRS
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - br
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 27 Jun 2024 11:11:53 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=5F8ZGzVDV6Mx1uOJyeXYTuV5VKnsyPFDR3I0uid7NK4-1719486713-1.0.1.1-nBDDHvZp5slfuUxwV5f1ReEOLghekkijqKOfbfzmlpl2h8eSnW14Z7z9Wm25HfcI2GjPaY8yPRgmT9i4FzwNmg;
+        path=/; expires=Thu, 27-Jun-24 11:41:53 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14399'
+      x-ratelimit-remaining-tokens:
+      - '29985'
+      x-ratelimit-reset-requests:
+      - 6s
+      x-ratelimit-reset-tokens:
+      - 30ms
+      x-request-id:
+      - req_01j1cpa33aerf8fxh44yxz09j2
+    status:
+      code: 200
+      message: OK
+version: 1

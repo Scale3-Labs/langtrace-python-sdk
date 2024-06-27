@@ -1,6 +1,7 @@
 from dotenv import find_dotenv, load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
+from groq import Groq
 
 _ = load_dotenv(find_dotenv())
 
@@ -12,21 +13,33 @@ _ = load_dotenv(find_dotenv())
 
 langtrace.init()
 
+client = Groq()
 
-def groq_example():
 
-    chat = ChatGroq(temperature=0, model_name="mixtral-8x7b-32768")
-
-    system = "You are a helpful assistant."
-    human = "{text}"
-    prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
-
-    chain = prompt | chat
-    result = chain.invoke(
-        {"text": "Explain the importance of low latency LLMs in 2 sentences or less."}
+def groq_basic():
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "Explain the importance of low latency LLMs",
+            }
+        ],
+        stream=False,
+        model="llama3-8b-8192",
     )
-    # print(result)
-    return result
+    return chat_completion
 
 
-groq_example()
+def groq_streaming():
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "Explain the importance of low latency LLMs",
+            }
+        ],
+        stream=True,
+        model="llama3-8b-8192",
+    )
+    for chunk in chat_completion:
+        print(chunk)
