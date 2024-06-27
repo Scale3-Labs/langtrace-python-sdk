@@ -385,7 +385,7 @@ class StreamWrapper:
                                 self.completion_tokens += token_counts
                                 content.append(tool_call.function.arguments)
             self.span.add_event(
-                Event.RESPONSE.value,
+                Event.STREAM_OUTPUT.value,
                 {
                     SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
                         "".join(content)

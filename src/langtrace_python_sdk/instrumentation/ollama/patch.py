@@ -218,7 +218,7 @@ def _handle_streaming_response(span, response, api):
             if api == "generate":
                 accumulated_tokens["response"] += chunk["response"]
             span.add_event(
-                Event.RESPONSE,
+                Event.STREAM_OUTPUT.value,
                 {
                     SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
                         accumulated_tokens
@@ -253,7 +253,7 @@ async def _ahandle_streaming_response(span, response, api):
                 accumulated_tokens["response"] += chunk["response"]
 
             span.add_event(
-                Event.RESPONSE,
+                Event.STREAM_OUTPUT.value,
                 {
                     SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: json.dumps(
                         chunk

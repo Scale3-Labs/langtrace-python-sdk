@@ -275,7 +275,7 @@ def chat_completions_create(original_method, version, tracer):
                 else:
                     content = []
                 span.add_event(
-                    Event.RESPONSE.value,
+                    Event.STREAM_OUTPUT.value,
                     {
                         SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
                             "".join(content)

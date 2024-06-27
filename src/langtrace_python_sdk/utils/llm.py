@@ -88,7 +88,7 @@ def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
 
 def get_llm_request_attributes(kwargs, prompts=None):
 
-    user = kwargs.get("user", "user")
+    user = kwargs.get("user", None)
     if prompts is None:
         prompts = [{"role": user, "content": kwargs.get("prompt", [])}]
 
