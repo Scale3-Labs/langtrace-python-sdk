@@ -675,18 +675,23 @@ def embeddings_create(original_method, version, tracer):
             SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
             SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
             SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value: json.dumps(
-                [kwargs.get("input", "")]
-            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
-
-        if kwargs.get("encoding_format") is not None:
-            attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = json.dumps(
-                [kwargs.get("encoding_format", "")]
+        encoding_format = kwargs.get("encoding_format")
+        if encoding_format is not None:
+            if not isinstance(encoding_format, list):
+                encoding_format = [encoding_format]
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = (
+                encoding_format
             )
+
+        if kwargs.get("input") is not None:
+            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value] = (
+                json.dumps([kwargs.get("input", "")])
+            )
+
+        attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
@@ -740,16 +745,20 @@ def async_embeddings_create(original_method, version, tracer):
             SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
             SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
             SpanAttributes.LLM_USER.value: kwargs.get("user"),
-            SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value: json.dumps(
-                [kwargs.get("encoding_format", "")]
-            ),
-            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value: json.dumps(
-                [kwargs.get("input", "")]
-            ),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
+
+        if kwargs.get("encoding_format") is not None:
+            attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = json.dumps(
+                [kwargs.get("encoding_format", "")]
+            )
+
+        if kwargs.get("input") is not None:
+            attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value] = json.dumps(
+                [kwargs.get("input", "")]
+            )
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
