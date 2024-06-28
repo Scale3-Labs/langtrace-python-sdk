@@ -173,3 +173,15 @@ def set_usage_attributes(span, usage):
         set_span_attributes(
             span, SpanAttributes.LLM_USAGE_SEARCH_UNITS.value, usage["search_units"]
         )
+
+
+def get_tool_calls(item):
+    if isinstance(item, dict):
+        if "tool_calls" in item and item["tool_calls"] is not None:
+            return item["tool_calls"]
+        return None
+
+    else:
+        if hasattr(item, "tool_calls") and item.tool_calls is not None:
+            return item.tool_calls
+        return None

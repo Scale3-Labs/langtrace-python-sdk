@@ -40,6 +40,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_tool_calls,
     is_streaming,
 )
 from openai._types import NOT_GIVEN
@@ -407,12 +408,13 @@ def chat_completions_create(original_method, version, tracer):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if hasattr(item, "tool_calls") and item.tool_calls is not None:
+            tools = get_tool_calls(item)
+            if tools is not None:
                 tool_calls = []
-                for tool_call in item.tool_calls:
+
+                for tool_call in tools:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
                         "type": tool_call.type if hasattr(tool_call, "type") else "",
@@ -501,12 +503,12 @@ def async_chat_completions_create(original_method, version, tracer):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if hasattr(item, "tool_calls") and item.tool_calls is not None:
+            tools = get_tool_calls(item)
+            if tools is not None:
                 tool_calls = []
-                for tool_call in item.tool_calls:
+                for tool_call in tools:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
                         "type": tool_call.type if hasattr(tool_call, "type") else "",
@@ -524,7 +526,7 @@ def async_chat_completions_create(original_method, version, tracer):
                                 else ""
                             ),
                         }
-                    tool_calls.append(tool_call_dict)
+                    tool_calls.append(json.dumps(tool_call_dict))
                 llm_prompts.append(tool_calls)
             else:
                 llm_prompts.append(item)
