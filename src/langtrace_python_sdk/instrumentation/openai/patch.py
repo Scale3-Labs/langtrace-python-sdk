@@ -413,7 +413,6 @@ def chat_completions_create(original_method, version, tracer):
             tools = get_tool_calls(item)
             if tools is not None:
                 tool_calls = []
-
                 for tool_call in tools:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
