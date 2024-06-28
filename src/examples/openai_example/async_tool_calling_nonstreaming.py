@@ -8,7 +8,7 @@ from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init()
+langtrace.init(write_spans_to_console=True)
 
 client = AsyncOpenAI()
 

@@ -17,6 +17,7 @@ def chat():
                 "content": "hi",
             },
         ],
+        options={"temperature": 0.5},
         stream=True,
     )
 

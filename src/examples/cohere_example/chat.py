@@ -23,6 +23,7 @@ def chat_comp():
                 "message": "The man who is widely credited with discovering gravity is Sir Isaac Newton",
             },
         ],
+        k=3,
         message="Tell me a story in 3 sentences or less?",
         preamble="answer like a pirate",
         # perform web search before answering the question. You can also use your own custom connector.
