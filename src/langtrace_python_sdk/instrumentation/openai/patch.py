@@ -28,7 +28,11 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tokens
+from langtrace_python_sdk.utils.llm import (
+    calculate_prompt_tokens,
+    estimate_tokens,
+    get_tool_calls,
+)
 from openai._types import NOT_GIVEN
 
 
@@ -430,9 +434,10 @@ def chat_completions_create(original_method, version, tracer):
         # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if hasattr(item, "tool_calls") and item.tool_calls is not None:
+            tools = get_tool_calls(item)
+            if tools is not None:
                 tool_calls = []
-                for tool_call in item.tool_calls:
+                for tool_call in tools:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
                         "type": tool_call.type if hasattr(tool_call, "type") else "",
@@ -611,9 +616,10 @@ def async_chat_completions_create(original_method, version, tracer):
         # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
-            if hasattr(item, "tool_calls") and item.tool_calls is not None:
+            tools = get_tool_calls(item)
+            if tools is not None:
                 tool_calls = []
-                for tool_call in item.tool_calls:
+                for tool_call in tools:
                     tool_call_dict = {
                         "id": tool_call.id if hasattr(tool_call, "id") else "",
                         "type": tool_call.type if hasattr(tool_call, "type") else "",
