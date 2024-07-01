@@ -32,23 +32,21 @@ def test_cohere_rerank(cohere_client, exporter):
     assert cohere_span.name == APIS["RERANK"]["METHOD"]
     attributes = cohere_span.attributes
 
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
 
     assert (
-        attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value)
+        attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME)
         == SERVICE_PROVIDERS["COHERE"]
     )
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("cohere")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == APIS["RERANK"]["URL"]
-    assert attributes.get(SpanAttributes.LLM_PATH.value) == APIS["RERANK"]["ENDPOINT"]
-    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("cohere")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == APIS["RERANK"]["URL"]
+    assert attributes.get(SpanAttributes.LLM_PATH) == APIS["RERANK"]["ENDPOINT"]
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
 
     langtrace_results = json.loads(
-        attributes.get(SpanAttributes.LLM_COHERE_RERANK_RESULTS.value)
+        attributes.get(SpanAttributes.LLM_COHERE_RERANK_RESULTS)
     )
     for idx, res in enumerate(results.results):
         lang_res = json.loads(langtrace_results[idx])

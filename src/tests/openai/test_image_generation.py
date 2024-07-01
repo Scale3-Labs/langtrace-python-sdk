@@ -21,32 +21,24 @@ def test_image_generation(openai_client, exporter):
     assert image_generation_span.name == "openai.images.generate"
 
     attributes = image_generation_span.attributes
-    assert (
-        attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value)
-        == "langtrace-python-sdk"
-    )
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
 
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "OpenAI"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("openai")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        "langtrace-python-sdk"
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.openai.com/v1/"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("openai")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v("langtrace-python-sdk")
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.openai.com/v1/"
 
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["IMAGES_GENERATION"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["IMAGES_GENERATION"]["ENDPOINT"]
     )
 
-    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
 
-    prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value))
+    prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
     assert prompts[0]["content"] == prompt
 
-    langtrace_responses = json.loads(
-        attributes.get(SpanAttributes.LLM_COMPLETIONS.value)
-    )
+    langtrace_responses = json.loads(attributes.get(SpanAttributes.LLM_COMPLETIONS))
     assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
         assert isinstance(langtrace_response, dict)
@@ -77,32 +69,24 @@ async def test_async_image_generation(async_openai_client, exporter):
     assert image_generation_span.name == "openai.images.generate"
 
     attributes = image_generation_span.attributes
-    assert (
-        attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value)
-        == "langtrace-python-sdk"
-    )
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
 
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "OpenAI"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("openai")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        "langtrace-python-sdk"
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.openai.com/v1/"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("openai")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v("langtrace-python-sdk")
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.openai.com/v1/"
 
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["IMAGES_GENERATION"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["IMAGES_GENERATION"]["ENDPOINT"]
     )
 
-    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
 
-    prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value))
+    prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
     assert prompts[0]["content"] == prompt
 
-    langtrace_responses = json.loads(
-        attributes.get(SpanAttributes.LLM_COMPLETIONS.value)
-    )
+    langtrace_responses = json.loads(attributes.get(SpanAttributes.LLM_COMPLETIONS))
     assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
         assert isinstance(langtrace_response, dict)

@@ -55,7 +55,7 @@ def messages_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["MESSAGES_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["MESSAGES_CREATE"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -95,7 +95,7 @@ def messages_create(original_method, version, tracer):
                     and chunk.message.model is not None
                 ):
                     span.set_attribute(
-                        SpanAttributes.LLM_RESPONSE_MODEL.value, chunk.message.model
+                        SpanAttributes.LLM_RESPONSE_MODEL, chunk.message.model
                     )
                 content = ""
                 if hasattr(chunk, "delta") and chunk.delta is not None:
@@ -120,11 +120,7 @@ def messages_create(original_method, version, tracer):
                 if content:
                     span.add_event(
                         Event.STREAM_OUTPUT.value,
-                        {
-                            SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: "".join(
-                                content
-                            )
-                        },
+                        {SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: "".join(content)},
                     )
 
                 # Assuming this is part of a generator, yield chunk or aggregated content
@@ -137,7 +133,7 @@ def messages_create(original_method, version, tracer):
                 span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
             )
             span.set_attribute(
-                SpanAttributes.LLM_COMPLETIONS.value,
+                SpanAttributes.LLM_COMPLETIONS,
                 json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
             )
             span.set_status(StatusCode.OK)
@@ -147,11 +143,11 @@ def messages_create(original_method, version, tracer):
         if not is_streaming(kwargs):
             if hasattr(result, "content") and result.content is not None:
                 set_span_attribute(
-                    span, SpanAttributes.LLM_RESPONSE_MODEL.value, result.model
+                    span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
                 set_span_attribute(
                     span,
-                    SpanAttributes.LLM_COMPLETIONS.value,
+                    SpanAttributes.LLM_COMPLETIONS,
                     json.dumps(
                         [
                             {
@@ -166,7 +162,7 @@ def messages_create(original_method, version, tracer):
             else:
                 responses = []
                 set_span_attribute(
-                    span, SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
+                    span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
                 )
 
             if (
@@ -174,7 +170,7 @@ def messages_create(original_method, version, tracer):
                 and result.system_fingerprint is not None
             ):
                 span.set_attribute(
-                    SpanAttributes.LLM_SYSTEM_FINGERPRINT.value,
+                    SpanAttributes.LLM_SYSTEM_FINGERPRINT,
                     result.system_fingerprint,
                 )
             # Get the usage

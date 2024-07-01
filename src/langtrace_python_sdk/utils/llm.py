@@ -78,11 +78,11 @@ def set_span_attributes(span, name, value):
 
 def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
     return {
-        SpanAttributes.LANGTRACE_SDK_NAME.value: LANGTRACE_SDK_NAME,
-        SpanAttributes.LANGTRACE_VERSION.value: v(LANGTRACE_SDK_NAME),
-        SpanAttributes.LANGTRACE_SERVICE_VERSION.value: version,
-        SpanAttributes.LANGTRACE_SERVICE_NAME.value: service_provider,
-        SpanAttributes.LANGTRACE_SERVICE_TYPE.value: vendor_type,
+        SpanAttributes.LANGTRACE_SDK_NAME: LANGTRACE_SDK_NAME,
+        SpanAttributes.LANGTRACE_VERSION: v(LANGTRACE_SDK_NAME),
+        SpanAttributes.LANGTRACE_SERVICE_VERSION: version,
+        SpanAttributes.LANGTRACE_SERVICE_NAME: service_provider,
+        SpanAttributes.LANGTRACE_SERVICE_TYPE: vendor_type,
     }
 
 
@@ -102,18 +102,18 @@ def get_llm_request_attributes(kwargs, prompts=None):
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
 
     return {
-        SpanAttributes.LLM_REQUEST_MODEL.value: kwargs.get("model"),
-        SpanAttributes.LLM_IS_STREAMING.value: kwargs.get("stream"),
-        SpanAttributes.LLM_REQUEST_TEMPERATURE.value: kwargs.get("temperature"),
-        SpanAttributes.LLM_TOP_K.value: top_k,
-        SpanAttributes.LLM_PROMPTS.value: json.dumps(prompts),
-        SpanAttributes.LLM_USER.value: user,
-        SpanAttributes.LLM_REQUEST_TOP_P.value: top_p,
-        SpanAttributes.LLM_REQUEST_MAX_TOKENS.value: kwargs.get("max_tokens"),
-        SpanAttributes.LLM_SYSTEM_FINGERPRINT.value: kwargs.get("system_fingerprint"),
-        SpanAttributes.LLM_PRESENCE_PENALTY.value: kwargs.get("presence_penalty"),
-        SpanAttributes.LLM_FREQUENCY_PENALTY.value: kwargs.get("frequency_penalty"),
-        SpanAttributes.LLM_REQUEST_SEED.value: kwargs.get("seed"),
+        SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model"),
+        SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
+        SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
+        SpanAttributes.LLM_TOP_K: top_k,
+        SpanAttributes.LLM_PROMPTS: json.dumps(prompts),
+        SpanAttributes.LLM_USER: user,
+        SpanAttributes.LLM_REQUEST_TOP_P: top_p,
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get("max_tokens"),
+        SpanAttributes.LLM_SYSTEM_FINGERPRINT: kwargs.get("system_fingerprint"),
+        SpanAttributes.LLM_PRESENCE_PENALTY: kwargs.get("presence_penalty"),
+        SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
+        SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
     }
 
 
@@ -124,7 +124,7 @@ def get_extra_attributes():
 
 def get_llm_url(instance):
     return {
-        SpanAttributes.LLM_URL.value: get_base_url(instance),
+        SpanAttributes.LLM_URL: get_base_url(instance),
     }
 
 
@@ -153,25 +153,25 @@ def set_usage_attributes(span, usage):
 
     set_span_attributes(
         span,
-        SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         input_tokens,
     )
 
     set_span_attributes(
         span,
-        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
         output_tokens,
     )
 
     set_span_attributes(
         span,
-        SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
         input_tokens + output_tokens,
     )
 
     if "search_units" in usage:
         set_span_attributes(
-            span, SpanAttributes.LLM_USAGE_SEARCH_UNITS.value, usage["search_units"]
+            span, SpanAttributes.LLM_USAGE_SEARCH_UNITS, usage["search_units"]
         )
 
 

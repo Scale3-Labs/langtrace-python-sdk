@@ -50,12 +50,10 @@ def rerank(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_URL.value: APIS["RERANK"]["URL"],
-            SpanAttributes.LLM_PATH.value: APIS["RERANK"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_DOCUMENTS.value: json.dumps(
-                kwargs.get("documents")
-            ),
-            SpanAttributes.LLM_COHERE_RERANK_QUERY.value: kwargs.get("query"),
+            SpanAttributes.LLM_URL: APIS["RERANK"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["RERANK"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_DOCUMENTS: json.dumps(kwargs.get("documents")),
+            SpanAttributes.LLM_COHERE_RERANK_QUERY: kwargs.get("query"),
             **get_extra_attributes(),
         }
 
@@ -73,13 +71,11 @@ def rerank(original_method, version, tracer):
                 for _, doc in enumerate(result.results):
                     results.append(doc.json())
                 span.set_attribute(
-                    SpanAttributes.LLM_COHERE_RERANK_RESULTS.value, json.dumps(results)
+                    SpanAttributes.LLM_COHERE_RERANK_RESULTS, json.dumps(results)
                 )
 
             if (hasattr(result, "response_id")) and (result.response_id is not None):
-                span.set_attribute(
-                    SpanAttributes.LLM_RESPONSE_ID.value, result.response_id
-                )
+                span.set_attribute(SpanAttributes.LLM_RESPONSE_ID, result.response_id)
 
             if hasattr(result, "meta") and result.meta is not None:
                 if (
@@ -89,16 +85,16 @@ def rerank(original_method, version, tracer):
                     usage = result.meta.billed_units
                     if usage is not None:
                         span.set_attribute(
-                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
                             usage.input_tokens or 0,
                         )
                         span.set_attribute(
-                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
                             usage.output_tokens or 0,
                         )
 
                         span.set_attribute(
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                             (usage.input_tokens or 0) + (usage.output_tokens or 0),
                         )
 
@@ -130,18 +126,14 @@ def embed(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_URL.value: APIS["EMBED"]["URL"],
-            SpanAttributes.LLM_PATH.value: APIS["EMBED"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value: json.dumps(
+            SpanAttributes.LLM_URL: APIS["EMBED"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["EMBED"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS: json.dumps(
                 kwargs.get("texts")
             ),
-            SpanAttributes.LLM_REQUEST_EMBEDDING_DATASET_ID.value: kwargs.get(
-                "dataset_id"
-            ),
-            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUT_TYPE.value: kwargs.get(
-                "input_type"
-            ),
-            SpanAttributes.LLM_REQUEST_EMBEDDING_JOB_NAME.value: kwargs.get("name"),
+            SpanAttributes.LLM_REQUEST_EMBEDDING_DATASET_ID: kwargs.get("dataset_id"),
+            SpanAttributes.LLM_REQUEST_EMBEDDING_INPUT_TYPE: kwargs.get("input_type"),
+            SpanAttributes.LLM_REQUEST_EMBEDDING_JOB_NAME: kwargs.get("name"),
             **get_extra_attributes(),
         }
 
@@ -211,8 +203,8 @@ def chat_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_URL.value: APIS["CHAT_CREATE"]["URL"],
-            SpanAttributes.LLM_PATH.value: APIS["CHAT_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_URL: APIS["CHAT_CREATE"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_CREATE"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -248,17 +240,15 @@ def chat_create(original_method, version, tracer):
                 result.generation_id is not None
             ):
                 span.set_attribute(
-                    SpanAttributes.LLM_GENERATION_ID.value, result.generation_id
+                    SpanAttributes.LLM_GENERATION_ID, result.generation_id
                 )
             if (hasattr(result, "response_id")) and (result.response_id is not None):
-                span.set_attribute(
-                    SpanAttributes.LLM_RESPONSE_ID.value, result.response_id
-                )
+                span.set_attribute(SpanAttributes.LLM_RESPONSE_ID, result.response_id)
             if (hasattr(result, "is_search_required")) and (
                 result.is_search_required is not None
             ):
                 span.set_attribute(
-                    SpanAttributes.LLM_REQUEST_SEARCH_REQUIRED.value,
+                    SpanAttributes.LLM_REQUEST_SEARCH_REQUIRED,
                     result.is_search_required,
                 )
 
@@ -289,27 +279,25 @@ def chat_create(original_method, version, tracer):
                             for item in result.chat_history
                         ]
                         span.set_attribute(
-                            SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
+                            SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
                         )
                     else:
                         responses = [{"role": "CHATBOT", "content": result.text}]
                         span.set_attribute(
-                            SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
+                            SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
                         )
                 elif hasattr(result, "tool_calls") and result.tool_calls is not None:
                     tool_calls = []
                     for tool_call in result.tool_calls:
                         tool_calls.append(tool_call.json())
                     span.set_attribute(
-                        SpanAttributes.LLM_TOOL_RESULTS.value, json.dumps(tool_calls)
+                        SpanAttributes.LLM_TOOL_RESULTS, json.dumps(tool_calls)
                     )
-                    span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS.value, json.dumps([])
-                    )
+                    span.set_attribute(SpanAttributes.LLM_COMPLETIONS, json.dumps([]))
                 else:
                     responses = []
                     span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
+                        SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
                     )
 
                 # Get the usage
@@ -321,16 +309,16 @@ def chat_create(original_method, version, tracer):
                         usage = result.meta.billed_units
                         if usage is not None:
                             span.set_attribute(
-                                SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+                                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
                                 usage.input_tokens or 0,
                             )
                             span.set_attribute(
-                                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+                                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
                                 usage.output_tokens or 0,
                             )
 
                             span.set_attribute(
-                                SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                                 (usage.input_tokens or 0) + (usage.output_tokens or 0),
                             )
 
@@ -390,9 +378,9 @@ def chat_stream(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_IS_STREAMING.value: True,
-            SpanAttributes.LLM_URL.value: APIS["CHAT_STREAM"]["URL"],
-            SpanAttributes.LLM_PATH.value: APIS["CHAT_STREAM"]["ENDPOINT"],
+            SpanAttributes.LLM_IS_STREAMING: True,
+            SpanAttributes.LLM_URL: APIS["CHAT_STREAM"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_STREAM"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -426,11 +414,7 @@ def chat_stream(original_method, version, tracer):
                         content = ""
                     span.add_event(
                         Event.STREAM_OUTPUT.value,
-                        {
-                            SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: "".join(
-                                content
-                            )
-                        },
+                        {SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: "".join(content)},
                     )
 
                     if (
@@ -442,21 +426,21 @@ def chat_stream(original_method, version, tracer):
                             response.generation_id is not None
                         ):
                             span.set_attribute(
-                                SpanAttributes.LLM_GENERATION_ID.value,
+                                SpanAttributes.LLM_GENERATION_ID,
                                 response.generation_id,
                             )
                         if (hasattr(response, "response_id")) and (
                             response.response_id is not None
                         ):
                             span.set_attribute(
-                                SpanAttributes.LLM_RESPONSE_ID.value,
+                                SpanAttributes.LLM_RESPONSE_ID,
                                 response.response_id,
                             )
                         if (hasattr(response, "is_search_required")) and (
                             response.is_search_required is not None
                         ):
                             span.set_attribute(
-                                SpanAttributes.LLM_REQUEST_SEARCH_REQUIRED.value,
+                                SpanAttributes.LLM_REQUEST_SEARCH_REQUIRED,
                                 response.is_search_required,
                             )
 
@@ -484,7 +468,7 @@ def chat_stream(original_method, version, tracer):
                                     for item in response.chat_history
                                 ]
                                 span.set_attribute(
-                                    SpanAttributes.LLM_COMPLETIONS.value,
+                                    SpanAttributes.LLM_COMPLETIONS,
                                     json.dumps(responses),
                                 )
                             else:
@@ -492,7 +476,7 @@ def chat_stream(original_method, version, tracer):
                                     {"role": "CHATBOT", "content": response.text}
                                 ]
                                 span.set_attribute(
-                                    SpanAttributes.LLM_COMPLETIONS.value,
+                                    SpanAttributes.LLM_COMPLETIONS,
                                     json.dumps(responses),
                                 )
 
@@ -505,16 +489,16 @@ def chat_stream(original_method, version, tracer):
                                 usage = response.meta.billed_units
                                 if usage is not None:
                                     span.set_attribute(
-                                        SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+                                        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
                                         usage.input_tokens or 0,
                                     )
                                     span.set_attribute(
-                                        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+                                        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
                                         usage.output_tokens or 0,
                                     )
 
                                     span.set_attribute(
-                                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                                         (usage.input_tokens or 0)
                                         + (usage.output_tokens or 0),
                                     )

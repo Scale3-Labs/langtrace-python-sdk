@@ -58,7 +58,7 @@ def images_generate(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -94,7 +94,7 @@ def images_generate(original_method, version, tracer):
                         }
                     ]
                     span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS.value, json.dumps(response)
+                        SpanAttributes.LLM_COMPLETIONS, json.dumps(response)
                     )
 
                 span.set_status(StatusCode.OK)
@@ -124,7 +124,7 @@ def async_images_generate(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -160,7 +160,7 @@ def async_images_generate(original_method, version, tracer):
                         }
                     ]
                     span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS.value, json.dumps(response)
+                        SpanAttributes.LLM_COMPLETIONS, json.dumps(response)
                     )
 
                 span.set_status(StatusCode.OK)
@@ -190,9 +190,9 @@ def images_edit(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["IMAGES_EDIT"]["ENDPOINT"],
-            SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("response_format"),
-            SpanAttributes.LLM_IMAGE_SIZE.value: kwargs.get("size"),
+            SpanAttributes.LLM_PATH: APIS["IMAGES_EDIT"]["ENDPOINT"],
+            SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("response_format"),
+            SpanAttributes.LLM_IMAGE_SIZE: kwargs.get("size"),
             **get_extra_attributes(),
         }
 
@@ -226,9 +226,7 @@ def images_edit(original_method, version, tracer):
 
                 span.add_event(
                     Event.RESPONSE.value,
-                    attributes={
-                        SpanAttributes.LLM_COMPLETIONS.value: json.dumps(response)
-                    },
+                    attributes={SpanAttributes.LLM_COMPLETIONS: json.dumps(response)},
                 )
 
                 span.set_status(StatusCode.OK)
@@ -272,23 +270,23 @@ class StreamWrapper:
             self.span.add_event(Event.STREAM_END.value)
             set_span_attribute(
                 self.span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
                 self.prompt_tokens,
             )
             set_span_attribute(
                 self.span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
                 self.completion_tokens,
             )
             set_span_attribute(
                 self.span,
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                 self.prompt_tokens + self.completion_tokens,
             )
 
             set_span_attribute(
                 self.span,
-                SpanAttributes.LLM_COMPLETIONS.value,
+                SpanAttributes.LLM_COMPLETIONS,
                 json.dumps(
                     [
                         {
@@ -345,7 +343,7 @@ class StreamWrapper:
         if hasattr(chunk, "model") and chunk.model is not None:
             set_span_attribute(
                 self.span,
-                SpanAttributes.LLM_RESPONSE_MODEL.value,
+                SpanAttributes.LLM_RESPONSE_MODEL,
                 chunk.model,
             )
 
@@ -388,7 +386,7 @@ class StreamWrapper:
             self.span.add_event(
                 Event.STREAM_OUTPUT.value,
                 {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
                         "".join(content)
                         if len(content) > 0 and content[0] is not None
                         else ""
@@ -440,7 +438,7 @@ def chat_completions_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, prompts=llm_prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -534,7 +532,7 @@ def async_chat_completions_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, prompts=llm_prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -599,8 +597,8 @@ def embeddings_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
+            SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),
         }
 
@@ -608,13 +606,13 @@ def embeddings_create(original_method, version, tracer):
         if encoding_format is not None:
             if not isinstance(encoding_format, list):
                 encoding_format = [encoding_format]
-            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = (
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = (
                 encoding_format
             )
 
         if kwargs.get("input") is not None:
-            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value] = (
-                json.dumps([kwargs.get("input", "")])
+            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
+                [kwargs.get("input", "")]
             )
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -657,8 +655,8 @@ def async_embeddings_create(original_method, version, tracer):
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
-            SpanAttributes.LLM_PATH.value: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_DIMENSIONS.value: kwargs.get("dimensions"),
+            SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),
         }
 
@@ -668,13 +666,13 @@ def async_embeddings_create(original_method, version, tracer):
         if encoding_format is not None:
             if not isinstance(encoding_format, list):
                 encoding_format = [encoding_format]
-            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS.value] = (
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = (
                 encoding_format
             )
 
         if kwargs.get("input") is not None:
-            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS.value] = (
-                json.dumps([kwargs.get("input", "")])
+            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
+                [kwargs.get("input", "")]
             )
 
         with tracer.start_as_current_span(
@@ -762,12 +760,12 @@ def _set_input_attributes(span, kwargs, attributes):
         tools.append(json.dumps(kwargs.get("tools")))
 
     if tools:
-        set_span_attribute(span, SpanAttributes.LLM_TOOLS.value, json.dumps(tools))
+        set_span_attribute(span, SpanAttributes.LLM_TOOLS, json.dumps(tools))
 
 
 @silently_fail
 def _set_response_attributes(span, kwargs, result):
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL.value, result.model)
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, result.model)
     if hasattr(result, "choices") and result.choices is not None:
         responses = [
             {
@@ -785,14 +783,10 @@ def _set_response_attributes(span, kwargs, result):
             }
             for choice in result.choices
         ]
-        set_span_attribute(
-            span, SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
-        )
+        set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses))
     else:
         responses = []
-        set_span_attribute(
-            span, SpanAttributes.LLM_COMPLETIONS.value, json.dumps(responses)
-        )
+        set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses))
     if (
         hasattr(result, "system_fingerprint")
         and result.system_fingerprint is not None
@@ -800,7 +794,7 @@ def _set_response_attributes(span, kwargs, result):
     ):
         set_span_attribute(
             span,
-            SpanAttributes.LLM_SYSTEM_FINGERPRINT.value,
+            SpanAttributes.LLM_SYSTEM_FINGERPRINT,
             result.system_fingerprint,
         )
     # Get the usage
@@ -809,16 +803,16 @@ def _set_response_attributes(span, kwargs, result):
         if usage is not None:
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value,
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
                 result.usage.prompt_tokens,
             )
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value,
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
                 result.usage.completion_tokens,
             )
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                 result.usage.total_tokens,
             )

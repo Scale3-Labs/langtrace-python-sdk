@@ -86,7 +86,7 @@ def chat_completions_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=llm_prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -116,7 +116,7 @@ def chat_completions_create(original_method, version, tracer):
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
                 set_span_attribute(
-                    span, SpanAttributes.LLM_RESPONSE_MODEL.value, result.model
+                    span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
@@ -141,14 +141,14 @@ def chat_completions_create(original_method, version, tracer):
                     ]
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_COMPLETIONS.value,
+                        SpanAttributes.LLM_COMPLETIONS,
                         json.dumps(responses),
                     )
                 else:
                     responses = []
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_COMPLETIONS.value,
+                        SpanAttributes.LLM_COMPLETIONS,
                         json.dumps(responses),
                     )
                 if (
@@ -157,7 +157,7 @@ def chat_completions_create(original_method, version, tracer):
                 ):
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_SYSTEM_FINGERPRINT.value,
+                        SpanAttributes.LLM_SYSTEM_FINGERPRINT,
                         result.system_fingerprint,
                     )
 
@@ -254,7 +254,7 @@ def chat_completions_create(original_method, version, tracer):
                 span.add_event(
                     Event.STREAM_OUTPUT.value,
                     {
-                        SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: (
+                        SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
                             "".join(content)
                             if len(content) > 0 and content[0] is not None
                             else ""
@@ -273,7 +273,7 @@ def chat_completions_create(original_method, version, tracer):
 
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_COMPLETIONS.value,
+                SpanAttributes.LLM_COMPLETIONS,
                 json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
             )
 
@@ -327,7 +327,7 @@ def async_chat_completions_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=llm_prompts),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
             **get_extra_attributes(),
         }
 
@@ -356,7 +356,7 @@ def async_chat_completions_create(original_method, version, tracer):
             result = await wrapped(*args, **kwargs)
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
                 set_span_attribute(
-                    span, SpanAttributes.LLM_RESPONSE_MODEL.value, result.model
+                    span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
@@ -381,14 +381,14 @@ def async_chat_completions_create(original_method, version, tracer):
                     ]
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_COMPLETIONS.value,
+                        SpanAttributes.LLM_COMPLETIONS,
                         json.dumps(responses),
                     )
                 else:
                     responses = []
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_COMPLETIONS.value,
+                        SpanAttributes.LLM_COMPLETIONS,
                         json.dumps(responses),
                     )
                 if (
@@ -397,7 +397,7 @@ def async_chat_completions_create(original_method, version, tracer):
                 ):
                     set_span_attribute(
                         span,
-                        SpanAttributes.LLM_SYSTEM_FINGERPRINT.value,
+                        SpanAttributes.LLM_SYSTEM_FINGERPRINT,
                         result.system_fingerprint,
                     )
 
@@ -450,7 +450,7 @@ def async_chat_completions_create(original_method, version, tracer):
             async for chunk in result:
                 if hasattr(chunk, "model") and chunk.model is not None:
                     set_span_attribute(
-                        span, SpanAttributes.LLM_RESPONSE_MODEL.value, chunk.model
+                        span, SpanAttributes.LLM_RESPONSE_MODEL, chunk.model
                     )
                     span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
@@ -498,7 +498,7 @@ def async_chat_completions_create(original_method, version, tracer):
                 span.add_event(
                     Event.RESPONSE.value,
                     {
-                        SpanAttributes.LLM_COMPLETIONS.value: (
+                        SpanAttributes.LLM_COMPLETIONS: (
                             "".join(content)
                             if len(content) > 0 and content[0] is not None
                             else ""
@@ -517,7 +517,7 @@ def async_chat_completions_create(original_method, version, tracer):
             )
             set_span_attribute(
                 span,
-                SpanAttributes.LLM_COMPLETIONS.value,
+                SpanAttributes.LLM_COMPLETIONS,
                 json.dumps(
                     [
                         {

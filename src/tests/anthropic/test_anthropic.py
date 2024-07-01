@@ -28,25 +28,20 @@ def test_anthropic(anthropic_client, exporter):
     assert completion_span.name == "anthropic.messages.create"
     attributes = completion_span.attributes
 
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Anthropic"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v(
-        "anthropic"
-    )
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.anthropic.com"
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Anthropic"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("anthropic")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.anthropic.com"
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["MESSAGES_CREATE"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     )
-    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
-    assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value)) == json.dumps(
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
+    assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS)) == json.dumps(
         messages_value
     )
-    assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is False
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
     assert_token_count(attributes)
     assert_response_format(attributes)
@@ -77,26 +72,21 @@ def test_anthropic_streaming(anthropic_client, exporter):
     assert streaming_span.name == "anthropic.messages.create"
     attributes = streaming_span.attributes
 
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Anthropic"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v(
-        "anthropic"
-    )
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Anthropic"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("anthropic")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
 
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.anthropic.com"
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.anthropic.com"
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["MESSAGES_CREATE"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     )
-    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL.value) == llm_model_value
-    assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS.value)) == json.dumps(
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
+    assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS)) == json.dumps(
         messages_value
     )
-    assert attributes.get(SpanAttributes.LLM_IS_STREAMING.value) is True
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events
 

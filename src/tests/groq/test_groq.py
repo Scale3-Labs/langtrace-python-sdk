@@ -23,17 +23,14 @@ def test_chat_completion(exporter, groq_client):
 
     assert groq_span.name == "groq.chat.completions.create"
     attributes = groq_span.attributes
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Groq"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("groq")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.groq.com"
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Groq"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("groq")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.groq.com"
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert_token_count(attributes)
     assert_response_format(attributes)
@@ -56,17 +53,14 @@ async def test_async_chat_completion(exporter, async_groq_client):
 
     assert groq_span.name == "groq.chat.completions.create"
     attributes = groq_span.attributes
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Groq"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("groq")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.groq.com"
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Groq"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("groq")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.groq.com"
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert_token_count(attributes)
     assert_response_format(attributes)
@@ -92,17 +86,14 @@ def test_chat_completion_streaming(exporter, groq_client):
     groq_span = spans[-1]
     assert groq_span.name == "groq.chat.completions.create"
     attributes = groq_span.attributes
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Groq"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("groq")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.groq.com"
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Groq"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("groq")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.groq.com"
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
 
     assert_token_count(attributes)
@@ -130,17 +121,14 @@ async def test_async_chat_completion_streaming(async_groq_client, exporter):
     groq_span = spans[-1]
     assert groq_span.name == "groq.chat.completions.create"
     attributes = groq_span.attributes
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME.value) == LANGTRACE_SDK_NAME
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME.value) == "Groq"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE.value) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION.value) == v("groq")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION.value) == v(
-        LANGTRACE_SDK_NAME
-    )
-    assert attributes.get(SpanAttributes.LLM_URL.value) == "https://api.groq.com"
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Groq"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("groq")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.groq.com"
     assert (
-        attributes.get(SpanAttributes.LLM_PATH.value)
-        == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
 
     assert_token_count(attributes)

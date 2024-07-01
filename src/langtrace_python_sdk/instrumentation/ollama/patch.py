@@ -29,8 +29,8 @@ def generic_patch(operation_name, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: api["ENDPOINT"],
-            SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("format"),
+            SpanAttributes.LLM_PATH: api["ENDPOINT"],
+            SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("format"),
             **get_extra_attributes(),
         }
 
@@ -77,8 +77,8 @@ def ageneric_patch(operation_name, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
-            SpanAttributes.LLM_PATH.value: api["ENDPOINT"],
-            SpanAttributes.LLM_RESPONSE_FORMAT.value: kwargs.get("format"),
+            SpanAttributes.LLM_PATH: api["ENDPOINT"],
+            SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("format"),
             **get_extra_attributes(),
         }
         attributes = LLMSpanAttributes(**span_attributes)
@@ -118,32 +118,28 @@ def _set_response_attributes(span, response):
     total_tokens = input_tokens + output_tokens
 
     if total_tokens > 0:
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS, input_tokens)
         set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_PROMPT_TOKENS.value, input_tokens
+            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, output_tokens
         )
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_COMPLETION_TOKENS.value, output_tokens
-        )
-        set_span_attribute(
-            span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS.value, total_tokens
-        )
+        set_span_attribute(span, SpanAttributes.LLM_USAGE_TOTAL_TOKENS, total_tokens)
 
     set_span_attribute(
         span,
-        SpanAttributes.LLM_RESPONSE_FINISH_REASON.value,
+        SpanAttributes.LLM_RESPONSE_FINISH_REASON,
         response.get("done_reason"),
     )
     if "message" in response:
         set_span_attribute(
             span,
-            SpanAttributes.LLM_COMPLETIONS.value,
+            SpanAttributes.LLM_COMPLETIONS,
             json.dumps([response.get("message")]),
         )
 
     if "response" in response:
         set_span_attribute(
             span,
-            SpanAttributes.LLM_COMPLETIONS.value,
+            SpanAttributes.LLM_COMPLETIONS,
             json.dumps([{"role": "assistant", "content": response.get("response")}]),
         )
 
@@ -158,32 +154,30 @@ def _set_input_attributes(span, kwargs, attributes):
     if "messages" in kwargs:
         set_span_attribute(
             span,
-            SpanAttributes.LLM_PROMPTS.value,
+            SpanAttributes.LLM_PROMPTS,
             json.dumps(kwargs.get("messages", [])),
         )
     if "prompt" in kwargs:
         set_span_attribute(
             span,
-            SpanAttributes.LLM_PROMPTS.value,
+            SpanAttributes.LLM_PROMPTS,
             json.dumps([{"role": "user", "content": kwargs.get("prompt", "")}]),
         )
     if "options" in kwargs:
         set_span_attribute(
             span,
-            SpanAttributes.LLM_REQUEST_TEMPERATURE.value,
+            SpanAttributes.LLM_REQUEST_TEMPERATURE,
             options.get("temperature"),
         )
-        set_span_attribute(
-            span, SpanAttributes.LLM_REQUEST_TOP_P.value, options.get("top_p")
-        )
+        set_span_attribute(span, SpanAttributes.LLM_REQUEST_TOP_P, options.get("top_p"))
         set_span_attribute(
             span,
-            SpanAttributes.LLM_FREQUENCY_PENALTY.value,
+            SpanAttributes.LLM_FREQUENCY_PENALTY,
             options.get("frequency_penalty"),
         )
         set_span_attribute(
             span,
-            SpanAttributes.LLM_PRESENCE_PENALTY.value,
+            SpanAttributes.LLM_PRESENCE_PENALTY,
             options.get("presence_penalty"),
         )
 
@@ -206,9 +200,7 @@ def _handle_streaming_response(span, response, api):
             span.add_event(
                 Event.STREAM_OUTPUT.value,
                 {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: chunk.get(
-                        "response"
-                    )
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: chunk.get("response")
                     or chunk.get("message").get("content"),
                 },
             )
@@ -242,9 +234,7 @@ async def _ahandle_streaming_response(span, response, api):
             span.add_event(
                 Event.STREAM_OUTPUT.value,
                 {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK.value: json.dumps(
-                        chunk
-                    ),
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: json.dumps(chunk),
                 },
             )
         _set_response_attributes(span, chunk | accumulated_tokens)
