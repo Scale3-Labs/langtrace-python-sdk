@@ -93,8 +93,11 @@ def images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS, json.dumps(response)
+                    span.add_event(
+                        Event.RESPONSE.value,
+                        attributes={
+                            SpanAttributes.LLM_COMPLETIONS: json.dumps(response)
+                        },
                     )
 
                 span.set_status(StatusCode.OK)
@@ -159,8 +162,11 @@ def async_images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS, json.dumps(response)
+                    span.add_event(
+                        Event.RESPONSE.value,
+                        attributes={
+                            SpanAttributes.LLM_COMPLETIONS: json.dumps(response)
+                        },
                     )
 
                 span.set_status(StatusCode.OK)

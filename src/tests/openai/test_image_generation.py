@@ -21,6 +21,8 @@ def test_image_generation(openai_client, exporter):
     assert image_generation_span.name == "openai.images.generate"
 
     attributes = image_generation_span.attributes
+    events = image_generation_span.events
+
     assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
 
     assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
@@ -38,7 +40,9 @@ def test_image_generation(openai_client, exporter):
     prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
     assert prompts[0]["content"] == prompt
 
-    langtrace_responses = json.loads(attributes.get(SpanAttributes.LLM_COMPLETIONS))
+    langtrace_responses = json.loads(
+        events[-1].attributes.get(SpanAttributes.LLM_COMPLETIONS)
+    )
     assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
         assert isinstance(langtrace_response, dict)
@@ -69,6 +73,8 @@ async def test_async_image_generation(async_openai_client, exporter):
     assert image_generation_span.name == "openai.images.generate"
 
     attributes = image_generation_span.attributes
+    events = image_generation_span.events
+
     assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
 
     assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
@@ -86,7 +92,9 @@ async def test_async_image_generation(async_openai_client, exporter):
     prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
     assert prompts[0]["content"] == prompt
 
-    langtrace_responses = json.loads(attributes.get(SpanAttributes.LLM_COMPLETIONS))
+    langtrace_responses = json.loads(
+        events[-1].attributes.get(SpanAttributes.LLM_COMPLETIONS)
+    )
     assert isinstance(langtrace_responses, list)
     for langtrace_response in langtrace_responses:
         assert isinstance(langtrace_response, dict)
