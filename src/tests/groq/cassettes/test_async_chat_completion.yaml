@@ -6,7 +6,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, br
+      - gzip, deflate
       connection:
       - keep-alive
       content-length:
@@ -30,58 +30,60 @@ interactions:
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.12.3
+      - 3.11.5
     method: POST
     uri: https://api.groq.com/openai/v1/chat/completions
   response:
     body:
       string: !!binary |
-        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
+        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
+        AAA=
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 89a4ffb33c750da8-MRS
+      - 89d12ed05998077f-MRS
       Cache-Control:
       - private, max-age=0, no-store, no-cache, must-revalidate
       Connection:
       - keep-alive
       Content-Encoding:
-      - br
+      - gzip
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 Jun 2024 11:11:53 GMT
+      - Tue, 02 Jul 2024 19:53:36 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=5F8ZGzVDV6Mx1uOJyeXYTuV5VKnsyPFDR3I0uid7NK4-1719486713-1.0.1.1-nBDDHvZp5slfuUxwV5f1ReEOLghekkijqKOfbfzmlpl2h8eSnW14Z7z9Wm25HfcI2GjPaY8yPRgmT9i4FzwNmg;
-        path=/; expires=Thu, 27-Jun-24 11:41:53 GMT; domain=.groq.com; HttpOnly; Secure;
+      - __cf_bm=kwAg3.4AprJOv6O8EoGGz949TacWaWKQOH.h4WYt6rQ-1719950016-1.0.1.1-wr1oIH71tAeoJR4E4muLNPp2pxTLEccQzQSaalMzTRri_RMUSGy7IVTmulIABre9w2vpXFnWiodeNPwZzdQ_hQ;
+        path=/; expires=Tue, 02-Jul-24 20:23:36 GMT; domain=.groq.com; HttpOnly; Secure;
         SameSite=None
       Transfer-Encoding:
       - chunked
@@ -96,15 +98,15 @@ interactions:
       x-ratelimit-limit-tokens:
       - '30000'
       x-ratelimit-remaining-requests:
-      - '14399'
+      - '14398'
       x-ratelimit-remaining-tokens:
-      - '29985'
+      - '29642'
       x-ratelimit-reset-requests:
-      - 6s
+      - 10.974999999s
       x-ratelimit-reset-tokens:
-      - 30ms
+      - 716ms
       x-request-id:
-      - req_01j1cpa33aerf8fxh44yxz09j2
+      - req_01j1tg4zmrf8fsbdvvqy1bfxtr
     status:
       code: 200
       message: OK

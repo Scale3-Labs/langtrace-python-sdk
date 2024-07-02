@@ -6,7 +6,7 @@ interactions:
       accept:
       - application/json
       accept-encoding:
-      - gzip, deflate, br
+      - gzip, deflate
       connection:
       - keep-alive
       content-length:
@@ -30,58 +30,61 @@ interactions:
       x-stainless-runtime:
       - CPython
       x-stainless-runtime-version:
-      - 3.12.3
+      - 3.11.5
     method: POST
     uri: https://api.groq.com/openai/v1/chat/completions
   response:
     body:
       string: !!binary |
-        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
+        H4sIAAAAAAAAA4xXTW/jRhK9768o8JQYlCBZsi3rFgQzSQBndvKBvawXRqlZJGvU7Ka7mtJoBv7v
+        QTVJWZY9mxzZ7GJXvXrvVfNrxkW2zkyN0TStnSyvLheFuSkmq9X1YrIszc1ks1iZSXG1uV7MFwZv
+        rzHLM7/5RCYOgVPjm9ZSZO+yPDOBMFKRrec389vbq9lsfpVnjS/IZuvMWmxwMVltJqv57aXurj0b
+        kmz9368Zu4I+Z+tZnjUkghVl669Z8JaydYYiLBFd1BjvIjk9/Q5DRXCHruqwIvhVTxH47u7uV/ke
+        LG8JYkAnpQ8NBYEadwSBdt52mix/oQJiTVAy2QJ8CQ5jF9CCHb/YBm9IhF0F3324+/g9bA5ADjdW
+        V6gs2TC5COgKfSITefciyJewQ4mAje9cFH2O9DlCgRGn8LPf045CrlkWrCmhBU0eDDrYEFhuOFKh
+        p8aaOEDNVQ3sSgrkDIHFSM4cctjXbOoUVSuKYdiOhW/1s8AOAqGdRG4IsG0tG9QXAvuaAoG0REUq
+        I5C03gnvyJEIYCAwoTOMdnrv7t2d34+npkxzQCsets7vHaBAqdWmEnwAdqllw8aEfoXsqADhynHJ
+        Rt9i1G4eszQK6IEwCBQdQfRjLRu2HA+60FLQlkJE2QrsOdbQdKZOh1MYSyDQagVije4VwlP4sybg
+        pvUhokLpS7BntY1d6BRRid4XUAbf9JTx1vq9thilJRNlrejMp3Bx8fubQF9crOEcvIQuiWj5aKH0
+        4VtdijVGCPTYcaAjrGOdkoNo+ZiSiBfwY41x46Okhu44xA4tHBUka3ivXTqDiZx0ygTCxmrnO6EA
+        9LmlwMo1mfbffq7uKJKkMZsyXcNvHZvt6VJfpSOVBIZDqvJZK8Y3TeeGOocjPgwqPOr647kKW27J
+        siN5A9MkTzoR50s5prLYtV2c3rtL7dcvTRv8jorzirVj74905n7XsMlVWFEzSl8wspRoEok3BwhU
+        dEbP2yPHHt4cGtzqErtIod8q0PhAJ4rLeyMZ/SW9bQMZFkpvWgqiDE7G9bI1i1SJU/MVKo7Vm8Ob
+        vFNiD7D0WCRD6g981Abagwp7YHjpw0Cs973AXiJqkwnrB4SUXL9r9SSnu3pCj7WRjEplJ1zV8TW3
+        SqJig2abglgR69n1bogvaEfWKx7qBwFbLuwBIkkcTKxkR4NxpNmjRywVox+9xMmRf+px30SoJtv2
+        vVTNlQElhs5EVYnxMsiLHIXqAMY76Zp2YMB6rGfggTqGU4dV8rd+T6HsLNQYij0GWo+4Phv7KMlE
+        ZWnQWh0TqT/PxB7jB/TepUwmbxE/FUhhko6mYnzjw7PHCRU5NOy44S9puL2qa3rvrnoEm5YiJ/li
+        sUMXsUpi+Xeo0PGXU8sa+pSQKqi1/vC2y+pYAHwxFsxbx+iI6Luqqhk8pMGwpSg5tBgim85isAfd
+        ya7oJAamfzjmOLJBe+6m79nphBit7SX5y/RS3TtZ3ijsVK9KCh3ag/DI8J8JbazNselQMFbOC/ch
+        Ue9OyVZai86xq4a4n7BJbXzDfU/yUXbx6GYVNjROyjThkoNYPLzwr+m9u9amvhtNx9H+7+eWtqxz
+        1ptt2t8JgUGhvojXg0tJp0a2Y9+JtqZpkwUatNCn7EVYqf488UGUKOeK0PvT2SQ/b9cPXfTON74T
+        2FHNxtI48L4F2R8cOxy+iCqonhKJsoaFvZv05j00448GQ4TaN/rl/+j9daJX0uCtJY3Z6Y12mNbp
+        jP93+HHeng6GdNX6xYF0TYPhkL8WzT+9OeRng+s4NHLgYVqcDIt8tLvkb7nmuuOCAN9W48m8olfE
+        mcIPkhpZUKPbNMfB9o9Y9NYMVfB7yYfNyTCSBt66ku3ZWjWlyK6nijJa8+vvqKC/Cyp9qbEdnbfs
+        kmf7Ej7cfezvRBiUiicGMc2e8sz6qg1+I9naddbmWcmOpX5QlLzL1plE32ZP/8uzbvw7aYNv2vgQ
+        /ZacZOvLWX5c4oay9Ww6my0X18vV4lr/W8bfpGPA1Wr+cn2IWl5fr64uF1fzPIs+oj0GXM+el8a9
+        N/PL+c18dfOUZ3KQSM1Dya6i0AZOf0ll+2CWeHNZbhaLWZZnnx+q4B81/fTvF+jxYTb/NI/V8vBp
+        Sfgoq8XerT6tLm9bt8qenv71FwAAAP//AwA+gIE4JQ4AAA==
     headers:
       CF-Cache-Status:
       - DYNAMIC
       CF-RAY:
-      - 89a4e8faa9200da0-MRS
+      - 89d12ec96e290db6-MRS
       Cache-Control:
       - private, max-age=0, no-store, no-cache, must-revalidate
       Connection:
       - keep-alive
       Content-Encoding:
-      - br
+      - gzip
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 Jun 2024 10:56:22 GMT
+      - Tue, 02 Jul 2024 19:53:35 GMT
       Server:
       - cloudflare
       Set-Cookie:
-      - __cf_bm=qqqEi4YN9iDITONJQkJXA_3b_bJGCKhwkURv0rbd598-1719485782-1.0.1.1-EmQ4k0B7vRs9.WyDdXuN208tRjIwUadt1lMeNhMmeQccFgeNsm7iSGxCLPJneJ4dme2OF7CWu9zMm5l5noi6eA;
-        path=/; expires=Thu, 27-Jun-24 11:26:22 GMT; domain=.groq.com; HttpOnly; Secure;
+      - __cf_bm=OFVZ5MTau_NNKPRUjheAMGYEZwox8.Qq_TAJs9A8z9o-1719950015-1.0.1.1-YU6dEHFQYzVO94VNwt3L81BuUTSs4sB_HQMi3jSugKQXoHPMGGETjuF.x_A_nltCq46MxBSKnw1V6rznSKA4ZQ;
+        path=/; expires=Tue, 02-Jul-24 20:23:35 GMT; domain=.groq.com; HttpOnly; Secure;
         SameSite=None
       Transfer-Encoding:
       - chunked
@@ -104,7 +107,7 @@ interactions:
       x-ratelimit-reset-tokens:
       - 30ms
       x-request-id:
-      - req_01j1cndp8bffc9fdts22w87w7g
+      - req_01j1tg4yj4eaqs83wn8j829pn8
     status:
       code: 200
       message: OK
