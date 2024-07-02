@@ -27,6 +27,7 @@ class FetchOptions(TypedDict, total=False):
 def get_prompt_from_registry(
     prompt_registry_id: str,
     options: Optional[FetchOptions] = None,
+    api_key: Optional[str] = None,
 ) -> LangtracePrompt:
     """Fetches a prompt from the registry.
 
@@ -52,8 +53,8 @@ def get_prompt_from_registry(
                     query_params[f"variables.{key}"] = value
         # Encode the query parameters
         query_string = urlencode(query_params, doseq=True)
-        headers = {"x-api-key": os.environ["LANGTRACE_API_KEY"]}
-        print(query_params)
+        headers = {"x-api-key": api_key or os.environ["LANGTRACE_API_KEY"]}
+
         # Make the GET request to the API
         response = requests.get(
             f"{os.environ['LANGTRACE_API_HOST']}/api/promptset?{query_string}",
