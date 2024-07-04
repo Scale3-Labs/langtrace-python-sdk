@@ -10,8 +10,7 @@ load_dotenv()
 
 @pytest.fixture(autouse=True)
 def environment():
-    if not os.environ["GROQ_API_KEY"]:
-        os.environ["GROQ_API_KEY"] = "test_api_key"
+    os.environ["GROQ_API_KEY"] = "test_api_key"
 
 
 @pytest.fixture
