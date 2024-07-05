@@ -14,6 +14,7 @@ from .qdrant import QdrantInstrumentation
 from .weaviate import WeaviateInstrumentation
 from .ollama import OllamaInstrumentor
 from .dspy import DspyInstrumentation
+from .litellm import LiteLLMInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -32,4 +33,5 @@ __all__ = [
     "WeaviateInstrumentation",
     "OllamaInstrumentor",
     "DspyInstrumentation",
+    "LiteLLMInstrumentation",
 ]
