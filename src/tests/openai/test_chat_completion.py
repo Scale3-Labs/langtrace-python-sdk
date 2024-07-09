@@ -38,7 +38,7 @@ def test_chat_completion(exporter, openai_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
-    # assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
+    assert_prompt_in_events(completion_span.events)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
     assert_token_count(attributes)
@@ -78,7 +78,7 @@ def test_chat_completion_streaming(exporter, openai_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
-    # assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
+    assert_prompt_in_events(streaming_span.events)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events
@@ -135,7 +135,7 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
-    # assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
+    assert_prompt_in_events(streaming_span.events)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events

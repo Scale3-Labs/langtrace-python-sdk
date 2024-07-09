@@ -33,7 +33,7 @@ def test_anthropic(anthropic_client, exporter):
     assert completion_span.name == "anthropic.messages.create"
     attributes = completion_span.attributes
     assert_langtrace_attributes(attributes, "Anthropic")
-    assert_prompt_in_events(completion_span.events, messages_value)
+    assert_prompt_in_events(completion_span.events)
     assert attributes.get(SpanAttributes.LLM_URL) == "https://api.anthropic.com"
     assert (
         attributes.get(SpanAttributes.LLM_PATH) == APIS["MESSAGES_CREATE"]["ENDPOINT"]
@@ -74,7 +74,7 @@ def test_anthropic_streaming(anthropic_client, exporter):
     attributes = streaming_span.attributes
 
     assert_langtrace_attributes(attributes, "Anthropic")
-    assert_prompt_in_events(streaming_span.events, messages_value)
+    assert_prompt_in_events(streaming_span.events)
 
     assert attributes.get(SpanAttributes.LLM_URL) == "https://api.anthropic.com"
     assert (

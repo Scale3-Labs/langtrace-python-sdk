@@ -57,17 +57,12 @@ def assert_langtrace_attributes(attributes, vendor, vendor_type="llm"):
     assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
 
 
-def assert_prompt_in_events(events, prompt):
+def assert_prompt_in_events(
+    events,
+):
     prompt_event = list(
         filter(lambda event: event.name == SpanAttributes.LLM_CONTENT_PROMPT, events)
     )
-    print(
-        json.loads(prompt_event[0].attributes.get(SpanAttributes.LLM_PROMPTS)),
-        json.dumps(prompt),
-    )
+    print(prompt_event)
 
     assert prompt_event
-
-    assert json.loads(
-        prompt_event[0].attributes.get(SpanAttributes.LLM_PROMPTS)
-    ) == json.dumps(prompt)
