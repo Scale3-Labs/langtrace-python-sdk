@@ -68,6 +68,7 @@ def init(
     api_host: Optional[str] = LANGTRACE_REMOTE_URL,
     disable_instrumentations: Optional[DisableInstrumentations] = None,
     disable_tracing_for_functions: Optional[InstrumentationMethods] = None,
+    service_name: Optional[str] = None,
 ):
 
     host = (
@@ -77,7 +78,7 @@ def init(
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
     provider = TracerProvider(
-        resource=Resource.create({"service.name": sys.argv[0]}),
+        resource=Resource.create({"service.name": service_name or sys.argv[0]}),
         sampler=sampler,
     )
 
