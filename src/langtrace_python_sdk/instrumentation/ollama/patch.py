@@ -7,6 +7,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    set_event_completion,
 )
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.constants.instrumentation.common import (
@@ -130,17 +131,11 @@ def _set_response_attributes(span, response):
         response.get("done_reason"),
     )
     if "message" in response:
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_COMPLETIONS,
-            json.dumps([response.get("message")]),
-        )
+        set_event_completion(span, [response.get("message")])
 
     if "response" in response:
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_COMPLETIONS,
-            json.dumps([{"role": "assistant", "content": response.get("response")}]),
+        set_event_completion(
+            span, [{"role": "assistant", "content": response.get("response")}]
         )
 
 

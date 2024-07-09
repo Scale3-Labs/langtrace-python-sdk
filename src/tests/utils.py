@@ -63,6 +63,17 @@ def assert_prompt_in_events(
     prompt_event = list(
         filter(lambda event: event.name == SpanAttributes.LLM_CONTENT_PROMPT, events)
     )
-    print(prompt_event)
 
     assert prompt_event
+
+
+def assert_completion_in_events(
+    events,
+):
+    completion_event = list(
+        filter(
+            lambda event: event.name == SpanAttributes.LLM_CONTENT_COMPLETION, events
+        )
+    )
+
+    assert completion_event

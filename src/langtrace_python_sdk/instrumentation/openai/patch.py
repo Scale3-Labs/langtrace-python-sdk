@@ -42,6 +42,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_tool_calls,
     is_streaming,
+    set_event_completion,
 )
 from openai._types import NOT_GIVEN
 from opentelemetry.trace.span import Span
@@ -93,12 +94,7 @@ def images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.add_event(
-                        Event.RESPONSE.value,
-                        attributes={
-                            SpanAttributes.LLM_COMPLETIONS: json.dumps(response)
-                        },
-                    )
+                    set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -162,12 +158,7 @@ def async_images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.add_event(
-                        Event.RESPONSE.value,
-                        attributes={
-                            SpanAttributes.LLM_COMPLETIONS: json.dumps(response)
-                        },
-                    )
+                    set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -230,10 +221,7 @@ def images_edit(original_method, version, tracer):
                         }
                     )
 
-                span.add_event(
-                    Event.RESPONSE.value,
-                    attributes={SpanAttributes.LLM_COMPLETIONS: json.dumps(response)},
-                )
+                set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -289,18 +277,14 @@ class StreamWrapper:
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                 self.prompt_tokens + self.completion_tokens,
             )
-
-            set_span_attribute(
+            set_event_completion(
                 self.span,
-                SpanAttributes.LLM_COMPLETIONS,
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(self.result_content),
-                        }
-                    ]
-                ),
+                [
+                    {
+                        "role": "assistant",
+                        "content": "".join(self.result_content),
+                    }
+                ],
             )
 
             self.span.set_status(StatusCode.OK)
@@ -789,10 +773,8 @@ def _set_response_attributes(span, kwargs, result):
             }
             for choice in result.choices
         ]
-        set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses))
-    else:
-        responses = []
-        set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses))
+        set_event_completion(span, responses)
+
     if (
         hasattr(result, "system_fingerprint")
         and result.system_fingerprint is not None

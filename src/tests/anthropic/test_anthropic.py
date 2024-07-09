@@ -4,6 +4,7 @@ import importlib
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from tests.utils import (
+    assert_completion_in_events,
     assert_langtrace_attributes,
     assert_prompt_in_events,
     assert_response_format,
@@ -34,18 +35,15 @@ def test_anthropic(anthropic_client, exporter):
     attributes = completion_span.attributes
     assert_langtrace_attributes(attributes, "Anthropic")
     assert_prompt_in_events(completion_span.events)
+    assert_completion_in_events(completion_span.events)
     assert attributes.get(SpanAttributes.LLM_URL) == "https://api.anthropic.com"
     assert (
         attributes.get(SpanAttributes.LLM_PATH) == APIS["MESSAGES_CREATE"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
-    # assert json.loads(attributes.get(SpanAttributes.LLM_PROMPTS)) == json.dumps(
-    #     messages_value
-    # )
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
 
 
 @pytest.mark.vcr()
@@ -75,6 +73,7 @@ def test_anthropic_streaming(anthropic_client, exporter):
 
     assert_langtrace_attributes(attributes, "Anthropic")
     assert_prompt_in_events(streaming_span.events)
+    assert_completion_in_events(streaming_span.events)
 
     assert attributes.get(SpanAttributes.LLM_URL) == "https://api.anthropic.com"
     assert (
@@ -85,9 +84,6 @@ def test_anthropic_streaming(anthropic_client, exporter):
 
     events = streaming_span.events
 
-    assert (
-        len(events) - 3 == chunk_count
-    )  # -2 for start and end events and prompt event
+    assert len(events) - 4 == chunk_count
 
     assert_token_count(attributes)
-    assert_response_format(attributes)

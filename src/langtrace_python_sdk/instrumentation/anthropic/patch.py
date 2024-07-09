@@ -24,6 +24,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_llm_url,
     is_streaming,
+    set_event_completion,
     set_usage_attributes,
 )
 from opentelemetry.trace import SpanKind
@@ -132,10 +133,9 @@ def messages_create(original_method, version, tracer):
             set_usage_attributes(
                 span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
             )
-            span.set_attribute(
-                SpanAttributes.LLM_COMPLETIONS,
-                json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
-            )
+            completion = [{"role": "assistant", "content": "".join(result_content)}]
+            set_event_completion(span, completion)
+
             span.set_status(StatusCode.OK)
             span.end()
 
@@ -145,25 +145,18 @@ def messages_create(original_method, version, tracer):
                 set_span_attribute(
                     span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
-                set_span_attribute(
-                    span,
-                    SpanAttributes.LLM_COMPLETIONS,
-                    json.dumps(
-                        [
-                            {
-                                "role": result.role if result.role else "assistant",
-                                "content": result.content[0].text,
-                                "type": result.content[0].type,
-                            }
-                        ]
-                    ),
-                )
+                completion = [
+                    {
+                        "role": result.role if result.role else "assistant",
+                        "content": result.content[0].text,
+                        "type": result.content[0].type,
+                    }
+                ]
+                set_event_completion(span, completion)
 
             else:
                 responses = []
-                set_span_attribute(
-                    span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
-                )
+                set_event_completion(span, responses)
 
             if (
                 hasattr(result, "system_fingerprint")

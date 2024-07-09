@@ -28,6 +28,7 @@ from langtrace.trace_attributes import SpanAttributes
 from importlib_metadata import version as v
 import json
 from opentelemetry import baggage
+from opentelemetry.trace import Span
 
 
 def estimate_tokens(prompt):
@@ -179,3 +180,13 @@ def get_tool_calls(item):
         if hasattr(item, "tool_calls") and item.tool_calls is not None:
             return item.tool_calls
         return None
+
+
+def set_event_completion(span: Span, result_content):
+
+    span.add_event(
+        name=SpanAttributes.LLM_CONTENT_COMPLETION,
+        attributes={
+            SpanAttributes.LLM_COMPLETIONS: json.dumps(result_content),
+        },
+    )

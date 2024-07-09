@@ -21,6 +21,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_extra_attributes,
     get_llm_url,
+    set_event_completion,
     set_usage_attributes,
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
@@ -278,26 +279,18 @@ def chat_create(original_method, version, tracer):
                             }
                             for item in result.chat_history
                         ]
-                        span.set_attribute(
-                            SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
-                        )
+                        set_event_completion(span, responses)
+
                     else:
                         responses = [{"role": "CHATBOT", "content": result.text}]
-                        span.set_attribute(
-                            SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
-                        )
+                        set_event_completion(span, responses)
+
                 elif hasattr(result, "tool_calls") and result.tool_calls is not None:
                     tool_calls = []
                     for tool_call in result.tool_calls:
                         tool_calls.append(tool_call.json())
                     span.set_attribute(
                         SpanAttributes.LLM_TOOL_RESULTS, json.dumps(tool_calls)
-                    )
-                    span.set_attribute(SpanAttributes.LLM_COMPLETIONS, json.dumps([]))
-                else:
-                    responses = []
-                    span.set_attribute(
-                        SpanAttributes.LLM_COMPLETIONS, json.dumps(responses)
                     )
 
                 # Get the usage
@@ -467,18 +460,13 @@ def chat_stream(original_method, version, tracer):
                                     }
                                     for item in response.chat_history
                                 ]
-                                span.set_attribute(
-                                    SpanAttributes.LLM_COMPLETIONS,
-                                    json.dumps(responses),
-                                )
+                                set_event_completion(span, responses)
+
                             else:
                                 responses = [
                                     {"role": "CHATBOT", "content": response.text}
                                 ]
-                                span.set_attribute(
-                                    SpanAttributes.LLM_COMPLETIONS,
-                                    json.dumps(responses),
-                                )
+                                set_event_completion(span, responses)
 
                         # Get the usage
                         if hasattr(response, "meta") and response.meta is not None:
