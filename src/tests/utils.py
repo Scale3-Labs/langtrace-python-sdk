@@ -1,6 +1,8 @@
 from unittest.mock import MagicMock, patch
 import json
 from langtrace.trace_attributes import SpanAttributes
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from importlib_metadata import version as v
 
 
 def common_setup(data, method_to_mock=None):
@@ -44,3 +46,28 @@ def assert_response_format(attributes):
         assert isinstance(langtrace_response, dict)
         assert "role" in langtrace_response
         assert "content" in langtrace_response
+
+
+def assert_langtrace_attributes(attributes, vendor, vendor_type="llm"):
+
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == vendor
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == vendor_type
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v(vendor.lower())
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+
+
+def assert_prompt_in_events(events, prompt):
+    prompt_event = list(
+        filter(lambda event: event.name == SpanAttributes.LLM_CONTENT_PROMPT, events)
+    )
+    print(
+        json.loads(prompt_event[0].attributes.get(SpanAttributes.LLM_PROMPTS)),
+        json.dumps(prompt),
+    )
+
+    assert prompt_event
+
+    assert json.loads(
+        prompt_event[0].attributes.get(SpanAttributes.LLM_PROMPTS)
+    ) == json.dumps(prompt)

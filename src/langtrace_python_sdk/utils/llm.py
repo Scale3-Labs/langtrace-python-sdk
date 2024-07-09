@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.utils import set_span_attribute
 from openai import NOT_GIVEN
 from tiktoken import get_encoding
 
@@ -67,13 +68,6 @@ def calculate_price_from_usage(model, usage):
             + cost_table["output"] * usage["completion_tokens"]
         ) / 1000
     return 0
-
-
-def set_span_attributes(span, name, value):
-    if value is not None:
-        if value != "":
-            span.set_attribute(name, value)
-    return
 
 
 def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
@@ -151,26 +145,26 @@ def set_usage_attributes(span, usage):
     input_tokens = usage.get("input_tokens") or usage.get("prompt_tokens") or 0
     output_tokens = usage.get("output_tokens") or usage.get("completion_tokens") or 0
 
-    set_span_attributes(
+    set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
         input_tokens,
     )
 
-    set_span_attributes(
+    set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
         output_tokens,
     )
 
-    set_span_attributes(
+    set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
         input_tokens + output_tokens,
     )
 
     if "search_units" in usage:
-        set_span_attributes(
+        set_span_attribute(
             span, SpanAttributes.LLM_USAGE_SEARCH_UNITS, usage["search_units"]
         )
 

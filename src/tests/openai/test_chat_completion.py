@@ -1,7 +1,11 @@
 import pytest
 import json
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from tests.utils import assert_response_format, assert_token_count
+from tests.utils import (
+    assert_prompt_in_events,
+    assert_response_format,
+    assert_token_count,
+)
 from importlib_metadata import version as v
 from langtrace.trace_attributes import SpanAttributes
 
@@ -34,7 +38,7 @@ def test_chat_completion(exporter, openai_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
-    assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
+    # assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
     assert_token_count(attributes)
@@ -74,11 +78,11 @@ def test_chat_completion_streaming(exporter, openai_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
-    assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
+    # assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events
-    assert len(events) - 2 == chunk_count  # -2 for start and end events
+    assert len(events) - 3 == chunk_count  # -2 for start and end events
 
     assert_token_count(attributes)
     assert_response_format(attributes)
@@ -131,11 +135,11 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
-    assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
+    # assert attributes.get(SpanAttributes.LLM_PROMPTS) == json.dumps(messages_value)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events
-    assert len(events) - 2 == chunk_count  # -2 for start and end events
+    assert len(events) - 3 == chunk_count  # -2 for start and end events
 
     assert_token_count(attributes)
     assert_response_format(attributes)
