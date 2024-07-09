@@ -8,13 +8,14 @@ ENABLED_EXAMPLES = {
     "langchain": False,
     "llamaindex": False,
     "hiveagent": False,
-    "openai": True,
+    "openai": False,
     "perplexity": False,
     "pinecone": False,
     "qdrant": False,
     "weaviate": False,
     "ollama": False,
     "groq": False,
+    "autogen": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -88,3 +89,9 @@ if ENABLED_EXAMPLES["groq"]:
 
     print(Fore.BLUE + "Running Groq example" + Fore.RESET)
     GroqRunner().run()
+
+if ENABLED_EXAMPLES["autogen"]:
+    from examples.autogen_example import AutoGenRunner
+
+    print(Fore.BLUE + "Running Autogen example" + Fore.RESET)
+    AutoGenRunner().run()
