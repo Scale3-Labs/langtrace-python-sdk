@@ -32,12 +32,12 @@ def patch_vertexai(name, version, tracer: Tracer):
                 "content": kwargs.get("prompt") or kwargs.get("message"),
             }
         ]
-        print(instance.__dict__)
-
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(
-                kwargs, prompts=args[0] or prompts, model=get_llm_model(instance)
+                kwargs,
+                prompts=args[0] if args else prompts,
+                model=get_llm_model(instance),
             ),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: "",

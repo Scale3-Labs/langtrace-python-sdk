@@ -14,11 +14,12 @@ vertexai.init(project="model-palace-429011-f5", location="us-central1")
 
 
 def basic():
-    # chat()
-    # chat_streaming()
-    # streaming_prediction()
+    chat()
+    chat_streaming()
+    streaming_prediction()
     generate()
-    # asyncio.run(async_streaming_prediction())
+    generate_stream()
+    asyncio.run(async_streaming_prediction())
 
 
 def chat():
@@ -118,7 +119,7 @@ async def async_streaming_prediction() -> str:
     return result
 
 
-def generate():
+def generate_stream():
     generation_config = {
         "max_output_tokens": 8192,
         "temperature": 1,
@@ -136,3 +137,23 @@ def generate():
 
     for response in responses:
         pass
+    return responses
+
+
+def generate():
+    generation_config = {
+        "max_output_tokens": 8192,
+        "temperature": 1,
+        "top_p": 0.95,
+    }
+    model = GenerativeModel(
+        "gemini-experimental",
+    )
+
+    responses = model.generate_content(
+        ["I am a software engineer. I enjoy playing video games and reading"],
+        generation_config=generation_config,
+        stream=False,
+    )
+
+    return responses
