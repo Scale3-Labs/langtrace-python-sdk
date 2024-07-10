@@ -53,6 +53,7 @@ from langtrace_python_sdk.instrumentation import (
     WeaviateInstrumentation,
     OllamaInstrumentor,
     DspyInstrumentation,
+    VertexAIInstrumentation,
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
@@ -113,6 +114,7 @@ def init(
         "ollama": OllamaInstrumentor(),
         "dspy": DspyInstrumentation(),
         "crewai": CrewAIInstrumentation(),
+        "vertexai": VertexAIInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
@@ -143,6 +145,7 @@ def init_instrumentations(
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):
+
             v.instrument()
     else:
 

@@ -8,13 +8,14 @@ ENABLED_EXAMPLES = {
     "langchain": False,
     "llamaindex": False,
     "hiveagent": False,
-    "openai": True,
+    "openai": False,
     "perplexity": False,
     "pinecone": False,
     "qdrant": False,
     "weaviate": False,
     "ollama": False,
     "groq": False,
+    "vertexai": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -88,3 +89,10 @@ if ENABLED_EXAMPLES["groq"]:
 
     print(Fore.BLUE + "Running Groq example" + Fore.RESET)
     GroqRunner().run()
+
+
+if ENABLED_EXAMPLES["vertexai"]:
+    from examples.vertexai_example import VertexAIRunner
+
+    print(Fore.BLUE + "Running Vertexai example" + Fore.RESET)
+    VertexAIRunner().run()

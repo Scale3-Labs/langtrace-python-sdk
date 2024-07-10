@@ -386,6 +386,24 @@ class StreamWrapper:
             if content:
                 self.result_content.append(content[0])
 
+        if hasattr(chunk, "text"):
+            print("chunk", chunk.text, chunk)
+            token_counts = estimate_tokens(chunk.text)
+            self.completion_tokens += token_counts
+            content = [chunk.text]
+            self.span.add_event(
+                Event.STREAM_OUTPUT.value,
+                {
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
+                        "".join(content)
+                        if len(content) > 0 and content[0] is not None
+                        else ""
+                    )
+                },
+            )
+            if content:
+                self.result_content.append(content[0])
+
 
 def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""

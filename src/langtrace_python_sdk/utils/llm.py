@@ -190,3 +190,8 @@ def set_event_completion(span: Span, result_content):
             SpanAttributes.LLM_COMPLETIONS: json.dumps(result_content),
         },
     )
+
+
+def set_span_attributes(span: Span, attributes: dict):
+    for field, value in attributes.model_dump(by_alias=True).items():
+        set_span_attribute(span, field, value)
