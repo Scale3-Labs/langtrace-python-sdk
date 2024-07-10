@@ -1,6 +1,6 @@
 import types
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
-from langtrace_python_sdk.instrumentation.openai.patch import StreamWrapper
+
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
     get_extra_attributes,
@@ -10,6 +10,7 @@ from langtrace_python_sdk.utils.llm import (
     set_event_completion,
     set_span_attributes,
     set_usage_attributes,
+    StreamWrapper,
 )
 from langtrace.trace_attributes import SpanAttributes
 from langtrace.trace_attributes import LLMSpanAttributes
