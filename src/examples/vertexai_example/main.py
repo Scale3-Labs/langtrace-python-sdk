@@ -9,17 +9,18 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-langtrace.init()
+langtrace.init(write_spans_to_console=True, batch=False)
 vertexai.init(project="model-palace-429011-f5", location="us-central1")
 
 
 def basic():
-    chat()
-    chat_streaming()
-    streaming_prediction()
-    generate()
-    generate_stream()
-    asyncio.run(async_streaming_prediction())
+    # chat()
+    # chat_streaming()
+    # streaming_prediction()
+    # generate()
+    # generate_stream()
+    # asyncio.run(async_streaming_prediction())
+    image_to_text()
 
 
 def chat():
@@ -157,3 +158,18 @@ def generate():
     )
 
     return responses
+
+
+def image_to_text():
+    model = GenerativeModel(model_name="gemini-experimental")
+
+    response = model.generate_content(
+        [
+            Part.from_uri(
+                "gs://cloud-samples-data/generative-ai/image/scones.jpg",
+                mime_type="image/jpeg",
+            ),
+            "What is shown in this image?",
+        ]
+    )
+    print(response.text)

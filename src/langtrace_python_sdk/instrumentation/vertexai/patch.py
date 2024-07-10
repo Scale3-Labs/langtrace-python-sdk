@@ -1,7 +1,7 @@
 import types
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 
-from langtrace_python_sdk.utils import set_span_attribute
+
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
     get_extra_attributes,
@@ -26,17 +26,12 @@ import json
 def patch_vertexai(name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["VERTEXAI"]
-        prompts = [
-            {
-                "role": "user",
-                "content": kwargs.get("prompt") or kwargs.get("message"),
-            }
-        ]
+        prompts = serialize_prompts(args, kwargs)
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(
                 kwargs,
-                prompts=args[0] if args else prompts,
+                prompts=prompts,
                 model=get_llm_model(instance),
             ),
             **get_llm_url(instance),
@@ -77,6 +72,7 @@ def patch_vertexai(name, version, tracer: Tracer):
 
 @silently_fail
 def set_response_attributes(span: Span, result):
+
     if hasattr(result, "text"):
         set_event_completion(span, result.text)
 
@@ -111,3 +107,25 @@ def get_llm_model(instance):
     if hasattr(instance, "_model_name"):
         llm_model = instance._model_name.replace("publishers/google/models/", "")
     return llm_model
+
+
+def serialize_prompts(args, kwargs):
+    prompt = ""
+    if args is not None and len(args) > 0:
+        for arg in args:
+            if isinstance(arg, str):
+                prompt = f"{prompt}{arg}\n"
+            elif isinstance(arg, list):
+                for subarg in arg:
+                    if type(subarg).__name__ == "Part":
+                        prompt = f"{prompt}{json.dumps(subarg.to_dict())}\n"
+                    else:
+                        prompt = f"{prompt}{subarg}\n"
+    else:
+        prompt = [
+            {
+                "role": "user",
+                "content": kwargs.get("prompt") or kwargs.get("message"),
+            }
+        ]
+    return prompt
