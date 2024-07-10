@@ -1,20 +1,20 @@
 APIS = {
     "GENERATE_CONTENT": {
-        "module": "vertexai.preview.generative_models",
+        "module": "vertexai.generative_models",
         "method": "GenerativeModel",
         "operation": "generate_content",
     },
     "AGENERATE_CONTENT": {
-        "module": "vertexai.preview.generative_models",
+        "module": "vertexai.generative_models",
         "method": "GenerativeModel",
         "operation": "generate_content_async",
     },
-    "PREDIT": {
+    "PREDICT": {
         "module": "vertexai.language_models",
         "method": "TextGenerationModel",
         "operation": "predict",
     },
-    "apredict": {
+    "APREDICT": {
         "module": "vertexai.language_models",
         "method": "TextGenerationModel",
         "operation": "predict_async",
@@ -24,7 +24,7 @@ APIS = {
         "method": "TextGenerationModel",
         "operation": "predict_streaming",
     },
-    "apredict_STREAM": {
+    "APREDICT_STREAM": {
         "module": "vertexai.language_models",
         "method": "TextGenerationModel",
         "operation": "predict_streaming_async",

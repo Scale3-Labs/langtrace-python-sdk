@@ -1,6 +1,7 @@
 import types
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 
+from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
     get_extra_attributes,
@@ -14,6 +15,7 @@ from langtrace_python_sdk.utils.llm import (
 )
 from langtrace.trace_attributes import SpanAttributes
 from langtrace.trace_attributes import LLMSpanAttributes
+from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry.trace import Tracer, SpanKind, Span
 from opentelemetry import trace
 from opentelemetry.trace.propagation import set_span_in_context
@@ -24,13 +26,19 @@ import json
 def patch_vertexai(name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["VERTEXAI"]
-
         prompts = [
-            {"role": "user", "content": kwargs.get("prompt") or kwargs.get("message")}
+            {
+                "role": "user",
+                "content": kwargs.get("prompt") or kwargs.get("message"),
+            }
         ]
+        print(instance.__dict__)
+
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs, prompts=prompts),
+            **get_llm_request_attributes(
+                kwargs, prompts=args[0] or prompts, model=get_llm_model(instance)
+            ),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: "",
             **get_extra_attributes(),
@@ -67,9 +75,19 @@ def patch_vertexai(name, version, tracer: Tracer):
     return traced_method
 
 
+@silently_fail
 def set_response_attributes(span: Span, result):
     if hasattr(result, "text"):
         set_event_completion(span, result.text)
+
+    if hasattr(result, "usage_metadata"):
+        usage = result.usage_metadata
+        input_tokens = usage.prompt_token_count
+        output_tokens = usage.candidates_token_count
+
+        set_usage_attributes(
+            span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
+        )
 
     if hasattr(result, "_prediction_response"):
         usage = result._prediction_response.metadata.get("tokenMetadata")
@@ -84,3 +102,12 @@ def is_streaming_response(response):
     return isinstance(response, types.GeneratorType) or isinstance(
         response, types.AsyncGeneratorType
     )
+
+
+def get_llm_model(instance):
+    llm_model = "unknown"
+    if hasattr(instance, "_model_id"):
+        llm_model = instance._model_id
+    if hasattr(instance, "_model_name"):
+        llm_model = instance._model_name.replace("publishers/google/models/", "")
+    return llm_model

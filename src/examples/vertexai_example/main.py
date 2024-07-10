@@ -1,7 +1,10 @@
 import vertexai
+import base64
 import asyncio
+import vertexai.preview.generative_models as generative_models
 from vertexai.language_models import ChatModel, InputOutputTextPair, TextGenerationModel
-from langtrace_python_sdk import langtrace, with_langtrace_root_span
+from langtrace_python_sdk import langtrace
+from vertexai.generative_models import GenerativeModel, Part, FinishReason
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,10 +14,11 @@ vertexai.init(project="model-palace-429011-f5", location="us-central1")
 
 
 def basic():
-    chat()
-    chat_streaming()
-    streaming_prediction()
-    asyncio.run(async_streaming_prediction())
+    # chat()
+    # chat_streaming()
+    # streaming_prediction()
+    generate()
+    # asyncio.run(async_streaming_prediction())
 
 
 def chat():
@@ -114,29 +118,21 @@ async def async_streaming_prediction() -> str:
     return result
 
 
-def generate_content():
-
-    chat_model = ChatModel.from_pretrained("chat-bison")
-
-    parameters = {
-        "temperature": 0.8,
-        "max_output_tokens": 256,
+def generate():
+    generation_config = {
+        "max_output_tokens": 8192,
+        "temperature": 1,
         "top_p": 0.95,
-        "top_k": 40,
     }
-
-    chat = chat_model.start_chat(
-        context="My name is Miles. You are an astronomer, knowledgeable about the solar system.",
-        examples=[
-            InputOutputTextPair(
-                input_text="How many moons does Mars have?",
-                output_text="The planet Mars has two moons, Phobos and Deimos.",
-            ),
-        ],
+    model = GenerativeModel(
+        "gemini-experimental",
     )
 
-    response = chat.send_message(
-        message="How many planets are there in the solar system?", **parameters
+    responses = model.generate_content(
+        ["I am a software engineer. I enjoy playing video games and reading"],
+        generation_config=generation_config,
+        stream=True,
     )
 
-    return response
+    for response in responses:
+        pass
