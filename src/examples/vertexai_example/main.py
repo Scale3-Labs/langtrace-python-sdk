@@ -17,10 +17,19 @@ def basic():
     # chat()
     # chat_streaming()
     # streaming_prediction()
-    # generate()
-    # generate_stream()
     # asyncio.run(async_streaming_prediction())
+
+    generate()
+    generate(stream=True)
+
     image_to_text()
+    image_to_text(stream=True)
+
+    video_to_text()
+    video_to_text(stream=True)
+
+    audio_to_text()
+    audio_to_text(stream=True)
 
 
 def chat():
@@ -120,7 +129,7 @@ async def async_streaming_prediction() -> str:
     return result
 
 
-def generate_stream():
+def generate(stream=False):
     generation_config = {
         "max_output_tokens": 8192,
         "temperature": 1,
@@ -133,34 +142,17 @@ def generate_stream():
     responses = model.generate_content(
         ["I am a software engineer. I enjoy playing video games and reading"],
         generation_config=generation_config,
-        stream=True,
+        stream=stream,
     )
 
-    for response in responses:
-        pass
-    return responses
+    if stream:
+        for res in responses:
+            print(res.text)
+    else:
+        print(responses.text)
 
 
-def generate():
-    generation_config = {
-        "max_output_tokens": 8192,
-        "temperature": 1,
-        "top_p": 0.95,
-    }
-    model = GenerativeModel(
-        "gemini-experimental",
-    )
-
-    responses = model.generate_content(
-        ["I am a software engineer. I enjoy playing video games and reading"],
-        generation_config=generation_config,
-        stream=False,
-    )
-
-    return responses
-
-
-def image_to_text():
+def image_to_text(stream=False):
     model = GenerativeModel(model_name="gemini-experimental")
 
     response = model.generate_content(
@@ -170,6 +162,53 @@ def image_to_text():
                 mime_type="image/jpeg",
             ),
             "What is shown in this image?",
-        ]
+        ],
+        stream=stream,
     )
-    print(response.text)
+    if stream:
+        for res in response:
+            print(res.text)
+    else:
+        print(response.text)
+
+
+def video_to_text(stream=False):
+    model = GenerativeModel(model_name="gemini-experimental")
+
+    prompt = """
+    Provide a description of the video.
+    The description should also contain anything important which people say in the video.
+    """
+
+    video_file_uri = "gs://cloud-samples-data/generative-ai/video/pixel8.mp4"
+    video_file = Part.from_uri(video_file_uri, mime_type="video/mp4")
+
+    contents = [video_file, prompt]
+    response = model.generate_content(contents, stream=stream)
+    if stream:
+        for res in response:
+            print(res.text)
+    else:
+        print(response.text)
+
+
+def audio_to_text(stream=False):
+    model = GenerativeModel(model_name="gemini-1.5-flash-001")
+
+    prompt = """
+    Please provide a summary for the audio.
+    Provide chapter titles, be concise and short, no need to provide chapter summaries.
+    Do not make up any information that is not part of the audio and do not be verbose.
+    """
+
+    audio_file_uri = "gs://cloud-samples-data/generative-ai/audio/pixel.mp3"
+    audio_file = Part.from_uri(audio_file_uri, mime_type="audio/mpeg")
+
+    contents = [audio_file, prompt]
+
+    response = model.generate_content(contents, stream=stream)
+    if stream:
+        for res in response:
+            print(res.text)
+    else:
+        print(response.text)
