@@ -1,50 +1,42 @@
-APIS = [
-    {
+APIS = {
+    "GENERATE_CONTENT": {
         "module": "vertexai.preview.generative_models",
-        "name": "GenerativeModel",
-        "method": "generate_content",
-        "span_name": "vertexai.generate_content",
+        "method": "GenerativeModel",
+        "operation": "generate_content",
     },
-    {
+    "AGENERATE_CONTENT": {
         "module": "vertexai.preview.generative_models",
-        "name": "GenerativeModel",
-        "method": "generate_content_async",
-        "span_name": "vertexai.generate_content_async",
+        "method": "GenerativeModel",
+        "operation": "generate_content_async",
     },
-    {
+    "PREDIT": {
         "module": "vertexai.language_models",
-        "name": "TextGenerationModel",
-        "method": "predict",
-        "span_name": "vertexai.predict",
+        "method": "TextGenerationModel",
+        "operation": "predict",
     },
-    {
+    "apredict": {
         "module": "vertexai.language_models",
-        "name": "TextGenerationModel",
-        "method": "predict_async",
-        "span_name": "vertexai.predict_async",
+        "method": "TextGenerationModel",
+        "operation": "predict_async",
     },
-    {
+    "PREDICT_STREAM": {
         "module": "vertexai.language_models",
-        "name": "TextGenerationModel",
-        "method": "predict_streaming",
-        "span_name": "vertexai.predict_streaming",
+        "method": "TextGenerationModel",
+        "operation": "predict_streaming",
     },
-    {
+    "apredict_STREAM": {
         "module": "vertexai.language_models",
-        "name": "TextGenerationModel",
-        "method": "predict_streaming_async",
-        "span_name": "vertexai.predict_streaming_async",
+        "method": "TextGenerationModel",
+        "operation": "predict_streaming_async",
     },
-    {
+    "SEND_MESSAGE": {
         "module": "vertexai.language_models",
-        "name": "ChatSession",
-        "method": "send_message",
-        "span_name": "vertexai.send_message",
+        "method": "ChatSession",
+        "operation": "send_message",
     },
-    {
+    "send_message_streaming": {
         "module": "vertexai.language_models",
-        "name": "ChatSession",
-        "method": "send_message_streaming",
-        "span_name": "vertexai.send_message_streaming",
+        "method": "ChatSession",
+        "operation": "send_message_streaming",
     },
-]
+}

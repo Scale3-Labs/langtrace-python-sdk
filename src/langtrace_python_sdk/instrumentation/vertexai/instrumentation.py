@@ -16,16 +16,17 @@ class VertexAIInstrumentation(BaseInstrumentor):
         tracer = get_tracer(__name__, "", trace_provider)
         version = v("google-cloud-aiplatform")
 
-        for api in APIS:
-            module = api.get("module")
-            name = api.get("name")
-            method = api.get("method")
-            span_name = api.get("span_name")
+        for _, api_config in APIS.items():
+
+            module = api_config.get("module")
+            operation = api_config.get("operation")
+            method = api_config.get("method")
+            name = f"{method}.{operation}"
 
             _W(
                 module=module,
-                name=f"{name}.{method}",
-                wrapper=patch_vertexai(span_name, version, tracer),
+                name=name,
+                wrapper=patch_vertexai(name, version, tracer),
             )
 
     def _uninstrument(self, **kwargs):
