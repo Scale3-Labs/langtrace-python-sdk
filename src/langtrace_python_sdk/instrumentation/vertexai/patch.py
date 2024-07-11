@@ -74,7 +74,7 @@ def patch_vertexai(name, version, tracer: Tracer):
 def set_response_attributes(span: Span, result):
 
     if hasattr(result, "text"):
-        set_event_completion(span, result.text)
+        set_event_completion(span, [{"role": "assistant", "content": result.text}])
 
     if hasattr(result, "usage_metadata"):
         usage = result.usage_metadata
