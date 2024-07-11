@@ -15,7 +15,8 @@ ENABLED_EXAMPLES = {
     "weaviate": False,
     "ollama": False,
     "groq": False,
-    "vertexai": True,
+    "vertexai": False,
+    "gemini": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -96,3 +97,9 @@ if ENABLED_EXAMPLES["vertexai"]:
 
     print(Fore.BLUE + "Running Vertexai example" + Fore.RESET)
     VertexAIRunner().run()
+
+if ENABLED_EXAMPLES["gemini"]:
+    from examples.gemini_example import GeminiRunner
+
+    print(Fore.BLUE + "Running Gemini example" + Fore.RESET)
+    GeminiRunner().run()

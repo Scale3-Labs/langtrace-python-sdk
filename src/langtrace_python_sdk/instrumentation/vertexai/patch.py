@@ -13,8 +13,7 @@ from langtrace_python_sdk.utils.llm import (
     set_usage_attributes,
     StreamWrapper,
 )
-from langtrace.trace_attributes import SpanAttributes
-from langtrace.trace_attributes import LLMSpanAttributes
+from langtrace.trace_attributes import LLMSpanAttributes, SpanAttributes
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry.trace import Tracer, SpanKind, Span
 from opentelemetry import trace
