@@ -133,6 +133,7 @@ def set_response_attributes(
     span: Span,
     result,
 ):
+    span.set_status(Status(StatusCode.OK))
     if hasattr(result, "text"):
         set_event_completion(span, [{"role": "assistant", "content": result.text}])
 
