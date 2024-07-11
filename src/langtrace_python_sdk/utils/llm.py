@@ -43,7 +43,7 @@ def estimate_tokens(prompt):
 
 def set_event_completion_chunk(span: Span, chunk):
     span.add_event(
-        name=SpanAttributes.LLM_CONTENT_COMPLETION,
+        name=SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK,
         attributes={
             SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: json.dumps(chunk),
         },
