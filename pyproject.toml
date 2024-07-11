@@ -50,7 +50,9 @@ dev = [
     "qdrant_client",
     "weaviate-client",
     "ollama",
-    "groq"
+    "groq",
+    "google-generativeai",
+    "google-cloud-aiplatform"
 ]
 
 test = [

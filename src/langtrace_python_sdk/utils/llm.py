@@ -24,11 +24,12 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     TIKTOKEN_MODEL_MAPPING,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
-from langtrace.trace_attributes import SpanAttributes
+from langtrace.trace_attributes import SpanAttributes, Event
 from importlib_metadata import version as v
 import json
 from opentelemetry import baggage
 from opentelemetry.trace import Span
+from opentelemetry.trace.status import StatusCode
 
 
 def estimate_tokens(prompt):
@@ -38,6 +39,15 @@ def estimate_tokens(prompt):
         # Simplified token estimation: count the words.
         return len([word for word in prompt.split() if word])
     return 0
+
+
+def set_event_completion_chunk(span: Span, chunk):
+    span.add_event(
+        name=SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK,
+        attributes={
+            SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: json.dumps(chunk),
+        },
+    )
 
 
 def estimate_tokens_using_tiktoken(prompt, model):
@@ -81,7 +91,7 @@ def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
     }
 
 
-def get_llm_request_attributes(kwargs, prompts=None):
+def get_llm_request_attributes(kwargs, prompts=None, model=None):
 
     user = kwargs.get("user", None)
     if prompts is None:
@@ -97,7 +107,7 @@ def get_llm_request_attributes(kwargs, prompts=None):
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
 
     return {
-        SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model"),
+        SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model"),
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
         SpanAttributes.LLM_TOP_K: top_k,
@@ -109,6 +119,10 @@ def get_llm_request_attributes(kwargs, prompts=None):
         SpanAttributes.LLM_PRESENCE_PENALTY: kwargs.get("presence_penalty"),
         SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
         SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
+        SpanAttributes.LLM_TOOLS: json.dumps(kwargs.get("tools")),
+        SpanAttributes.LLM_REQUEST_LOGPROPS: kwargs.get("logprobs"),
+        SpanAttributes.LLM_REQUEST_LOGITBIAS: kwargs.get("logit_bias"),
+        SpanAttributes.LLM_REQUEST_TOP_LOGPROPS: kwargs.get("top_logprobs"),
     }
 
 
@@ -190,3 +204,178 @@ def set_event_completion(span: Span, result_content):
             SpanAttributes.LLM_COMPLETIONS: json.dumps(result_content),
         },
     )
+
+
+def set_span_attributes(span: Span, attributes: dict):
+    for field, value in attributes.model_dump(by_alias=True).items():
+        set_span_attribute(span, field, value)
+
+
+class StreamWrapper:
+    span: Span
+
+    def __init__(
+        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
+    ):
+        self.stream = stream
+        self.span = span
+        self.prompt_tokens = prompt_tokens
+        self.function_call = function_call
+        self.tool_calls = tool_calls
+        self.result_content = []
+        self.completion_tokens = 0
+        self._span_started = False
+        self.setup()
+
+    def setup(self):
+        if not self._span_started:
+            self.span.add_event(Event.STREAM_START.value)
+            self._span_started = True
+
+    def cleanup(self):
+        if self._span_started:
+            self.span.add_event(Event.STREAM_END.value)
+            set_span_attribute(
+                self.span,
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                self.prompt_tokens,
+            )
+            set_span_attribute(
+                self.span,
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                self.completion_tokens,
+            )
+            set_span_attribute(
+                self.span,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                self.prompt_tokens + self.completion_tokens,
+            )
+            set_event_completion(
+                self.span,
+                [
+                    {
+                        "role": "assistant",
+                        "content": "".join(self.result_content),
+                    }
+                ],
+            )
+
+            self.span.set_status(StatusCode.OK)
+            self.span.end()
+            self._span_started = False
+
+    def __enter__(self):
+        self.setup()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+
+    async def __aenter__(self):
+        self.setup()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.cleanup()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            chunk = next(self.stream)
+            self.process_chunk(chunk)
+            return chunk
+        except StopIteration:
+            self.cleanup()
+            raise
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            chunk = await self.stream.__anext__()
+            self.process_chunk(chunk)
+            return chunk
+        except StopAsyncIteration:
+            self.cleanup()
+            raise StopAsyncIteration
+
+    def process_chunk(self, chunk):
+        if hasattr(chunk, "model") and chunk.model is not None:
+            set_span_attribute(
+                self.span,
+                SpanAttributes.LLM_RESPONSE_MODEL,
+                chunk.model,
+            )
+
+        if hasattr(chunk, "choices") and chunk.choices is not None:
+            content = []
+            if not self.function_call and not self.tool_calls:
+                for choice in chunk.choices:
+                    if choice.delta and choice.delta.content is not None:
+                        token_counts = estimate_tokens(choice.delta.content)
+                        self.completion_tokens += token_counts
+                        content = [choice.delta.content]
+            elif self.function_call:
+                for choice in chunk.choices:
+                    if (
+                        choice.delta
+                        and choice.delta.function_call is not None
+                        and choice.delta.function_call.arguments is not None
+                    ):
+                        token_counts = estimate_tokens(
+                            choice.delta.function_call.arguments
+                        )
+                        self.completion_tokens += token_counts
+                        content = [choice.delta.function_call.arguments]
+            elif self.tool_calls:
+                for choice in chunk.choices:
+                    if choice.delta and choice.delta.tool_calls is not None:
+                        toolcalls = choice.delta.tool_calls
+                        content = []
+                        for tool_call in toolcalls:
+                            if (
+                                tool_call
+                                and tool_call.function is not None
+                                and tool_call.function.arguments is not None
+                            ):
+                                token_counts = estimate_tokens(
+                                    tool_call.function.arguments
+                                )
+                                self.completion_tokens += token_counts
+                                content.append(tool_call.function.arguments)
+            self.span.add_event(
+                Event.STREAM_OUTPUT.value,
+                {
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
+                        "".join(content)
+                        if len(content) > 0 and content[0] is not None
+                        else ""
+                    )
+                },
+            )
+            if content:
+                self.result_content.append(content[0])
+
+        if hasattr(chunk, "text"):
+            token_counts = estimate_tokens(chunk.text)
+            self.completion_tokens += token_counts
+            content = [chunk.text]
+            self.span.add_event(
+                Event.STREAM_OUTPUT.value,
+                {
+                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
+                        "".join(content)
+                        if len(content) > 0 and content[0] is not None
+                        else ""
+                    )
+                },
+            )
+            if content:
+                self.result_content.append(content[0])
+
+        if hasattr(chunk, "usage_metadata"):
+            self.completion_tokens = chunk.usage_metadata.candidates_token_count
+            self.prompt_tokens = chunk.usage_metadata.prompt_token_count
