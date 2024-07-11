@@ -110,7 +110,7 @@ def get_llm_model(instance):
 
 def serialize_prompts(args, kwargs, instance):
     prompts = []
-    if hasattr(instance, "_system_instruction"):
+    if hasattr(instance, "_system_instruction") and instance._system_instruction is not None:
         system_prompt = {
             "role": "system",
             "content": instance._system_instruction.__dict__["_pb"].parts[0].text,
