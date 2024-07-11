@@ -58,6 +58,7 @@ def patch_vertexai(name, version, tracer: Tracer):
                 )
             else:
                 set_response_attributes(span, result)
+            span.set_status(StatusCode.OK)
             span.end()
             return result
         except Exception as error:
