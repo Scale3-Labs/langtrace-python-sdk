@@ -41,6 +41,15 @@ def estimate_tokens(prompt):
     return 0
 
 
+def set_event_completion_chunk(span: Span, chunk):
+    span.add_event(
+        name=SpanAttributes.LLM_CONTENT_COMPLETION,
+        attributes={
+            SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: json.dumps(chunk),
+        },
+    )
+
+
 def estimate_tokens_using_tiktoken(prompt, model):
     """
     Estimate the number of tokens in a prompt using tiktoken."""
