@@ -1,3 +1,9 @@
+from langtrace.trace_attributes import LLMSpanAttributes, SpanAttributes
+from opentelemetry import trace
+from opentelemetry.trace import Span, SpanKind, Tracer
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.status import Status, StatusCode
+
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace_python_sdk.utils.llm import (
     get_extra_attributes,
@@ -10,11 +16,6 @@ from langtrace_python_sdk.utils.llm import (
     set_span_attributes,
     set_usage_attributes,
 )
-from opentelemetry.trace import Tracer, SpanKind, Span
-from langtrace.trace_attributes import SpanAttributes, LLMSpanAttributes
-from opentelemetry.trace.propagation import set_span_in_context
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry import trace
 
 
 def patch_gemini(name, version, tracer: Tracer):
@@ -125,7 +126,7 @@ def serialize_prompts(args, kwargs, instance):
                 for subarg in arg:
                     content = f"{content}{subarg}\n"
         prompts.append({"role": "user", "content": content})
-    return [prompts]
+    return prompts
 
 
 def set_response_attributes(
