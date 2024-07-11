@@ -4,10 +4,11 @@ from dotenv import load_dotenv
 import os
 import asyncio
 import pathlib
+from .function_tools import tools
 
 load_dotenv()
 
-langtrace.init(write_spans_to_console=True, batch=False)
+langtrace.init(write_spans_to_console=False, batch=False)
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 
@@ -19,20 +20,22 @@ async def async_demo():
 
 def basic():
     generate()
-    generate(stream=True)
+    generate(stream=True, with_tools=True)
 
     # image_to_text()
     # audio_to_text()
     asyncio.run(async_demo())
 
 
-def generate(stream=False):
+def generate(stream=False, with_tools=False):
     model = genai.GenerativeModel(
-        "gemini-1.5-flash", system_instruction="You are a cat. Your name is Neko."
+        "gemini-1.5-pro", system_instruction="You are a cat. Your name is Neko."
     )
 
     response = model.generate_content(
-        "Write a story about a AI and magic", stream=stream
+        "Write a story about a AI and magic",
+        stream=stream,
+        tools=tools if with_tools else None,
     )
     if stream:
         for res in response:
@@ -57,20 +60,20 @@ async def async_generate(stream=False):
         print(response.text)
 
 
-# def image_to_text(stream=False):
-#     model = genai.GenerativeModel("gemini-1.5-flash")
-#     image1 = {
-#         "mime_type": "image/jpeg",
-#         "data": pathlib.Path("src/examples/gemini_example/jetpack.jpg").read_bytes(),
-#     }
+def image_to_text(stream=False):
+    model = genai.GenerativeModel("gemini-1.5-flash")
+    image1 = {
+        "mime_type": "image/jpeg",
+        "data": pathlib.Path("src/examples/gemini_example/jetpack.jpg").read_bytes(),
+    }
 
-#     prompt = "Describe me this picture. What do you see in it."
-#     response = model.generate_content([prompt, image1], stream=stream)
-#     if stream:
-#         for res in response:
-#             print(res.text)
-#     else:
-#         print(response.text)
+    prompt = "Describe me this picture. What do you see in it."
+    response = model.generate_content([prompt, image1], stream=stream)
+    if stream:
+        for res in response:
+            print(res.text)
+    else:
+        print(response.text)
 
 
 # def audio_to_text(stream=False):

@@ -150,7 +150,7 @@ def build_streaming_response(span, response):
         item_to_yield = item
         complete_response += str(item.text)
         yield item_to_yield
-        set_event_completion_chunk(span, complete_response)
+        set_event_completion_chunk(span, item.text)
         if hasattr(item, "usage_metadata"):
             usage = item.usage_metadata
             input_tokens = usage.prompt_token_count
