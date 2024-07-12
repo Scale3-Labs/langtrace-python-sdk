@@ -16,6 +16,8 @@ ENABLED_EXAMPLES = {
     "ollama": False,
     "groq": False,
     "autogen": True,
+    "vertexai": False,
+    "gemini": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -95,3 +97,15 @@ if ENABLED_EXAMPLES["autogen"]:
 
     print(Fore.BLUE + "Running Autogen example" + Fore.RESET)
     AutoGenRunner().run()
+
+if ENABLED_EXAMPLES["vertexai"]:
+    from examples.vertexai_example import VertexAIRunner
+
+    print(Fore.BLUE + "Running Vertexai example" + Fore.RESET)
+    VertexAIRunner().run()
+
+if ENABLED_EXAMPLES["gemini"]:
+    from examples.gemini_example import GeminiRunner
+
+    print(Fore.BLUE + "Running Gemini example" + Fore.RESET)
+    GeminiRunner().run()

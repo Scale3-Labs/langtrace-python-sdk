@@ -17,7 +17,7 @@ limitations under the License.
 import json
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from langtrace_python_sdk.utils.silently_fail import silently_fail
-from langtrace_python_sdk.utils.llm import set_span_attributes
+from langtrace_python_sdk.utils import set_span_attribute
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -64,7 +64,7 @@ def collection_patch(method, version, tracer):
         ) as span:
             collection_name = kwargs.get("collection_name") or args[0]
             operation = api["OPERATION"]
-            set_span_attributes(span, "db.collection.name", collection_name)
+            set_span_attribute(span, "db.collection.name", collection_name)
 
             if operation == "add":
                 _set_upload_attributes(span, args, kwargs, "documents")
@@ -111,7 +111,7 @@ def _set_upsert_attributes(span, args, kwargs):
     else:
         # In case of using Batch.
         length = len(points.ids)
-    set_span_attributes(span, "db.upsert.points_count", length)
+    set_span_attribute(span, "db.upsert.points_count", length)
 
 
 @silently_fail
@@ -123,16 +123,16 @@ def _set_upload_attributes(span, args, kwargs, field):
         # In case of using Batch.
         length = len(docs.ids)
 
-    set_span_attributes(span, f"db.upload.{field}_count", length)
+    set_span_attribute(span, f"db.upload.{field}_count", length)
 
 
 @silently_fail
 def _set_search_attributes(span, args, kwargs):
     limit = kwargs.get("limit") or 10
-    set_span_attributes(span, "db.query.top_k", limit)
+    set_span_attribute(span, "db.query.top_k", limit)
 
 
 @silently_fail
 def _set_batch_search_attributes(span, args, kwargs, method):
     requests = kwargs.get("requests") or []
-    set_span_attributes(span, f"db.{method}.requests_count", len(requests))
+    set_span_attribute(span, f"db.{method}.requests_count", len(requests))

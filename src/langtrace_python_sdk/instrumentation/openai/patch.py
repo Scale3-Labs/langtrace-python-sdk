@@ -17,24 +17,21 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import (
-    Event,
     LLMSpanAttributes,
     SpanAttributes,
 )
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.silently_fail import silently_fail
-from opentelemetry import baggage, trace
+from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
-    estimate_tokens,
     get_base_url,
     get_extra_attributes,
     get_langtrace_attributes,
@@ -42,9 +39,11 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_tool_calls,
     is_streaming,
+    set_event_completion,
+    StreamWrapper,
+    set_span_attributes,
 )
 from openai._types import NOT_GIVEN
-from opentelemetry.trace.span import Span
 
 
 def images_generate(original_method, version, tracer):
@@ -69,8 +68,7 @@ def images_generate(original_method, version, tracer):
             kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -93,12 +91,7 @@ def images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.add_event(
-                        Event.RESPONSE.value,
-                        attributes={
-                            SpanAttributes.LLM_COMPLETIONS: json.dumps(response)
-                        },
-                    )
+                    set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -138,8 +131,7 @@ def async_images_generate(original_method, version, tracer):
             kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
@@ -162,12 +154,7 @@ def async_images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.add_event(
-                        Event.RESPONSE.value,
-                        attributes={
-                            SpanAttributes.LLM_COMPLETIONS: json.dumps(response)
-                        },
-                    )
+                    set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -209,9 +196,7 @@ def images_edit(original_method, version, tracer):
             kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -230,10 +215,7 @@ def images_edit(original_method, version, tracer):
                         }
                     )
 
-                span.add_event(
-                    Event.RESPONSE.value,
-                    attributes={SpanAttributes.LLM_COMPLETIONS: json.dumps(response)},
-                )
+                set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -250,159 +232,6 @@ def images_edit(original_method, version, tracer):
     return traced_method
 
 
-class StreamWrapper:
-    span: Span
-
-    def __init__(
-        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
-    ):
-        self.stream = stream
-        self.span = span
-        self.prompt_tokens = prompt_tokens
-        self.function_call = function_call
-        self.tool_calls = tool_calls
-        self.result_content = []
-        self.completion_tokens = 0
-        self._span_started = False
-        self.setup()
-
-    def setup(self):
-        if not self._span_started:
-            self.span.add_event(Event.STREAM_START.value)
-            self._span_started = True
-
-    def cleanup(self):
-        if self._span_started:
-            self.span.add_event(Event.STREAM_END.value)
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-                self.prompt_tokens,
-            )
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-                self.completion_tokens,
-            )
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                self.prompt_tokens + self.completion_tokens,
-            )
-
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_COMPLETIONS,
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(self.result_content),
-                        }
-                    ]
-                ),
-            )
-
-            self.span.set_status(StatusCode.OK)
-            self.span.end()
-            self._span_started = False
-
-    def __enter__(self):
-        self.setup()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
-
-    async def __aenter__(self):
-        self.setup()
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        self.cleanup()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        try:
-            chunk = next(self.stream)
-            self.process_chunk(chunk)
-            return chunk
-        except StopIteration:
-            self.cleanup()
-            raise
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        try:
-            chunk = await self.stream.__anext__()
-            self.process_chunk(chunk)
-            return chunk
-        except StopAsyncIteration:
-            self.cleanup()
-            raise StopAsyncIteration
-
-    def process_chunk(self, chunk):
-        if hasattr(chunk, "model") and chunk.model is not None:
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_RESPONSE_MODEL,
-                chunk.model,
-            )
-
-        if hasattr(chunk, "choices") and chunk.choices is not None:
-            content = []
-            if not self.function_call and not self.tool_calls:
-                for choice in chunk.choices:
-                    if choice.delta and choice.delta.content is not None:
-                        token_counts = estimate_tokens(choice.delta.content)
-                        self.completion_tokens += token_counts
-                        content = [choice.delta.content]
-            elif self.function_call:
-                for choice in chunk.choices:
-                    if (
-                        choice.delta
-                        and choice.delta.function_call is not None
-                        and choice.delta.function_call.arguments is not None
-                    ):
-                        token_counts = estimate_tokens(
-                            choice.delta.function_call.arguments
-                        )
-                        self.completion_tokens += token_counts
-                        content = [choice.delta.function_call.arguments]
-            elif self.tool_calls:
-                for choice in chunk.choices:
-                    if choice.delta and choice.delta.tool_calls is not None:
-                        toolcalls = choice.delta.tool_calls
-                        content = []
-                        for tool_call in toolcalls:
-                            if (
-                                tool_call
-                                and tool_call.function is not None
-                                and tool_call.function.arguments is not None
-                            ):
-                                token_counts = estimate_tokens(
-                                    tool_call.function.arguments
-                                )
-                                self.completion_tokens += token_counts
-                                content.append(tool_call.function.arguments)
-            self.span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                        "".join(content)
-                        if len(content) > 0 and content[0] is not None
-                        else ""
-                    )
-                },
-            )
-            if content:
-                self.result_content.append(content[0])
-
-
 def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
@@ -412,6 +241,8 @@ def chat_completions_create(original_method, version, tracer):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["GROQ"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -629,8 +460,7 @@ def embeddings_create(original_method, version, tracer):
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -687,8 +517,7 @@ def async_embeddings_create(original_method, version, tracer):
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
@@ -789,10 +618,8 @@ def _set_response_attributes(span, kwargs, result):
             }
             for choice in result.choices
         ]
-        set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses))
-    else:
-        responses = []
-        set_span_attribute(span, SpanAttributes.LLM_COMPLETIONS, json.dumps(responses))
+        set_event_completion(span, responses)
+
     if (
         hasattr(result, "system_fingerprint")
         and result.system_fingerprint is not None
