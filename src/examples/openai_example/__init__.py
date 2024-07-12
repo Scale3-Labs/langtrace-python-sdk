@@ -10,6 +10,7 @@ class OpenAIRunner:
             run_conversation as run_conversation_streaming,
         )
         from .chat_completion import chat_completion as chat_completion_example
+
         from .embeddings_create import embeddings_create as embeddings_create_example
         from .function_calling import function_calling as function_example
         from .images_edit import image_edit

@@ -18,7 +18,7 @@ classifiers=[
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  'trace-attributes>=5.0.0,<6.0.0',
+  'trace-attributes>=6.0.0,<7.0.0',
   'opentelemetry-api>=1.25.0',
   'opentelemetry-sdk>=1.25.0',
   'opentelemetry-instrumentation>=0.46b0',
@@ -49,7 +49,10 @@ dev = [
     "cohere",
     "qdrant_client",
     "weaviate-client",
-    "ollama"
+    "ollama",
+    "groq",
+    "google-generativeai",
+    "google-cloud-aiplatform"
 ]
 
 test = [

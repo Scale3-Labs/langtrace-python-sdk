@@ -16,22 +16,31 @@ limitations under the License.
 
 import json
 
-from importlib_metadata import version as v
-from langtrace.trace_attributes import Event, LLMSpanAttributes
-from opentelemetry import baggage, trace
+from langtrace.trace_attributes import (
+    LLMSpanAttributes,
+    SpanAttributes,
+)
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.silently_fail import silently_fail
+from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
-    estimate_tokens,
+    get_base_url,
+    get_extra_attributes,
+    get_langtrace_attributes,
+    get_llm_request_attributes,
+    get_llm_url,
     get_tool_calls,
+    is_streaming,
+    set_event_completion,
+    StreamWrapper,
 )
 from openai._types import NOT_GIVEN
 
@@ -42,44 +51,28 @@ def images_generate(original_method, version, tracer):
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps(
-                [{"role": "user", "content": kwargs.get("prompt", [])}]
-            ),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                if kwargs.get("stream") is False or kwargs.get("stream") is None:
+                if not is_streaming(kwargs):
                     data = (
                         result.data[0]
                         if hasattr(result, "data") and len(result.data) > 0
@@ -98,7 +91,7 @@ def images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.set_attribute("llm.responses", json.dumps(response))
+                    set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -121,45 +114,29 @@ def async_images_generate(original_method, version, tracer):
     """
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["IMAGES_GENERATION"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.stream": kwargs.get("stream"),
-            "llm.prompts": json.dumps(
-                [{"role": "user", "content": kwargs.get("prompt", [])}]
-            ),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            items = attributes.model_dump(by_alias=True).items()
-            for field, value in items:
-                if value is not None:
-                    span.set_attribute(field, value)
+            for field, value in attributes.model_dump(by_alias=True).items():
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
-                if kwargs.get("stream") is False or kwargs.get("stream") is None:
+                if not is_streaming(kwargs):
                     data = (
                         result.data[0]
                         if hasattr(result, "data") and len(result.data) > 0
@@ -178,7 +155,7 @@ def async_images_generate(original_method, version, tracer):
                             },
                         }
                     ]
-                    span.set_attribute("llm.responses", json.dumps(response))
+                    set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -201,42 +178,23 @@ def images_edit(original_method, version, tracer):
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["IMAGES_EDIT"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.response_format": kwargs.get("response_format"),
-            "llm.image.size": kwargs.get("size"),
-            "llm.prompts": json.dumps(
-                [
-                    {
-                        "role": kwargs.get("user", "user"),
-                        "content": kwargs.get("prompt", []),
-                    }
-                ]
-            ),
-            "llm.top_k": kwargs.get("n"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["IMAGES_EDIT"]["ENDPOINT"],
+            SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("response_format"),
+            SpanAttributes.LLM_IMAGE_SIZE: kwargs.get("size"),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             APIS["IMAGES_EDIT"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             for field, value in attributes.model_dump(by_alias=True).items():
@@ -260,10 +218,7 @@ def images_edit(original_method, version, tracer):
                         }
                     )
 
-                span.add_event(
-                    name="response",
-                    attributes={"llm.responses": json.dumps(response)},
-                )
+                set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -280,158 +235,17 @@ def images_edit(original_method, version, tracer):
     return traced_method
 
 
-class StreamWrapper:
-    def __init__(
-        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
-    ):
-        self.stream = stream
-        self.span = span
-        self.prompt_tokens = prompt_tokens
-        self.function_call = function_call
-        self.tool_calls = tool_calls
-        self.result_content = []
-        self.completion_tokens = 0
-        self._span_started = False
-        self._start_span()
-
-    def _start_span(self):
-        if not self._span_started:
-            self.span.add_event(Event.STREAM_START.value)
-            self._span_started = True
-
-    def _end_span(self):
-        if self._span_started:
-            self.span.add_event(Event.STREAM_END.value)
-            self.span.set_attribute(
-                "llm.token.counts",
-                json.dumps(
-                    {
-                        "input_tokens": self.prompt_tokens,
-                        "output_tokens": self.completion_tokens,
-                        "total_tokens": self.prompt_tokens + self.completion_tokens,
-                    }
-                ),
-            )
-            self.span.set_attribute(
-                "llm.responses",
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(self.result_content),
-                        }
-                    ]
-                ),
-            )
-            self.span.set_status(StatusCode.OK)
-            self.span.end()
-            self._span_started = False
-
-    def __enter__(self):
-        self._start_span()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self._end_span()
-
-    def __iter__(self):
-        self._start_span()
-        return self
-
-    def __aiter__(self):
-        self._start_span()
-        return self
-
-    async def __anext__(self):
-        try:
-            chunk = await self.stream.__anext__()
-            self.process_chunk(chunk)
-            return chunk
-        except StopIteration:
-            self._end_span()
-            raise
-
-    def __next__(self):
-        try:
-            chunk = next(self.stream)
-            self.process_chunk(chunk)
-            return chunk
-        except StopIteration:
-            self._end_span()
-            raise
-
-    def process_chunk(self, chunk):
-        if hasattr(chunk, "model") and chunk.model is not None:
-            self.span.set_attribute("llm.model", chunk.model)
-        if hasattr(chunk, "choices") and chunk.choices is not None:
-            content = []
-            if not self.function_call and not self.tool_calls:
-                for choice in chunk.choices:
-                    if choice.delta and choice.delta.content is not None:
-                        token_counts = estimate_tokens(choice.delta.content)
-                        self.completion_tokens += token_counts
-                        content = [choice.delta.content]
-            elif self.function_call:
-                for choice in chunk.choices:
-                    if (
-                        choice.delta
-                        and choice.delta.function_call is not None
-                        and choice.delta.function_call.arguments is not None
-                    ):
-                        token_counts = estimate_tokens(
-                            choice.delta.function_call.arguments
-                        )
-                        self.completion_tokens += token_counts
-                        content = [choice.delta.function_call.arguments]
-            elif self.tool_calls:
-                for choice in chunk.choices:
-                    if choice.delta and choice.delta.tool_calls is not None:
-                        toolcalls = choice.delta.tool_calls
-                        content = []
-                        for tool_call in toolcalls:
-                            if (
-                                tool_call
-                                and tool_call.function is not None
-                                and tool_call.function.arguments is not None
-                            ):
-                                token_counts = estimate_tokens(
-                                    tool_call.function.arguments
-                                )
-                                self.completion_tokens += token_counts
-                                content.append(tool_call.function.arguments)
-            self.span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    "response": (
-                        "".join(content)
-                        if len(content) > 0 and content[0] is not None
-                        else ""
-                    )
-                },
-            )
-            if content:
-                self.result_content.append(content[0])
-
-
 def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        # If base url contains perplexity or azure, set the service provider accordingly
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
-        # handle tool calls in the kwargs
+        elif "groq" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["GROQ"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -461,113 +275,31 @@ def chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(llm_prompts),
-            "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        tools = []
-        if (
-            kwargs.get("temperature") is not None
-            and kwargs.get("temperature") != NOT_GIVEN
-        ):
-            attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
-            attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
-            attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
-            for function in kwargs.get("functions"):
-                tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
-            tools.append(json.dumps(kwargs.get("tools")))
-        if len(tools) > 0:
-            attributes.llm_tools = json.dumps(tools)
-
-        # TODO(Karthik): Gotta figure out how to handle streaming with context
-        # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         )
-        for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
-                span.set_attribute(field, value)
+        _set_input_attributes(span, kwargs, attributes)
+
         try:
-            # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            if (
-                kwargs.get("stream") is False
-                or kwargs.get("stream") is None
-                or kwargs.get("stream") == NOT_GIVEN
-            ):
-                span.set_attribute("llm.model", result.model)
-                if hasattr(result, "choices") and result.choices is not None:
-                    responses = [
-                        {
-                            "role": (
-                                choice.message.role
-                                if choice.message and choice.message.role
-                                else "assistant"
-                            ),
-                            "content": extract_content(choice),
-                            **(
-                                {
-                                    "content_filter_results": choice[
-                                        "content_filter_results"
-                                    ]
-                                }
-                                if "content_filter_results" in choice
-                                else {}
-                            ),
-                        }
-                        for choice in result.choices
-                    ]
-                    span.set_attribute("llm.responses", json.dumps(responses))
-                else:
-                    responses = []
-                    span.set_attribute("llm.responses", json.dumps(responses))
-                if (
-                    hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
-                    and result.system_fingerprint != NOT_GIVEN
-                ):
-                    span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
-                    )
-                # Get the usage
-                if hasattr(result, "usage") and result.usage is not None:
-                    usage = result.usage
-                    if usage is not None:
-                        usage_dict = {
-                            "input_tokens": result.usage.prompt_tokens,
-                            "output_tokens": usage.completion_tokens,
-                            "total_tokens": usage.total_tokens,
-                        }
-                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
-                span.set_status(StatusCode.OK)
-                span.end()
-                return result
-            else:
-                # iterate over kwargs.get("messages", {}) and calculate the prompt tokens
+            if is_streaming(kwargs):
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
                         json.dumps(message), kwargs.get("model")
                     )
 
-                # iterate over kwargs.get("functions") and calculate the prompt tokens
                 if (
                     kwargs.get("functions") is not None
                     and kwargs.get("functions") != NOT_GIVEN
@@ -584,6 +316,11 @@ def chat_completions_create(original_method, version, tracer):
                     function_call=kwargs.get("functions") is not None,
                     tool_calls=kwargs.get("tools") is not None,
                 )
+            else:
+                _set_response_attributes(span, kwargs, result)
+                span.set_status(StatusCode.OK)
+                span.end()
+                return result
 
         except Exception as error:
             span.record_exception(error)
@@ -591,7 +328,6 @@ def chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    # return the wrapped method
     return traced_method
 
 
@@ -599,21 +335,11 @@ def async_chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        # If base url contains perplexity or azure, set the service provider accordingly
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
-        # handle tool calls in the kwargs
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -637,117 +363,37 @@ def async_chat_completions_create(original_method, version, tracer):
                                 else ""
                             ),
                         }
-                    tool_calls.append(tool_call_dict)
+                    tool_calls.append(json.dumps(tool_call_dict))
                 llm_prompts.append(tool_calls)
             else:
                 llm_prompts.append(item)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(llm_prompts),
-            "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        tools = []
-        if (
-            kwargs.get("temperature") is not None
-            and kwargs.get("temperature") != NOT_GIVEN
-        ):
-            attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None and kwargs.get("top_p") != NOT_GIVEN:
-            attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None and kwargs.get("user") != NOT_GIVEN:
-            attributes.llm_user = kwargs.get("user")
-        if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
-            for function in kwargs.get("functions"):
-                tools.append(json.dumps({"type": "function", "function": function}))
-        if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
-            tools.append(json.dumps(kwargs.get("tools")))
-        if len(tools) > 0:
-            attributes.llm_tools = json.dumps(tools)
-
-        # TODO(Karthik): Gotta figure out how to handle streaming with context
-        # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["CHAT_COMPLETION"]["METHOD"],
+            kind=SpanKind.CLIENT.value,
+            context=set_span_in_context(trace.get_current_span()),
         )
-        for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
-                span.set_attribute(field, value)
+        _set_input_attributes(span, kwargs, attributes)
+
         try:
-            # Attempt to call the original method
             result = await wrapped(*args, **kwargs)
-            if (
-                kwargs.get("stream") is False
-                or kwargs.get("stream") is None
-                or kwargs.get("stream") == NOT_GIVEN
-            ):
-                span.set_attribute("llm.model", result.model)
-                if hasattr(result, "choices") and result.choices is not None:
-                    responses = [
-                        {
-                            "role": (
-                                choice.message.role
-                                if choice.message and choice.message.role
-                                else "assistant"
-                            ),
-                            "content": extract_content(choice),
-                            **(
-                                {
-                                    "content_filter_results": choice[
-                                        "content_filter_results"
-                                    ]
-                                }
-                                if "content_filter_results" in choice
-                                else {}
-                            ),
-                        }
-                        for choice in result.choices
-                    ]
-                    span.set_attribute("llm.responses", json.dumps(responses))
-                else:
-                    responses = []
-                    span.set_attribute("llm.responses", json.dumps(responses))
-                if (
-                    hasattr(result, "system_fingerprint")
-                    and result.system_fingerprint is not None
-                    and result.system_fingerprint != NOT_GIVEN
-                ):
-                    span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
-                    )
-                # Get the usage
-                if hasattr(result, "usage") and result.usage is not None:
-                    usage = result.usage
-                    if usage is not None:
-                        usage_dict = {
-                            "input_tokens": result.usage.prompt_tokens,
-                            "output_tokens": usage.completion_tokens,
-                            "total_tokens": usage.total_tokens,
-                        }
-                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
-                span.set_status(StatusCode.OK)
-                span.end()
-                return result
-            else:
-                # iterate over kwargs.get("messages", {}) and calculate the prompt tokens
+            if is_streaming(kwargs):
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
                         json.dumps(message), kwargs.get("model")
                     )
 
-                # iterate over kwargs.get("functions") and calculate the prompt tokens
                 if (
                     kwargs.get("functions") is not None
                     and kwargs.get("functions") != NOT_GIVEN
@@ -764,6 +410,11 @@ def async_chat_completions_create(original_method, version, tracer):
                     function_call=kwargs.get("functions") is not None,
                     tool_calls=kwargs.get("tools") is not None,
                 )
+            else:
+                _set_response_attributes(span, kwargs, result)
+                span.set_status(StatusCode.OK)
+                span.end()
+                return result
 
         except Exception as error:
             span.record_exception(error)
@@ -771,7 +422,6 @@ def async_chat_completions_create(original_method, version, tracer):
             span.end()
             raise
 
-    # return the wrapped method
     return traced_method
 
 
@@ -781,51 +431,40 @@ def embeddings_create(original_method, version, tracer):
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
-
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": "",
-            "llm.embedding_inputs": json.dumps([kwargs.get("input", "")]),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
+            **get_extra_attributes(),
         }
 
-        if kwargs.get("encoding_format") is not None:
-            span_attributes["llm.encoding.formats"] = json.dumps(
-                [kwargs.get("encoding_format")]
+        encoding_format = kwargs.get("encoding_format")
+        if encoding_format is not None:
+            if not isinstance(encoding_format, list):
+                encoding_format = [encoding_format]
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = (
+                encoding_format
+            )
+
+        if kwargs.get("input") is not None:
+            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
+                [kwargs.get("input", "")]
             )
 
         attributes = LLMSpanAttributes(**span_attributes)
-        kwargs.get("encoding_format")
-
-        if kwargs.get("dimensions") is not None:
-            attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None:
-            attributes["llm.user"] = kwargs.get("user")
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
             for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -850,49 +489,40 @@ def async_embeddings_create(original_method, version, tracer):
     """
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
 
         service_provider = SERVICE_PROVIDERS["OPENAI"]
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
-            "llm.model": kwargs.get("model"),
-            "llm.prompts": json.dumps(
-                [{"role": "user", "content": kwargs.get("input", "")}]
-            ),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(kwargs),
+            SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
+            SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
-        kwargs.get("encoding_format")
 
-        if kwargs.get("encoding_format") is not None:
-            attributes.llm_encoding_format = kwargs.get("encoding_format")
-        if kwargs.get("dimensions") is not None:
-            attributes["llm.dimensions"] = kwargs.get("dimensions")
-        if kwargs.get("user") is not None:
-            attributes["llm.user"] = kwargs.get("user")
+        encoding_format = kwargs.get("encoding_format")
+        if encoding_format is not None:
+            if not isinstance(encoding_format, list):
+                encoding_format = [encoding_format]
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = (
+                encoding_format
+            )
+
+        if kwargs.get("input") is not None:
+            span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
+                [kwargs.get("input", "")]
+            )
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
-            async for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            for field, value in attributes.model_dump(by_alias=True).items():
+                set_span_attribute(span, field, value)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
@@ -953,3 +583,74 @@ def extract_content(choice):
     # Return an empty string if none of the above conditions are met
     else:
         return ""
+
+
+@silently_fail
+def _set_input_attributes(span, kwargs, attributes):
+
+    for field, value in attributes.model_dump(by_alias=True).items():
+        set_span_attribute(span, field, value)
+
+    if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
+        tools = []
+        for function in kwargs.get("functions"):
+            tools.append(json.dumps({"type": "function", "function": function}))
+
+    if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
+        tools.append(json.dumps(kwargs.get("tools")))
+
+    if tools:
+        set_span_attribute(span, SpanAttributes.LLM_TOOLS, json.dumps(tools))
+
+
+@silently_fail
+def _set_response_attributes(span, kwargs, result):
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, result.model)
+    if hasattr(result, "choices") and result.choices is not None:
+        responses = [
+            {
+                "role": (
+                    choice.message.role
+                    if choice.message and choice.message.role
+                    else "assistant"
+                ),
+                "content": extract_content(choice),
+                **(
+                    {"content_filter_results": choice["content_filter_results"]}
+                    if "content_filter_results" in choice
+                    else {}
+                ),
+            }
+            for choice in result.choices
+        ]
+        set_event_completion(span, responses)
+
+    if (
+        hasattr(result, "system_fingerprint")
+        and result.system_fingerprint is not None
+        and result.system_fingerprint != NOT_GIVEN
+    ):
+        set_span_attribute(
+            span,
+            SpanAttributes.LLM_SYSTEM_FINGERPRINT,
+            result.system_fingerprint,
+        )
+    # Get the usage
+    if hasattr(result, "usage") and result.usage is not None:
+        usage = result.usage
+        if usage is not None:
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                result.usage.prompt_tokens,
+            )
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                result.usage.completion_tokens,
+            )
+            set_span_attribute(
+                span,
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                result.usage.total_tokens,
+            )

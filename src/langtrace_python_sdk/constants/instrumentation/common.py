@@ -26,6 +26,8 @@ SERVICE_PROVIDERS = {
     "QDRANT": "Qdrant",
     "WEAVIATE": "Weaviate",
     "OLLAMA": "Ollama",
+    "VERTEXAI": "VertexAI",
+    "GEMINI": "Gemini",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"
