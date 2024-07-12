@@ -1,6 +1,4 @@
 from langtrace_python_sdk.constants.instrumentation.ollama import APIS
-from importlib_metadata import version as v
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.llm import (
     get_extra_attributes,
@@ -10,11 +8,7 @@ from langtrace_python_sdk.utils.llm import (
     set_event_completion,
 )
 from langtrace_python_sdk.utils.silently_fail import silently_fail
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
-from opentelemetry import baggage
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace.trace_attributes import LLMSpanAttributes, Event
 from opentelemetry.trace import SpanKind
 import json
@@ -28,7 +22,7 @@ def generic_patch(operation_name, version, tracer):
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, prompts=kwargs.get("messages", [])),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: api["ENDPOINT"],
             SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("format"),
@@ -146,18 +140,6 @@ def _set_input_attributes(span, kwargs, attributes):
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
 
-    if "messages" in kwargs:
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_PROMPTS,
-            json.dumps(kwargs.get("messages", [])),
-        )
-    if "prompt" in kwargs:
-        set_span_attribute(
-            span,
-            SpanAttributes.LLM_PROMPTS,
-            json.dumps([{"role": "user", "content": kwargs.get("prompt", "")}]),
-        )
     if "options" in kwargs:
         set_span_attribute(
             span,
