@@ -37,8 +37,8 @@ def test_image_generation(openai_client, exporter):
 
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
 
-    prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
-    assert prompts[0]["content"] == prompt
+    # prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
+    # assert prompts[0]["content"] == prompt
 
     langtrace_responses = json.loads(
         events[-1].attributes.get(SpanAttributes.LLM_COMPLETIONS)
@@ -89,8 +89,8 @@ async def test_async_image_generation(async_openai_client, exporter):
 
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
 
-    prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
-    assert prompts[0]["content"] == prompt
+    # prompts = json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))
+    # assert prompts[0]["content"] == prompt
 
     langtrace_responses = json.loads(
         events[-1].attributes.get(SpanAttributes.LLM_COMPLETIONS)

@@ -15,6 +15,8 @@ from .weaviate import WeaviateInstrumentation
 from .ollama import OllamaInstrumentor
 from .dspy import DspyInstrumentation
 from .litellm import LiteLLMInstrumentation
+from .vertexai import VertexAIInstrumentation
+from .gemini import GeminiInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -34,4 +36,6 @@ __all__ = [
     "OllamaInstrumentor",
     "DspyInstrumentation",
     "LiteLLMInstrumentation",
+    "VertexAIInstrumentation",
+    "GeminiInstrumentation",
 ]

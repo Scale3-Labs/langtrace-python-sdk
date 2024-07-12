@@ -29,6 +29,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_llm_url,
     get_langtrace_attributes,
+    set_event_completion,
     set_usage_attributes,
 )
 from langtrace_python_sdk.constants.instrumentation.common import (
@@ -139,18 +140,8 @@ def chat_completions_create(original_method, version, tracer):
                         }
                         for choice in result.choices
                     ]
-                    set_span_attribute(
-                        span,
-                        SpanAttributes.LLM_COMPLETIONS,
-                        json.dumps(responses),
-                    )
-                else:
-                    responses = []
-                    set_span_attribute(
-                        span,
-                        SpanAttributes.LLM_COMPLETIONS,
-                        json.dumps(responses),
-                    )
+                    set_event_completion(span, responses)
+
                 if (
                     hasattr(result, "system_fingerprint")
                     and result.system_fingerprint is not None
@@ -270,11 +261,8 @@ def chat_completions_create(original_method, version, tracer):
                 span,
                 {"input_tokens": prompt_tokens, "output_tokens": completion_tokens},
             )
-
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_COMPLETIONS,
-                json.dumps([{"role": "assistant", "content": "".join(result_content)}]),
+            set_event_completion(
+                span, [{"role": "assistant", "content": "".join(result_content)}]
             )
 
             span.set_status(StatusCode.OK)
@@ -379,18 +367,9 @@ def async_chat_completions_create(original_method, version, tracer):
                         }
                         for choice in result.choices
                     ]
-                    set_span_attribute(
-                        span,
-                        SpanAttributes.LLM_COMPLETIONS,
-                        json.dumps(responses),
-                    )
-                else:
-                    responses = []
-                    set_span_attribute(
-                        span,
-                        SpanAttributes.LLM_COMPLETIONS,
-                        json.dumps(responses),
-                    )
+
+                    set_event_completion(span, responses)
+
                 if (
                     hasattr(result, "system_fingerprint")
                     and result.system_fingerprint is not None
@@ -515,17 +494,15 @@ def async_chat_completions_create(original_method, version, tracer):
                 span,
                 {"input_tokens": prompt_tokens, "output_tokens": completion_tokens},
             )
-            set_span_attribute(
+
+            set_event_completion(
                 span,
-                SpanAttributes.LLM_COMPLETIONS,
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(result_content),
-                        }
-                    ]
-                ),
+                [
+                    {
+                        "role": "assistant",
+                        "content": "".join(result_content),
+                    }
+                ],
             )
 
             span.set_status(StatusCode.OK)

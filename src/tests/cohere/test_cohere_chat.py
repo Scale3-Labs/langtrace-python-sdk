@@ -4,7 +4,13 @@ from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVID
 import pytest
 import importlib
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
-from tests.utils import assert_response_format, assert_token_count
+from tests.utils import (
+    assert_completion_in_events,
+    assert_langtrace_attributes,
+    assert_prompt_in_events,
+    assert_response_format,
+    assert_token_count,
+)
 from importlib_metadata import version as v
 from langtrace.trace_attributes import SpanAttributes
 
@@ -34,15 +40,10 @@ def test_cohere_chat(cohere_client, exporter):
     cohere_span = spans[-1]
     assert cohere_span.name == APIS["CHAT_CREATE"]["METHOD"]
     attributes = cohere_span.attributes
+    assert_langtrace_attributes(attributes, SERVICE_PROVIDERS["COHERE"])
+    assert_prompt_in_events(cohere_span.events)
+    assert_completion_in_events(cohere_span.events)
 
-    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
-    assert (
-        attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME)
-        == SERVICE_PROVIDERS["COHERE"]
-    )
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
-    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("cohere")
-    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
     assert attributes.get(SpanAttributes.LLM_URL) == APIS["CHAT_CREATE"]["URL"]
     assert attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_CREATE"]["ENDPOINT"]
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
@@ -52,17 +53,8 @@ def test_cohere_chat(cohere_client, exporter):
     assert attributes.get(SpanAttributes.LLM_GENERATION_ID) == res.generation_id
 
     assert json.loads(attributes.get("llm_connectors")) == connectors
-    assert (
-        json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))[-1]["content"]
-        == messages_value
-    )
-    assert (
-        json.loads(attributes.get(SpanAttributes.LLM_COMPLETIONS))[-1]["content"]
-        == res.text
-    )
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
 
 
 @pytest.mark.vcr
@@ -117,17 +109,10 @@ def test_cohere_chat_streaming(cohere_client, exporter):
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     assert json.loads(attributes.get("llm_connectors")) == connectors
-    assert (
-        json.loads(attributes.get(SpanAttributes.LLM_PROMPTS))[-1]["content"]
-        == messages_value
-    )
     events = cohere_span.events
+    assert_prompt_in_events(events)
+    assert_completion_in_events(events)
     assert events[-1].name == "stream.end"
-    assert len(events) - 2 == chunks_count
-    assert (
-        json.loads(attributes.get(SpanAttributes.LLM_COMPLETIONS))[-1]["content"]
-        == streamed_response
-    )
+    assert len(events) - 4 == chunks_count
 
     assert_token_count(attributes)
-    assert_response_format(attributes)

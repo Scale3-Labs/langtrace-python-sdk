@@ -3,7 +3,12 @@ from langtrace_python_sdk.constants.instrumentation.groq import APIS
 import pytest
 from langtrace.trace_attributes import SpanAttributes
 from importlib_metadata import version as v
-from tests.utils import assert_response_format, assert_token_count
+from tests.utils import (
+    assert_completion_in_events,
+    assert_prompt_in_events,
+    assert_response_format,
+    assert_token_count,
+)
 
 
 @pytest.mark.vcr
@@ -33,7 +38,8 @@ def test_chat_completion(exporter, groq_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert_token_count(attributes)
-    assert_response_format(attributes)
+    assert_prompt_in_events(groq_span.events)
+    assert_completion_in_events(groq_span.events)
 
 
 @pytest.mark.vcr()
@@ -63,7 +69,8 @@ async def test_async_chat_completion(exporter, async_groq_client):
         attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
     )
     assert_token_count(attributes)
-    assert_response_format(attributes)
+    assert_prompt_in_events(groq_span.events)
+    assert_completion_in_events(groq_span.events)
 
 
 @pytest.mark.vcr()
@@ -97,7 +104,7 @@ def test_chat_completion_streaming(exporter, groq_client):
     )
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
+    assert_completion_in_events(groq_span.events)
 
 
 @pytest.mark.vcr()
@@ -132,4 +139,4 @@ async def test_async_chat_completion_streaming(async_groq_client, exporter):
     )
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
+    assert_completion_in_events(groq_span.events)
