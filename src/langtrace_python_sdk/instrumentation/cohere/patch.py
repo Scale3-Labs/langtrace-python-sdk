@@ -26,18 +26,13 @@ from langtrace_python_sdk.utils.llm import (
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
-from opentelemetry import baggage
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants.instrumentation.cohere import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
-from importlib_metadata import version as v
-
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace.trace_attributes import SpanAttributes
 
 
@@ -51,6 +46,7 @@ def rerank(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
+            SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
             SpanAttributes.LLM_URL: APIS["RERANK"]["URL"],
             SpanAttributes.LLM_PATH: APIS["RERANK"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DOCUMENTS: json.dumps(kwargs.get("documents")),
@@ -204,6 +200,7 @@ def chat_create(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
+            SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
             SpanAttributes.LLM_URL: APIS["CHAT_CREATE"]["URL"],
             SpanAttributes.LLM_PATH: APIS["CHAT_CREATE"]["ENDPOINT"],
             **get_extra_attributes(),
@@ -371,6 +368,7 @@ def chat_stream(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
+            SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
             SpanAttributes.LLM_IS_STREAMING: True,
             SpanAttributes.LLM_URL: APIS["CHAT_STREAM"]["URL"],
             SpanAttributes.LLM_PATH: APIS["CHAT_STREAM"]["ENDPOINT"],
