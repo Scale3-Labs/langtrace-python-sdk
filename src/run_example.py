@@ -6,7 +6,7 @@ ENABLED_EXAMPLES = {
     "cohere": False,
     "fastapi": False,
     "langchain": False,
-    "llamaindex": True,
+    "llamaindex": False,
     "hiveagent": False,
     "openai": False,
     "perplexity": False,
@@ -15,6 +15,8 @@ ENABLED_EXAMPLES = {
     "weaviate": False,
     "ollama": False,
     "groq": False,
+    "vertexai": False,
+    "gemini": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -82,3 +84,22 @@ if ENABLED_EXAMPLES["ollama"]:
 
     print(Fore.BLUE + "Running Ollama example" + Fore.RESET)
     OllamaRunner().run()
+
+if ENABLED_EXAMPLES["groq"]:
+    from examples.langchain_example import GroqRunner
+
+    print(Fore.BLUE + "Running Groq example" + Fore.RESET)
+    GroqRunner().run()
+
+
+if ENABLED_EXAMPLES["vertexai"]:
+    from examples.vertexai_example import VertexAIRunner
+
+    print(Fore.BLUE + "Running Vertexai example" + Fore.RESET)
+    VertexAIRunner().run()
+
+if ENABLED_EXAMPLES["gemini"]:
+    from examples.gemini_example import GeminiRunner
+
+    print(Fore.BLUE + "Running Gemini example" + Fore.RESET)
+    GeminiRunner().run()

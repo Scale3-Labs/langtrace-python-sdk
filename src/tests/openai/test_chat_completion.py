@@ -1,8 +1,14 @@
 import pytest
 import json
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from tests.utils import assert_response_format, assert_token_count
+from tests.utils import (
+    assert_completion_in_events,
+    assert_prompt_in_events,
+    assert_response_format,
+    assert_token_count,
+)
 from importlib_metadata import version as v
+from langtrace.trace_attributes import SpanAttributes
 
 
 @pytest.mark.vcr()
@@ -22,33 +28,22 @@ def test_chat_completion(exporter, openai_client):
     assert completion_span.name == "openai.chat.completions.create"
 
     attributes = completion_span.attributes
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == "OpenAI"
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == v("openai")
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
-    assert attributes.get("url.full") == "https://api.openai.com/v1/"
-    assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
-    assert attributes.get("llm.model") == "gpt-4-0613"
-    assert attributes.get("llm.prompts") == json.dumps(messages_value)
-    assert attributes.get("llm.stream") is False
+
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("openai")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v("langtrace-python-sdk")
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.openai.com/v1/"
+    assert (
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+    )
+    assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
+    assert_prompt_in_events(completion_span.events)
+    assert_completion_in_events(completion_span.events)
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is False
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
-
-    langtrace_responses = json.loads(attributes.get("llm.responses"))
-    assert isinstance(langtrace_responses, list)
-    for langtrace_response in langtrace_responses:
-        assert isinstance(langtrace_response, dict)
-        assert "role" in langtrace_response
-        assert "content" in langtrace_response
-
-    langtrace_responses = json.loads(attributes.get("llm.responses"))
-    assert isinstance(langtrace_responses, list)
-    for langtrace_response in langtrace_responses:
-        assert isinstance(langtrace_response, dict)
-        assert "role" in langtrace_response
-        assert "content" in langtrace_response
 
 
 @pytest.mark.vcr()
@@ -64,6 +59,7 @@ def test_chat_completion_streaming(exporter, openai_client):
 
     chunk_count = 0
     response = openai_client.chat.completions.create(**kwargs)
+
     for _ in response:
         chunk_count += 1
 
@@ -73,36 +69,24 @@ def test_chat_completion_streaming(exporter, openai_client):
     assert streaming_span.name == "openai.chat.completions.create"
     attributes = streaming_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == "OpenAI"
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == v("openai")
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
-    assert attributes.get("url.full") == "https://api.openai.com/v1/"
-    assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
-    assert attributes.get("llm.model") == "gpt-4-0613"
-    assert attributes.get("llm.prompts") == json.dumps(messages_value)
-    assert attributes.get("llm.stream") is True
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("openai")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v("langtrace-python-sdk")
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.openai.com/v1/"
+    assert (
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+    )
+    assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
+    assert_prompt_in_events(streaming_span.events)
+    assert_completion_in_events(streaming_span.events)
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events
-    assert len(events) - 2 == chunk_count  # -2 for start and end events
+    assert len(events) - 4 == chunk_count  # -2 for start and end events
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
-
-    langtrace_responses = json.loads(attributes.get("llm.responses"))
-    assert isinstance(langtrace_responses, list)
-    for langtrace_response in langtrace_responses:
-        assert isinstance(langtrace_response, dict)
-        assert "role" in langtrace_response
-        assert "content" in langtrace_response
-
-    langtrace_responses = json.loads(attributes.get("llm.responses"))
-    assert isinstance(langtrace_responses, list)
-    for langtrace_response in langtrace_responses:
-        assert isinstance(langtrace_response, dict)
-        assert "role" in langtrace_response
-        assert "content" in langtrace_response
 
 
 @pytest.mark.vcr()
@@ -118,9 +102,9 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
     }
 
     chunk_count = 0
-    with await async_openai_client.chat.completions.create(**kwargs) as response:
-        async for _ in response:
-            chunk_count += 1
+    response = await async_openai_client.chat.completions.create(**kwargs)
+    async for chunk in response:
+        chunk_count += 1
 
     spans = exporter.get_finished_spans()
     streaming_span = spans[-1]
@@ -128,19 +112,21 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
     assert streaming_span.name == "openai.chat.completions.create"
     attributes = streaming_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == "OpenAI"
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == v("openai")
-    assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
-    assert attributes.get("url.full") == "https://api.openai.com/v1/"
-    assert attributes.get("llm.api") == APIS["CHAT_COMPLETION"]["ENDPOINT"]
-    assert attributes.get("llm.model") == "gpt-4-0613"
-    assert attributes.get("llm.prompts") == json.dumps(messages_value)
-    assert attributes.get("llm.stream") is True
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == "langtrace-python-sdk"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "OpenAI"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("openai")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v("langtrace-python-sdk")
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://api.openai.com/v1/"
+    assert (
+        attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_COMPLETION"]["ENDPOINT"]
+    )
+    assert attributes.get(SpanAttributes.LLM_RESPONSE_MODEL) == "gpt-4-0613"
+    assert_prompt_in_events(streaming_span.events)
+    assert_completion_in_events(streaming_span.events)
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
     events = streaming_span.events
-    assert len(events) - 2 == chunk_count  # -2 for start and end events
+    assert len(events) - 4 == chunk_count  # -2 for start and end events
 
     assert_token_count(attributes)
-    assert_response_format(attributes)

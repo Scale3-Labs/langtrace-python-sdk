@@ -4,8 +4,15 @@ from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVID
 import pytest
 import importlib
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
-from tests.utils import assert_response_format, assert_token_count
+from tests.utils import (
+    assert_completion_in_events,
+    assert_langtrace_attributes,
+    assert_prompt_in_events,
+    assert_response_format,
+    assert_token_count,
+)
 from importlib_metadata import version as v
+from langtrace.trace_attributes import SpanAttributes
 
 
 @pytest.mark.vcr
@@ -33,28 +40,21 @@ def test_cohere_chat(cohere_client, exporter):
     cohere_span = spans[-1]
     assert cohere_span.name == APIS["CHAT_CREATE"]["METHOD"]
     attributes = cohere_span.attributes
+    assert_langtrace_attributes(attributes, SERVICE_PROVIDERS["COHERE"])
+    assert_prompt_in_events(cohere_span.events)
+    assert_completion_in_events(cohere_span.events)
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["COHERE"]
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "cohere"
+    assert attributes.get(SpanAttributes.LLM_URL) == APIS["CHAT_CREATE"]["URL"]
+    assert attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_CREATE"]["ENDPOINT"]
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
+    assert attributes.get(SpanAttributes.LLM_REQUEST_TEMPERATURE) == kwargs.get(
+        "temperature"
     )
+    assert attributes.get(SpanAttributes.LLM_GENERATION_ID) == res.generation_id
 
-    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
-    assert attributes.get("url.full") == APIS["CHAT_CREATE"]["URL"]
-    assert attributes.get("llm.api") == APIS["CHAT_CREATE"]["ENDPOINT"]
-    assert attributes.get("llm.model") == llm_model_value
-    assert attributes.get("llm.generation_id") == res.generation_id
-    assert attributes.get("llm.temperature") == kwargs.get("temperature")
-    assert attributes.get("llm.stream") is False
-
-    assert json.loads(attributes.get("llm.connectors")) == connectors
-    assert json.loads(attributes.get("llm.prompts"))[-1]["content"] == messages_value
-    assert json.loads(attributes.get("llm.responses"))[-1]["content"] == res.text
+    assert json.loads(attributes.get("llm_connectors")) == connectors
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
 
 
 @pytest.mark.vcr
@@ -92,27 +92,27 @@ def test_cohere_chat_streaming(cohere_client, exporter):
     assert cohere_span.name == APIS["CHAT_STREAM"]["METHOD"]
     attributes = cohere_span.attributes
 
-    assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
-    assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["COHERE"]
-    assert attributes.get("langtrace.service.type") == "llm"
-    assert attributes.get("langtrace.service.version") == importlib.metadata.version(
-        "cohere"
-    )
-
-    assert attributes.get("langtrace.version") == v(LANGTRACE_SDK_NAME)
-    assert attributes.get("url.full") == APIS["CHAT_STREAM"]["URL"]
-    assert attributes.get("llm.api") == APIS["CHAT_STREAM"]["ENDPOINT"]
-    assert attributes.get("llm.model") == llm_model_value
-    assert attributes.get("llm.temperature") == kwargs.get("temperature")
-    assert attributes.get("llm.stream") is True
-    assert json.loads(attributes.get("llm.connectors")) == connectors
-    assert json.loads(attributes.get("llm.prompts"))[-1]["content"] == messages_value
-    events = cohere_span.events
-    assert events[-1].name == "stream.end"
-    assert len(events) - 2 == chunks_count
+    assert attributes.get(SpanAttributes.LANGTRACE_SDK_NAME) == LANGTRACE_SDK_NAME
     assert (
-        json.loads(attributes.get("llm.responses"))[-1]["content"] == streamed_response
+        attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME)
+        == SERVICE_PROVIDERS["COHERE"]
     )
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_TYPE) == "llm"
+    assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_VERSION) == v("cohere")
+    assert attributes.get(SpanAttributes.LANGTRACE_VERSION) == v(LANGTRACE_SDK_NAME)
+    assert attributes.get(SpanAttributes.LLM_URL) == APIS["CHAT_STREAM"]["URL"]
+    assert attributes.get(SpanAttributes.LLM_PATH) == APIS["CHAT_STREAM"]["ENDPOINT"]
+    assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
+    assert attributes.get(SpanAttributes.LLM_REQUEST_TEMPERATURE) == kwargs.get(
+        "temperature"
+    )
+    assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
+
+    assert json.loads(attributes.get("llm_connectors")) == connectors
+    events = cohere_span.events
+    assert_prompt_in_events(events)
+    assert_completion_in_events(events)
+    assert events[-1].name == "stream.end"
+    assert len(events) - 4 == chunks_count
 
     assert_token_count(attributes)
-    assert_response_format(attributes)
