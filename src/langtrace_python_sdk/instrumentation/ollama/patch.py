@@ -22,7 +22,10 @@ def generic_patch(operation_name, version, tracer):
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs, prompts=kwargs.get("messages", [])),
+            **get_llm_request_attributes(
+                kwargs,
+                prompts=kwargs.get("messages", None),
+            ),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: api["ENDPOINT"],
             SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("format"),

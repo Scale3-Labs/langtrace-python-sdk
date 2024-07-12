@@ -100,7 +100,6 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
             if "prompt" in kwargs
             else None
         )
-    print("PRMPT", prompts)
     top_k = (
         kwargs.get("n", None)
         or kwargs.get("k", None)
