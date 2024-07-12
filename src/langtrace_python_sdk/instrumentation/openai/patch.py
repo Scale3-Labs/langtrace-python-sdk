@@ -244,6 +244,8 @@ def chat_completions_create(original_method, version, tracer):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["GROQ"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)

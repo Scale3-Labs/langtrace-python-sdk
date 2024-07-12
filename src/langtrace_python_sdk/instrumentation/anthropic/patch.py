@@ -45,12 +45,10 @@ def messages_create(original_method, version, tracer):
 
         # extract system from kwargs and attach as a role to the prompts
         # we do this to keep it consistent with the openai
-        prompts = json.dumps(kwargs.get("messages", []))
+        prompts = kwargs.get("messages", [])
         system = kwargs.get("system")
         if system:
-            prompts = json.dumps(
-                [{"role": "system", "content": system}] + kwargs.get("messages", [])
-            )
+            prompts = [{"role": "system", "content": system}] + kwargs.get("messages", [])
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
