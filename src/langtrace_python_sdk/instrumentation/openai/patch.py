@@ -41,6 +41,7 @@ from langtrace_python_sdk.utils.llm import (
     is_streaming,
     set_event_completion,
     StreamWrapper,
+    set_span_attributes,
 )
 from openai._types import NOT_GIVEN
 
@@ -67,8 +68,7 @@ def images_generate(original_method, version, tracer):
             kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -131,8 +131,7 @@ def async_images_generate(original_method, version, tracer):
             kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
@@ -197,9 +196,7 @@ def images_edit(original_method, version, tracer):
             kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -463,8 +460,7 @@ def embeddings_create(original_method, version, tracer):
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
@@ -521,8 +517,7 @@ def async_embeddings_create(original_method, version, tracer):
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
-            for field, value in attributes.model_dump(by_alias=True).items():
-                set_span_attribute(span, field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)

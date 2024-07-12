@@ -95,8 +95,11 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
 
     user = kwargs.get("user", None)
     if prompts is None:
-        prompts = [{"role": user, "content": kwargs.get("prompt", [])}]
-
+        prompts = (
+            [{"role": user or "user", "content": kwargs.get("prompt")}]
+            if "prompt" in kwargs
+            else None
+        )
     top_k = (
         kwargs.get("n", None)
         or kwargs.get("k", None)
@@ -105,13 +108,13 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
     )
 
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
-
+    tools = kwargs.get("tools", None)
     return {
         SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model"),
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
         SpanAttributes.LLM_TOP_K: top_k,
-        SpanAttributes.LLM_PROMPTS: json.dumps(prompts),
+        SpanAttributes.LLM_PROMPTS: json.dumps(prompts) if prompts else None,
         SpanAttributes.LLM_USER: user,
         SpanAttributes.LLM_REQUEST_TOP_P: top_p,
         SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get("max_tokens"),
@@ -119,7 +122,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
         SpanAttributes.LLM_PRESENCE_PENALTY: kwargs.get("presence_penalty"),
         SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
         SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
-        SpanAttributes.LLM_TOOLS: json.dumps(kwargs.get("tools")),
+        SpanAttributes.LLM_TOOLS: json.dumps(tools) if tools else None,
         SpanAttributes.LLM_REQUEST_LOGPROPS: kwargs.get("logprobs"),
         SpanAttributes.LLM_REQUEST_LOGITBIAS: kwargs.get("logit_bias"),
         SpanAttributes.LLM_REQUEST_TOP_LOGPROPS: kwargs.get("top_logprobs"),
