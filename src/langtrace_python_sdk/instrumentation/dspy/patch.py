@@ -39,25 +39,25 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
                     ),
                 }
                 span_attributes["dspy.optimizer.module.prog"] = json.dumps(prog)
-        if "metric" in instance and instance.metric:
-            span_attributes["dspy.optimizer.metric"] = instance.metric.__name__
+        if hasattr(instance, 'metric'):
+            span_attributes["dspy.optimizer.metric"] = getattr(instance, 'metric').__name__
         if kwargs.get("trainset") and len(kwargs.get("trainset")) > 0:
             span_attributes["dspy.optimizer.trainset"] = str(kwargs.get("trainset"))
         config = {}
-        if "metric_threshold" in instance and instance.metric_threshold:
-            config["metric_threshold"] = instance.metric_threshold
-        if "teacher_settings" in instance and instance.teacher_settings:
-            config["teacher_settings"] = instance.teacher_settings
-        if "max_bootstrapped_demos" in instance and instance.max_bootstrapped_demos:
-            config["max_bootstrapped_demos"] = instance.max_bootstrapped_demos
-        if "max_labeled_demos" in instance and instance.max_labeled_demos:
-            config["max_labeled_demos"] = instance.max_labeled_demos
-        if "max_rounds" in instance and instance.max_rounds:
-            config["max_rounds"] = instance.max_rounds
-        if "max_errors" in instance and instance.max_errors:
-            config["max_errors"] = instance.max_errors
-        if "error_count" in instance and instance.error_count:
-            config["error_count"] = instance.error_count
+        if hasattr(instance, 'metric_threshold'):
+            config["metric_threshold"] = getattr(instance, 'metric_threshold')
+        if hasattr(instance, 'teacher_settings'):
+            config["teacher_settings"] = getattr(instance, 'teacher_settings')
+        if hasattr(instance, 'max_bootstrapped_demos'):
+            config["max_bootstrapped_demos"] = getattr(instance, 'max_bootstrapped_demos')
+        if hasattr(instance, 'max_labeled_demos'):
+            config["max_labeled_demos"] = getattr(instance, 'max_labeled_demos')
+        if hasattr(instance, 'max_rounds'):
+            config["max_rounds"] = getattr(instance, 'max_rounds')
+        if hasattr(instance, 'max_steps'):
+            config["max_errors"] = getattr(instance, 'max_errors')
+        if hasattr(instance, 'error_count'):
+            config["error_count"] = getattr(instance, 'error_count')
         if config and len(config) > 0:
             span_attributes["dspy.optimizer.config"] = json.dumps(config)
 
@@ -147,30 +147,30 @@ def patch_evaluate(operation_name, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        if "devset" in instance and instance.devset is not None:
-            span_attributes["dspy.evaluate.devset"] = str(instance.devset)
-        if "display" in instance and instance.display is not None:
-            span_attributes["dspy.evaluate.display"] = str(instance.display)
-        if "num_threads" in instance and instance.num_threads is not None:
-            span_attributes["dspy.evaluate.num_threads"] = str(instance.num_threads)
-        if "return_outputs" in instance and instance.return_outputs is not None:
+        if hasattr(instance, "devset"):
+            span_attributes["dspy.evaluate.devset"] = str(getattr(instance, "devset"))
+        if hasattr(instance, "trainset"):
+            span_attributes["dspy.evaluate.display"] = str(getattr(instance, "trainset"))
+        if hasattr(instance, "num_threads"):
+            span_attributes["dspy.evaluate.num_threads"] = str(getattr(instance, "num_threads"))
+        if hasattr(instance, "return_outputs"):
             span_attributes["dspy.evaluate.return_outputs"] = str(
-                instance.return_outputs
+                getattr(instance, "return_outputs")
             )
-        if "display_table" in instance and instance.display_table is not None:
-            span_attributes["dspy.evaluate.display_table"] = str(instance.display_table)
-        if "display_progress" in instance and instance.display_progress is not None:
+        if hasattr(instance, "display_table"):
+            span_attributes["dspy.evaluate.display_table"] = str(getattr(instance, "display_table"))
+        if hasattr(instance, "display_progress"):
             span_attributes["dspy.evaluate.display_progress"] = str(
-                instance.display_progress
+                getattr(instance, "display_progress")
             )
-        if "metric" in instance and instance.metric is not None:
-            span_attributes["dspy.evaluate.metric"] = instance.metric.__name__
-        if "error_count" in instance and instance.error_count is not None:
-            span_attributes["dspy.evaluate.error_count"] = str(instance.error_count)
-        if "error_lock" in instance and instance.error_lock is not None:
-            span_attributes["dspy.evaluate.error_lock"] = str(instance.error_lock)
-        if "max_errors" in instance and instance.max_errors is not None:
-            span_attributes["dspy.evaluate.max_errors"] = str(instance.max_errors)
+        if hasattr(instance, "metric"):
+            span_attributes["dspy.evaluate.metric"] = getattr(instance, "metric").__name__
+        if hasattr(instance, "error_count"):
+            span_attributes["dspy.evaluate.error_count"] = str(getattr(instance, "error_count"))
+        if hasattr(instance, "error_lock"):
+            span_attributes["dspy.evaluate.error_lock"] = str(getattr(instance, "error_lock"))
+        if hasattr(instance, "max_errors"):
+            span_attributes["dspy.evaluate.max_errors"] = str(getattr(instance, "max_errors"))
         if args and len(args) > 0:
             span_attributes["dspy.evaluate.args"] = str(args)
 
