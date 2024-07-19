@@ -16,5 +16,6 @@ def embeddings_create():
     result = client.embeddings.create(
         model="text-embedding-ada-002",
         input="Once upon a time, there was a pirate.",
+        encoding_format="float",
     )
     return result

@@ -9,7 +9,7 @@ from langtrace_python_sdk.utils.with_root_span import (
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_spans_to_console=False)
+langtrace.init(write_spans_to_console=True)
 client = OpenAI()
 
 

@@ -34,7 +34,9 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
             if args[0].prog:
                 prog = {
                     "name": args[0].prog.__class__.__name__,
-                    "signature": str(args[0].prog.signature) if args[0].prog.signature else None,
+                    "signature": (
+                        str(args[0].prog.signature) if args[0].prog.signature else None
+                    ),
                 }
                 span_attributes["dspy.optimizer.module.prog"] = json.dumps(prog)
         if "metric" in instance and instance.metric:
@@ -60,9 +62,7 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
             span_attributes["dspy.optimizer.config"] = json.dumps(config)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(
-            operation_name, kind=SpanKind.CLIENT
-        ) as span:
+        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:
@@ -108,9 +108,7 @@ def patch_signature(operation_name, version, tracer):
             span_attributes["dspy.signature.args"] = str(kwargs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(
-            operation_name, kind=SpanKind.CLIENT
-        ) as span:
+        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:
@@ -156,11 +154,15 @@ def patch_evaluate(operation_name, version, tracer):
         if "num_threads" in instance and instance.num_threads is not None:
             span_attributes["dspy.evaluate.num_threads"] = str(instance.num_threads)
         if "return_outputs" in instance and instance.return_outputs is not None:
-            span_attributes["dspy.evaluate.return_outputs"] = str(instance.return_outputs)
+            span_attributes["dspy.evaluate.return_outputs"] = str(
+                instance.return_outputs
+            )
         if "display_table" in instance and instance.display_table is not None:
             span_attributes["dspy.evaluate.display_table"] = str(instance.display_table)
         if "display_progress" in instance and instance.display_progress is not None:
-            span_attributes["dspy.evaluate.display_progress"] = str(instance.display_progress)
+            span_attributes["dspy.evaluate.display_progress"] = str(
+                instance.display_progress
+            )
         if "metric" in instance and instance.metric is not None:
             span_attributes["dspy.evaluate.metric"] = instance.metric.__name__
         if "error_count" in instance and instance.error_count is not None:
@@ -173,9 +175,7 @@ def patch_evaluate(operation_name, version, tracer):
             span_attributes["dspy.evaluate.args"] = str(args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(
-            operation_name, kind=SpanKind.CLIENT
-        ) as span:
+        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:

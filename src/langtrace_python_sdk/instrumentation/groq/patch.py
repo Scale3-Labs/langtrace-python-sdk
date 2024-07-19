@@ -17,11 +17,21 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
+from langtrace_python_sdk.utils import set_span_attribute
 from opentelemetry import baggage, trace
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
+from langtrace_python_sdk.utils.llm import (
+    get_base_url,
+    get_extra_attributes,
+    get_llm_request_attributes,
+    get_llm_url,
+    get_langtrace_attributes,
+    set_event_completion,
+    set_usage_attributes,
+)
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
@@ -31,25 +41,19 @@ from langtrace_python_sdk.utils.llm import calculate_prompt_tokens, estimate_tok
 from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace.trace_attributes import SpanAttributes
 
 
 def chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["GROQ"]
         # If base url contains perplexity or azure, set the service provider accordingly
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         # handle tool calls in the kwargs
         llm_prompts = []
@@ -80,27 +84,16 @@ def chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(llm_prompts),
-            "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None:
-            attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
-            attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None:
-            attributes.llm_user = kwargs.get("user")
         if kwargs.get("functions") is not None:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
@@ -111,20 +104,21 @@ def chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT) as span:
+        #                                   kind=SpanKind.CLIENT.value) as span:
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT,
+            kind=SpanKind.CLIENT.value,
             context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
-                span.set_attribute(field, value)
+            set_span_attribute(span, field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                span.set_attribute("llm.model", result.model)
+                set_span_attribute(
+                    span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
+                )
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
@@ -146,27 +140,23 @@ def chat_completions_create(original_method, version, tracer):
                         }
                         for choice in result.choices
                     ]
-                    span.set_attribute("llm.responses", json.dumps(responses))
-                else:
-                    responses = []
-                    span.set_attribute("llm.responses", json.dumps(responses))
+                    set_event_completion(span, responses)
+
                 if (
                     hasattr(result, "system_fingerprint")
                     and result.system_fingerprint is not None
                 ):
-                    span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
+                    set_span_attribute(
+                        span,
+                        SpanAttributes.LLM_SYSTEM_FINGERPRINT,
+                        result.system_fingerprint,
                     )
+
                 # Get the usage
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
-                    if usage is not None:
-                        usage_dict = {
-                            "input_tokens": result.usage.prompt_tokens,
-                            "output_tokens": usage.completion_tokens,
-                            "total_tokens": usage.total_tokens,
-                        }
-                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
+                    set_usage_attributes(span, dict(usage))
+
                 span.set_status(StatusCode.OK)
                 span.end()
                 return result
@@ -255,7 +245,7 @@ def chat_completions_create(original_method, version, tracer):
                 span.add_event(
                     Event.STREAM_OUTPUT.value,
                     {
-                        "response": (
+                        SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
                             "".join(content)
                             if len(content) > 0 and content[0] is not None
                             else ""
@@ -267,27 +257,14 @@ def chat_completions_create(original_method, version, tracer):
         finally:
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
-            span.set_attribute(
-                "llm.token.counts",
-                json.dumps(
-                    {
-                        "input_tokens": prompt_tokens,
-                        "output_tokens": completion_tokens,
-                        "total_tokens": prompt_tokens + completion_tokens,
-                    }
-                ),
+            set_usage_attributes(
+                span,
+                {"input_tokens": prompt_tokens, "output_tokens": completion_tokens},
             )
-            span.set_attribute(
-                "llm.responses",
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(result_content),
-                        }
-                    ]
-                ),
+            set_event_completion(
+                span, [{"role": "assistant", "content": "".join(result_content)}]
             )
+
             span.set_status(StatusCode.OK)
             span.end()
 
@@ -299,19 +276,12 @@ def async_chat_completions_create(original_method, version, tracer):
     """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
     async def traced_method(wrapped, instance, args, kwargs):
-        base_url = (
-            str(instance._client._base_url)
-            if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
-            else ""
-        )
         service_provider = SERVICE_PROVIDERS["GROQ"]
         # If base url contains perplexity or azure, set the service provider accordingly
-        if "perplexity" in base_url:
+        if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
-        elif "azure" in base_url:
+        elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-
-        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         # handle tool calls in the kwargs
         llm_prompts = []
@@ -342,27 +312,17 @@ def async_chat_completions_create(original_method, version, tracer):
                 llm_prompts.append(item)
 
         span_attributes = {
-            "langtrace.sdk.name": "langtrace-python-sdk",
-            "langtrace.service.name": service_provider,
-            "langtrace.service.type": "llm",
-            "langtrace.service.version": version,
-            "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "url.full": base_url,
-            "llm.api": APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            "llm.prompts": json.dumps(llm_prompts),
-            "llm.stream": kwargs.get("stream"),
-            **(extra_attributes if extra_attributes is not None else {}),
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         tools = []
-        if kwargs.get("temperature") is not None:
-            attributes.llm_temperature = kwargs.get("temperature")
-        if kwargs.get("top_p") is not None:
-            attributes.llm_top_p = kwargs.get("top_p")
-        if kwargs.get("user") is not None:
-            attributes.llm_user = kwargs.get("user")
+
         if kwargs.get("functions") is not None:
             for function in kwargs.get("functions"):
                 tools.append(json.dumps({"type": "function", "function": function}))
@@ -373,18 +333,19 @@ def async_chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT) as span:
+        #                                   kind=SpanKind.CLIENT.value) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
+            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT.value
         )
         for field, value in attributes.model_dump(by_alias=True).items():
-            if value is not None:
-                span.set_attribute(field, value)
+            set_span_attribute(span, field, value)
         try:
             # Attempt to call the original method
             result = await wrapped(*args, **kwargs)
             if kwargs.get("stream") is False or kwargs.get("stream") is None:
-                span.set_attribute("llm.model", result.model)
+                set_span_attribute(
+                    span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
+                )
                 if hasattr(result, "choices") and result.choices is not None:
                     responses = [
                         {
@@ -406,27 +367,25 @@ def async_chat_completions_create(original_method, version, tracer):
                         }
                         for choice in result.choices
                     ]
-                    span.set_attribute("llm.responses", json.dumps(responses))
-                else:
-                    responses = []
-                    span.set_attribute("llm.responses", json.dumps(responses))
+
+                    set_event_completion(span, responses)
+
                 if (
                     hasattr(result, "system_fingerprint")
                     and result.system_fingerprint is not None
                 ):
-                    span.set_attribute(
-                        "llm.system.fingerprint", result.system_fingerprint
+                    set_span_attribute(
+                        span,
+                        SpanAttributes.LLM_SYSTEM_FINGERPRINT,
+                        result.system_fingerprint,
                     )
+
                 # Get the usage
                 if hasattr(result, "usage") and result.usage is not None:
                     usage = result.usage
                     if usage is not None:
-                        usage_dict = {
-                            "input_tokens": result.usage.prompt_tokens,
-                            "output_tokens": usage.completion_tokens,
-                            "total_tokens": usage.total_tokens,
-                        }
-                        span.set_attribute("llm.token.counts", json.dumps(usage_dict))
+                        set_usage_attributes(span, dict(usage))
+
                 span.set_status(StatusCode.OK)
                 span.end()
                 return result
@@ -469,6 +428,9 @@ def async_chat_completions_create(original_method, version, tracer):
         try:
             async for chunk in result:
                 if hasattr(chunk, "model") and chunk.model is not None:
+                    set_span_attribute(
+                        span, SpanAttributes.LLM_RESPONSE_MODEL, chunk.model
+                    )
                     span.set_attribute("llm.model", chunk.model)
                 if hasattr(chunk, "choices") and chunk.choices is not None:
                     if not function_call and not tool_calls:
@@ -513,9 +475,9 @@ def async_chat_completions_create(original_method, version, tracer):
                 else:
                     content = []
                 span.add_event(
-                    Event.STREAM_OUTPUT.value,
+                    Event.RESPONSE.value,
                     {
-                        "response": (
+                        SpanAttributes.LLM_COMPLETIONS: (
                             "".join(content)
                             if len(content) > 0 and content[0] is not None
                             else ""
@@ -527,27 +489,22 @@ def async_chat_completions_create(original_method, version, tracer):
         finally:
             # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
-            span.set_attribute(
-                "llm.token.counts",
-                json.dumps(
+
+            set_usage_attributes(
+                span,
+                {"input_tokens": prompt_tokens, "output_tokens": completion_tokens},
+            )
+
+            set_event_completion(
+                span,
+                [
                     {
-                        "input_tokens": prompt_tokens,
-                        "output_tokens": completion_tokens,
-                        "total_tokens": prompt_tokens + completion_tokens,
+                        "role": "assistant",
+                        "content": "".join(result_content),
                     }
-                ),
+                ],
             )
-            span.set_attribute(
-                "llm.responses",
-                json.dumps(
-                    [
-                        {
-                            "role": "assistant",
-                            "content": "".join(result_content),
-                        }
-                    ]
-                ),
-            )
+
             span.set_status(StatusCode.OK)
             span.end()
 

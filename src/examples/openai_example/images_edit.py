@@ -23,8 +23,8 @@ def image_edit():
 
     response = client.images.edit(
         model="dall-e-2",
-        image=open("./resources/lounge_flamingo.png", "rb"),
-        mask=open("./resources/mask.png", "rb"),
+        image=open("src/examples/openai_example/resources/lounge_flamingo.png", "rb"),
+        mask=open("src/examples/openai_example/resources/mask.png", "rb"),
         prompt="A sunlit indoor lounge area with a pool and duck standing in side with flamingo.",
         n=1,
         size="1024x1024",

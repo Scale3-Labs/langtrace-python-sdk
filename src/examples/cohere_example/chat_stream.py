@@ -18,6 +18,9 @@ def chat_stream():
         message="Tell me a short story in 2 lines",
         preamble="Respond like a pirate",
         max_tokens=100,
+        k=3,
+        p=0.9,
+        temperature=0.5,
     ):
         if event.event_type == "text-generation":
             result.append(event.text)

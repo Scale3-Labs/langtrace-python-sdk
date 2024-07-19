@@ -1,0 +1,114 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Explain the importance of low
+      latency LLMs"}], "model": "llama3-8b-8192"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '116'
+      content-type:
+      - application/json
+      host:
+      - api.groq.com
+      user-agent:
+      - Groq/Python 0.9.0
+      x-stainless-arch:
+      - arm64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - MacOS
+      x-stainless-package-version:
+      - 0.9.0
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - 3.11.5
+    method: POST
+    uri: https://api.groq.com/openai/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      CF-Cache-Status:
+      - DYNAMIC
+      CF-RAY:
+      - 89d12ec96e290db6-MRS
+      Cache-Control:
+      - private, max-age=0, no-store, no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Encoding:
+      - gzip
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 02 Jul 2024 19:53:35 GMT
+      Server:
+      - cloudflare
+      Set-Cookie:
+      - __cf_bm=OFVZ5MTau_NNKPRUjheAMGYEZwox8.Qq_TAJs9A8z9o-1719950015-1.0.1.1-YU6dEHFQYzVO94VNwt3L81BuUTSs4sB_HQMi3jSugKQXoHPMGGETjuF.x_A_nltCq46MxBSKnw1V6rznSKA4ZQ;
+        path=/; expires=Tue, 02-Jul-24 20:23:35 GMT; domain=.groq.com; HttpOnly; Secure;
+        SameSite=None
+      Transfer-Encoding:
+      - chunked
+      alt-svc:
+      - h3=":443"; ma=86400
+      vary:
+      - Origin
+      via:
+      - 1.1 google
+      x-ratelimit-limit-requests:
+      - '14400'
+      x-ratelimit-limit-tokens:
+      - '30000'
+      x-ratelimit-remaining-requests:
+      - '14399'
+      x-ratelimit-remaining-tokens:
+      - '29985'
+      x-ratelimit-reset-requests:
+      - 6s
+      x-ratelimit-reset-tokens:
+      - 30ms
+      x-request-id:
+      - req_01j1tg4yj4eaqs83wn8j829pn8
+    status:
+      code: 200
+      message: OK
+version: 1
