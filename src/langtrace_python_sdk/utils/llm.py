@@ -123,6 +123,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
         SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
         SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
         SpanAttributes.LLM_TOOLS: json.dumps(tools) if tools else None,
+        SpanAttributes.LLM_TOOL_CHOICE: kwargs.get("tool_choice"),
         SpanAttributes.LLM_REQUEST_LOGPROPS: kwargs.get("logprobs"),
         SpanAttributes.LLM_REQUEST_LOGITBIAS: kwargs.get("logit_bias"),
         SpanAttributes.LLM_REQUEST_TOP_LOGPROPS: kwargs.get("top_logprobs"),
