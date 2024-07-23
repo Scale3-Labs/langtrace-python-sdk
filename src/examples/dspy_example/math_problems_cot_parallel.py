@@ -22,7 +22,8 @@ class CoT(dspy.Module):
         self.prog = dspy.ChainOfThought("question -> answer")
 
     def forward(self, question):
-        return self.prog(question=question)
+        result = inject_additional_attributes(lambda: self.prog(question=question), {'langtrace.span.name': 'MathProblemsCotParallel'})
+        return result
 
 @with_langtrace_root_span(name="parallel_example")
 def example():
