@@ -48,7 +48,9 @@ def messages_create(original_method, version, tracer):
         prompts = kwargs.get("messages", [])
         system = kwargs.get("system")
         if system:
-            prompts = [{"role": "system", "content": system}] + kwargs.get("messages", [])
+            prompts = [{"role": "system", "content": system}] + kwargs.get(
+                "messages", []
+            )
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
