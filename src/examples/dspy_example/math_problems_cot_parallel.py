@@ -5,7 +5,7 @@ from dspy.teleprompt import BootstrapFewShot
 from concurrent.futures import ThreadPoolExecutor
 
 # flake8: noqa
-from langtrace_python_sdk import langtrace, with_langtrace_root_span
+from langtrace_python_sdk import langtrace, with_langtrace_root_span, inject_additional_attributes
 
 langtrace.init()
 
