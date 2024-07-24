@@ -25,6 +25,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     is_streaming,
     set_event_completion,
+    set_event_completion_chunk,
     set_usage_attributes,
 )
 from opentelemetry.trace import SpanKind
