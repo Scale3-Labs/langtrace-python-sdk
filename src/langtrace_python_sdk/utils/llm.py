@@ -88,6 +88,7 @@ def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
         SpanAttributes.LANGTRACE_SERVICE_VERSION: version,
         SpanAttributes.LANGTRACE_SERVICE_NAME: service_provider,
         SpanAttributes.LANGTRACE_SERVICE_TYPE: vendor_type,
+        SpanAttributes.LLM_SYSTEM: service_provider,
     }
 
 
