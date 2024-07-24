@@ -30,6 +30,7 @@ import json
 from opentelemetry import baggage
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
+import os
 
 
 def estimate_tokens(prompt):
@@ -42,6 +43,9 @@ def estimate_tokens(prompt):
 
 
 def set_event_completion_chunk(span: Span, chunk):
+    disabled = os.environ.get("HIDE_SENSITIVE_DATA", False)
+    if disabled:
+        return
     span.add_event(
         name=SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK,
         attributes={
@@ -202,6 +206,9 @@ def get_tool_calls(item):
 
 
 def set_event_completion(span: Span, result_content):
+    disabled = os.environ.get("HIDE_SENSITIVE_DATA", False)
+    if disabled:
+        return
 
     span.add_event(
         name=SpanAttributes.LLM_CONTENT_COMPLETION,
@@ -351,15 +358,9 @@ class StreamWrapper:
                                 )
                                 self.completion_tokens += token_counts
                                 content.append(tool_call.function.arguments)
-            self.span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                        "".join(content)
-                        if len(content) > 0 and content[0] is not None
-                        else ""
-                    )
-                },
+            set_event_completion_chunk(
+                self.span,
+                "".join(content) if len(content) > 0 and content[0] is not None else "",
             )
             if content:
                 self.result_content.append(content[0])
@@ -368,16 +369,11 @@ class StreamWrapper:
             token_counts = estimate_tokens(chunk.text)
             self.completion_tokens += token_counts
             content = [chunk.text]
-            self.span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                        "".join(content)
-                        if len(content) > 0 and content[0] is not None
-                        else ""
-                    )
-                },
+            set_event_completion_chunk(
+                self.span,
+                "".join(content) if len(content) > 0 and content[0] is not None else "",
             )
+
             if content:
                 self.result_content.append(content[0])
 

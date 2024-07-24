@@ -22,6 +22,7 @@ from langtrace_python_sdk.utils.llm import (
     get_extra_attributes,
     get_llm_url,
     set_event_completion,
+    set_event_completion_chunk,
     set_usage_attributes,
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
@@ -403,10 +404,7 @@ def chat_stream(original_method, version, tracer):
                         content = event.text
                     else:
                         content = ""
-                    span.add_event(
-                        Event.STREAM_OUTPUT.value,
-                        {SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: "".join(content)},
-                    )
+                    set_event_completion_chunk(span, "".join(content))
 
                     if (
                         hasattr(event, "finish_reason")
