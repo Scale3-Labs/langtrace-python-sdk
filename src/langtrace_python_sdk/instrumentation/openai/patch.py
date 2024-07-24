@@ -65,7 +65,7 @@ def images_generate(original_method, version, tracer):
 
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             set_span_attributes(span, attributes)
@@ -128,7 +128,7 @@ def async_images_generate(original_method, version, tracer):
 
         with tracer.start_as_current_span(
             APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             set_span_attributes(span, attributes)
@@ -193,7 +193,7 @@ def images_edit(original_method, version, tracer):
 
         with tracer.start_as_current_span(
             APIS["IMAGES_EDIT"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             set_span_attributes(span, attributes)
@@ -283,7 +283,7 @@ def chat_completions_create(original_method, version, tracer):
 
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
         _set_input_attributes(span, kwargs, attributes)
@@ -377,7 +377,7 @@ def async_chat_completions_create(original_method, version, tracer):
 
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
         _set_input_attributes(span, kwargs, attributes)
@@ -456,7 +456,7 @@ def embeddings_create(original_method, version, tracer):
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
@@ -513,7 +513,7 @@ def async_embeddings_create(original_method, version, tracer):
 
         with tracer.start_as_current_span(
             APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
