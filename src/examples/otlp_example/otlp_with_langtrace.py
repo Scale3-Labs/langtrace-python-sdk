@@ -36,7 +36,7 @@ langtrace.init(custom_remote_exporter=otlp_exporter, batch=False)
 
 
 def chat_with_openai():
-    client = OpenAI(api_key="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")
+    client = OpenAI()
     messages = [
         {
             "role": "user",
