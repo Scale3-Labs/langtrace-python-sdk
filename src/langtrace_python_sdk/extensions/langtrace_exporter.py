@@ -97,7 +97,11 @@ class LangTraceExporter(SpanExporter):
             response = requests.post(
                 url=f"{self.api_host}",
                 data=json.dumps(data),
-                headers={"Content-Type": "application/json", "x-api-key": self.api_key},
+                headers={
+                    "Content-Type": "application/json",
+                    "x-api-key": self.api_key,
+                    "User-Agent": "LangtraceExporter",
+                },
                 timeout=20,
             )
 
