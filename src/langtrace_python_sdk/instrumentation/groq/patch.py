@@ -30,6 +30,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_langtrace_attributes,
     set_event_completion,
+    set_event_completion_chunk,
     set_usage_attributes,
 )
 from langtrace_python_sdk.constants.instrumentation.common import (
@@ -104,10 +105,10 @@ def chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT.value) as span:
+        #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
             APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
@@ -242,15 +243,14 @@ def chat_completions_create(original_method, version, tracer):
                                         content = content + []
                 else:
                     content = []
-                span.add_event(
-                    Event.STREAM_OUTPUT.value,
-                    {
-                        SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                            "".join(content)
-                            if len(content) > 0 and content[0] is not None
-                            else ""
-                        )
-                    },
+
+                set_event_completion_chunk(
+                    span,
+                    (
+                        "".join(content)
+                        if len(content) > 0 and content[0] is not None
+                        else ""
+                    ),
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
@@ -333,9 +333,9 @@ def async_chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT.value) as span:
+        #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT.value
+            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
