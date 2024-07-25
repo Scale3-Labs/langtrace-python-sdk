@@ -30,6 +30,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_langtrace_attributes,
     set_event_completion,
+    set_event_completion_chunk,
     set_usage_attributes,
 )
 from langtrace_python_sdk.constants.instrumentation.common import (
@@ -242,15 +243,14 @@ def chat_completions_create(original_method, version, tracer):
                                         content = content + []
                 else:
                     content = []
-                span.add_event(
-                    Event.STREAM_OUTPUT.value,
-                    {
-                        SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                            "".join(content)
-                            if len(content) > 0 and content[0] is not None
-                            else ""
-                        )
-                    },
+
+                set_event_completion_chunk(
+                    span,
+                    (
+                        "".join(content)
+                        if len(content) > 0 and content[0] is not None
+                        else ""
+                    ),
                 )
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
