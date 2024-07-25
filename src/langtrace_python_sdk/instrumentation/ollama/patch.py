@@ -6,6 +6,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_llm_url,
     set_event_completion,
+    set_event_completion_chunk,
 )
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
@@ -177,12 +178,8 @@ def _handle_streaming_response(span, response, api):
             if api == "generate":
                 accumulated_tokens["response"] += chunk["response"]
 
-            span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: chunk.get("response")
-                    or chunk.get("message").get("content"),
-                },
+            set_event_completion_chunk(
+                span, chunk.get("response") or chunk.get("message").get("content")
             )
 
         _set_response_attributes(span, chunk | accumulated_tokens)
@@ -211,12 +208,7 @@ async def _ahandle_streaming_response(span, response, api):
             if api == "generate":
                 accumulated_tokens["response"] += chunk["response"]
 
-            span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: json.dumps(chunk),
-                },
-            )
+            set_event_completion_chunk(span, chunk)
         _set_response_attributes(span, chunk | accumulated_tokens)
     finally:
         # Finalize span after processing all chunks
