@@ -27,13 +27,25 @@ class OpenMode(str):
 
 
 class LangTraceFile(io.BytesIO):
-    _host: str = os.environ.get("LANGTRACE_API_HOST", None) or LANGTRACE_REMOTE_URL
 
     def __init__(self, fs: "LangTraceFileSystem", path: str, mode: OpenMode):
         super().__init__()
         self.fs = fs
         self.path = path
         self.mode = mode
+        self._host: str = os.environ.get("LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL)
+        self._api_key: str = os.environ.get("LANGTRACE_API_KEY", None)
+        if self._host.endswith("/api/trace"):
+            self._host = self._host.replace("/api/trace", "")
+
+        if self._api_key is None:
+            print(Fore.RED)
+            print(
+                f"Missing Langtrace API key, proceed to {self._host} to create one"
+            )
+            print("Set the API key as an environment variable LANGTRACE_API_KEY")
+            print(Fore.RESET)
+            return
 
     def close(self) -> None:
         if not self.closed:
@@ -71,7 +83,7 @@ class LangTraceFile(io.BytesIO):
                 data=json.dumps(data),
                 headers={
                     "Content-Type": "application/json",
-                    "x-api-key": os.environ.get("LANGTRACE_API_KEY"),
+                    "x-api-key": self._api_key,
                 },
                 timeout=20,
             )
@@ -82,7 +94,6 @@ class LangTraceFile(io.BytesIO):
 
 
 class LangTraceFileSystem(AbstractFileSystem):
-    _host: str = os.environ.get("LANGTRACE_API_HOST", None) or LANGTRACE_REMOTE_URL
     protocol = "langtracefs"
     sep = "/"
 
@@ -90,6 +101,19 @@ class LangTraceFileSystem(AbstractFileSystem):
         super().__init__(*args, **kwargs)
         self.files = {}
         self.dirs = set()
+        self._host: str = os.environ.get("LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL)
+        self._api_key: str = os.environ.get("LANGTRACE_API_KEY", None)
+        if self._host.endswith("/api/trace"):
+            self._host = self._host.replace("/api/trace", "")
+
+        if self._api_key is None:
+            print(Fore.RED)
+            print(
+                f"Missing Langtrace API key, proceed to {self._host} to create one"
+            )
+            print("Set the API key as an environment variable LANGTRACE_API_KEY")
+            print(Fore.RESET)
+            return
 
     def open(
         self,
@@ -118,7 +142,7 @@ class LangTraceFileSystem(AbstractFileSystem):
                 url=f"{self._host}/api/dataset/download?id={dataset_id}",
                 headers={
                     "Content-Type": "application/json",
-                    "x-api-key": os.environ.get("LANGTRACE_API_KEY"),
+                    "x-api-key": self._api_key,
                 },
                 timeout=20,
             )
