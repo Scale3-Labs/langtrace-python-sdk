@@ -43,8 +43,8 @@ def estimate_tokens(prompt):
 
 
 def set_event_completion_chunk(span: Span, chunk):
-    disabled = os.environ.get("HIDE_SENSITIVE_DATA", False)
-    if disabled:
+    enabled = os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true")
+    if enabled.lower() == "false":
         return
     span.add_event(
         name=SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK,
@@ -207,8 +207,8 @@ def get_tool_calls(item):
 
 
 def set_event_completion(span: Span, result_content):
-    disabled = os.environ.get("HIDE_SENSITIVE_DATA", False)
-    if disabled:
+    enabled = os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true")
+    if enabled.lower() == "false":
         return
 
     span.add_event(

@@ -16,8 +16,8 @@ def set_span_attribute(span: Span, name, value):
 
 
 def set_event_prompt(span: Span, prompt):
-    disabled = os.environ.get("HIDE_SENSITIVE_DATA", False)
-    if disabled:
+    enabled = os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true")
+    if enabled.lower() == "false":
         return
 
     span.add_event(

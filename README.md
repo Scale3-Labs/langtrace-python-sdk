@@ -228,6 +228,11 @@ from langtrace_python_sdk import get_prompt_from_registry
 prompt = get_prompt_from_registry(<Registry ID>, options={"prompt_version": 1, "variables": {"foo": "bar"} })
 ```
 
+### Opt out of tracing prompt and completion data
+By default, prompt and completion data are captured. If you would like to opt out of it, set the following env var,
+
+`TRACE_PROMPT_COMPLETION_DATA=false`
+
 ## Supported integrations
 
 Langtrace automatically captures traces from the following vendors:
