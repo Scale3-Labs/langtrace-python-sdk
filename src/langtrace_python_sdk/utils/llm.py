@@ -88,10 +88,11 @@ def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
         SpanAttributes.LANGTRACE_SERVICE_VERSION: version,
         SpanAttributes.LANGTRACE_SERVICE_NAME: service_provider,
         SpanAttributes.LANGTRACE_SERVICE_TYPE: vendor_type,
+        SpanAttributes.LLM_SYSTEM: service_provider,
     }
 
 
-def get_llm_request_attributes(kwargs, prompts=None, model=None):
+def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name="chat"):
 
     user = kwargs.get("user", None)
     if prompts is None:
@@ -110,6 +111,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
     tools = kwargs.get("tools", None)
     return {
+        SpanAttributes.LLM_OPERATION_NAME: operation_name,
         SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model"),
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
