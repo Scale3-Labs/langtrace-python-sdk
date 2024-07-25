@@ -194,7 +194,7 @@ def main():
 from langtrace_python_sdk import with_langtrace_root_span, with_additional_attributes
 
 
-@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
+@with_additional_attributes({"user.id": "1234"})
 def api_call1():
     response = client.chat.completions.create(
         model="gpt-4",
@@ -204,7 +204,7 @@ def api_call1():
     return response
 
 
-@with_additional_attributes({"user.id": "5678", "user.feedback.rating": -1})
+@with_additional_attributes({"user.id": "5678"})
 def api_call2():
     response = client.chat.completions.create(
         model="gpt-4",
@@ -253,6 +253,7 @@ Langtrace automatically captures traces from the following vendors:
 | CrewAI       | Framework       | :x:                | :white_check_mark:              |
 | Ollama       | Framework       | :x:                | :white_check_mark:              |
 | VertexAI     | Framework       | :x:                | :white_check_mark:              |
+| Vercel AI SDK| Framework       | :white_check_mark: | :x:                             |
 | Pinecone     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | QDrant       | Vector Database | :white_check_mark: | :white_check_mark:              |
