@@ -44,7 +44,7 @@ def rerank(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="rerank"),
             **get_llm_url(instance),
             SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
             SpanAttributes.LLM_URL: APIS["RERANK"]["URL"],
@@ -121,7 +121,7 @@ def embed(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="embed"),
             **get_llm_url(instance),
             SpanAttributes.LLM_URL: APIS["EMBED"]["URL"],
             SpanAttributes.LLM_PATH: APIS["EMBED"]["ENDPOINT"],

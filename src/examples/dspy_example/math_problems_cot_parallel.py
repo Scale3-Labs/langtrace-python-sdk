@@ -1,11 +1,11 @@
+import contextvars
 import dspy
 from dspy.datasets.gsm8k import GSM8K, gsm8k_metric
 from dspy.teleprompt import BootstrapFewShot
 from concurrent.futures import ThreadPoolExecutor
-from opentelemetry.context import get_current, attach, detach
 
 # flake8: noqa
-from langtrace_python_sdk import langtrace, with_langtrace_root_span
+from langtrace_python_sdk import langtrace, with_langtrace_root_span, inject_additional_attributes
 
 langtrace.init()
 
@@ -22,7 +22,8 @@ class CoT(dspy.Module):
         self.prog = dspy.ChainOfThought("question -> answer")
 
     def forward(self, question):
-        return self.prog(question=question)
+        result = inject_additional_attributes(lambda: self.prog(question=question), {'langtrace.span.name': 'MathProblemsCotParallel'})
+        return result
 
 @with_langtrace_root_span(name="parallel_example")
 def example():
@@ -34,21 +35,12 @@ def example():
     optimized_cot = teleprompter.compile(CoT(), trainset=gsm8k_trainset)
 
     questions = [
-        "What is the cosine of 0?",
-        "What is the tangent of 0?",
+        "What is the sine of 0?",
+        "What is the tangent of 100?",
     ]
 
-    current_context = get_current()
-
-    def run_with_context(context, func, *args, **kwargs):
-        token = attach(context)
-        try:
-            return func(*args, **kwargs)
-        finally:
-            detach(token)
-
     with ThreadPoolExecutor(max_workers=2) as executor:
-        futures = [executor.submit(run_with_context, current_context, optimized_cot, question=q) for q in questions]
+        futures = [executor.submit(contextvars.copy_context().run, optimized_cot, question=q) for q in questions]
 
         for future in futures:
             ans = future.result()

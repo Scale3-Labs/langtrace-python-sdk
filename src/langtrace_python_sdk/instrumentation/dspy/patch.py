@@ -61,8 +61,14 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
         if config and len(config) > 0:
             span_attributes["dspy.optimizer.config"] = json.dumps(config)
 
+        # passed operation name
+        opname = operation_name
+        if extra_attributes is not None and "langtrace.span.name" in extra_attributes:
+            # append the operation name to the span name
+            opname = f"{operation_name}-{extra_attributes['langtrace.span.name']}"
+
         attributes = FrameworkSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(opname, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:
@@ -100,6 +106,12 @@ def patch_signature(operation_name, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
+        # passed operation name
+        opname = operation_name
+        if extra_attributes is not None and "langtrace.span.name" in extra_attributes:
+            # append the operation name to the span name
+            opname = f"{operation_name}-{extra_attributes['langtrace.span.name']}"
+
         if instance.__class__.__name__:
             span_attributes["dspy.signature.name"] = instance.__class__.__name__
             span_attributes["dspy.signature"] = str(instance)
@@ -108,7 +120,7 @@ def patch_signature(operation_name, version, tracer):
             span_attributes["dspy.signature.args"] = str(kwargs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(opname, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:
@@ -147,6 +159,12 @@ def patch_evaluate(operation_name, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
+        # passed operation name
+        opname = operation_name
+        if extra_attributes is not None and "langtrace.span.name" in extra_attributes:
+            # append the operation name to the span name
+            opname = f"{operation_name}-{extra_attributes['langtrace.span.name']}"
+
         if hasattr(instance, "devset"):
             span_attributes["dspy.evaluate.devset"] = str(getattr(instance, "devset"))
         if hasattr(instance, "trainset"):
@@ -175,7 +193,7 @@ def patch_evaluate(operation_name, version, tracer):
             span_attributes["dspy.evaluate.args"] = str(args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(opname, kind=SpanKind.CLIENT) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:
