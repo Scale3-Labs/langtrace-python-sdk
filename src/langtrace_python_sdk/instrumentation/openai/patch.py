@@ -294,7 +294,7 @@ def chat_completions_create(original_method, version, tracer):
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
-                        json.dumps(message), kwargs.get("model")
+                        json.dumps(str(message)), kwargs.get("model")
                     )
 
                 if (
@@ -388,7 +388,7 @@ def async_chat_completions_create(original_method, version, tracer):
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
-                        json.dumps(message), kwargs.get("model")
+                        json.dumps((str(message))), kwargs.get("model")
                     )
 
                 if (
@@ -582,12 +582,11 @@ def extract_content(choice):
 
 @silently_fail
 def _set_input_attributes(span, kwargs, attributes):
-
+    tools = []
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
 
     if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
-        tools = []
         for function in kwargs.get("functions"):
             tools.append(json.dumps({"type": "function", "function": function}))
 
