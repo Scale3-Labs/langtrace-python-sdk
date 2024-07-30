@@ -25,6 +25,7 @@ from wrapt import wrap_function_wrapper
 from langtrace_python_sdk.instrumentation.langchain_core.patch import (
     generic_patch,
     runnable_patch,
+    callback_patch,
 )
 
 
@@ -72,6 +73,7 @@ def patch_module_classes(
                 continue
             try:
                 method_path = f"{name}.{method_name}"
+                print(f"Wrapping {module_name}.{method_path}")
                 wrap_function_wrapper(
                     module_name,
                     method_path,
@@ -126,39 +128,39 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
         modules_to_patch = [
             ("langchain_core.retrievers", "retriever", generic_patch, True, True),
             ("langchain_core.prompts.chat", "prompt", generic_patch, True, True),
-            ("langchain_core.runnables.base", "runnable", runnable_patch, True, True),
+            ("langchain_core.runnables.base", "runnable", callback_patch, True, True),
             (
                 "langchain_core.runnables.passthrough",
                 "runnablepassthrough",
-                runnable_patch,
+                callback_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.string",
                 "stroutputparser",
-                runnable_patch,
+                callback_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.json",
                 "jsonoutputparser",
-                runnable_patch,
+                callback_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.list",
                 "listoutputparser",
-                runnable_patch,
+                callback_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.xml",
                 "xmloutputparser",
-                runnable_patch,
+                callback_patch,
                 True,
                 True,
             ),
