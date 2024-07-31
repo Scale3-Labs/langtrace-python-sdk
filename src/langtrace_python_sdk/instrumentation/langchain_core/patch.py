@@ -364,9 +364,9 @@ class LangtraceCallBackHandler(BaseCallbackHandler):
         inputs: Dict[str, Any],
         *,
         run_id: UUID,
-        parent_run_id: UUID | None = None,
-        tags: List[str] | None = None,
-        metadata: Dict[str, Any] | None = None,
+        parent_run_id: Optional[UUID] = None,
+        tags: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ) -> Any:
         try:
@@ -391,7 +391,7 @@ class LangtraceCallBackHandler(BaseCallbackHandler):
         outputs: Dict[str, Any],
         *,
         run_id: UUID,
-        parent_run_id: UUID | None = None,
+        parent_run_id: Optional[UUID] = None,
         **kwargs: Any,
     ) -> Any:
         span = self.get_span(run_id)
