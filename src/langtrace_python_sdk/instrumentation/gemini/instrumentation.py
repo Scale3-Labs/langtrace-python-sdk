@@ -14,7 +14,7 @@ class GeminiInstrumentation(BaseInstrumentor):
     def _instrument(self, **kwargs):
         trace_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", trace_provider)
-        version = v("google-cloud-aiplatform")
+        version = v("google-generativeai")
 
         for _, api_config in APIS.items():
             module = api_config.get("module")
