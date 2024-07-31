@@ -28,6 +28,8 @@ from langtrace_python_sdk.instrumentation.langchain_core.patch import (
     callback_patch,
 )
 
+CALLBACK_METHODS = ["invoke", "stream", "transform", "ainvoke", "astream", "atransform"]
+
 
 # pylint: disable=dangerous-default-value
 def patch_module_classes(
@@ -73,14 +75,24 @@ def patch_module_classes(
                 continue
             try:
                 method_path = f"{name}.{method_name}"
-                print(f"Wrapping {module_name}.{method_path}")
-                wrap_function_wrapper(
-                    module_name,
-                    method_path,
-                    patch_method(
-                        method_path, task, tracer, version, trace_output, trace_input
-                    ),
-                )
+                if method_name in CALLBACK_METHODS:
+                    print("Wrapping callback", module_name, method_path)
+                    wrap_function_wrapper(
+                        module_name, method_path, callback_patch("", tracer, version)
+                    )
+                else:
+                    wrap_function_wrapper(
+                        module_name,
+                        method_path,
+                        patch_method(
+                            method_path,
+                            task,
+                            tracer,
+                            version,
+                            trace_output,
+                            trace_input,
+                        ),
+                    )
             # pylint: disable=broad-except
             except Exception:
                 pass
@@ -126,41 +138,49 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
         ]
 
         modules_to_patch = [
+            ("langchain.chains.base", "Chain", generic_patch, True, True),
             ("langchain_core.retrievers", "retriever", generic_patch, True, True),
-            ("langchain_core.prompts.chat", "prompt", generic_patch, True, True),
-            ("langchain_core.runnables.base", "runnable", callback_patch, True, True),
+            ("langchain_core.prompts.chat", "prompt", runnable_patch, True, True),
+            ("langchain_core.runnables.base", "runnable", runnable_patch, True, True),
             (
                 "langchain_core.runnables.passthrough",
                 "runnablepassthrough",
-                callback_patch,
+                runnable_patch,
+                True,
+                True,
+            ),
+            (
+                "langchain_core.runnables.base",
+                "RunnableSequence",
+                runnable_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.string",
                 "stroutputparser",
-                callback_patch,
+                runnable_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.json",
                 "jsonoutputparser",
-                callback_patch,
+                runnable_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.list",
                 "listoutputparser",
-                callback_patch,
+                runnable_patch,
                 True,
                 True,
             ),
             (
                 "langchain_core.output_parsers.xml",
                 "xmloutputparser",
-                callback_patch,
+                runnable_patch,
                 True,
                 True,
             ),

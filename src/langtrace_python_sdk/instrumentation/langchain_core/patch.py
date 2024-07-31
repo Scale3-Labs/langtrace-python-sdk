@@ -20,6 +20,7 @@ from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace_python_sdk.utils import set_event_prompt
 from langtrace_python_sdk.utils.llm import set_span_attributes
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind, StatusCode
@@ -39,6 +40,7 @@ from langchain_core.messages import BaseMessage
 from langchain_core.outputs import LLMResult
 from opentelemetry.trace import Span, Context
 from opentelemetry import context as context_api
+from langtrace.trace_attributes import SpanAttributes
 
 
 def generic_patch(
@@ -237,19 +239,27 @@ def to_json_string(any_object):
     return json.dumps(cleaned_object, default=custom_serializer, indent=2)
 
 
+def check_for_exisiting_callbacks(args, kwargs):
+    callbacks = []
+    if len(args) == 0:
+        return []
+
+    if len(args) > 1:
+        callbacks = args[1].get("callbacks", [])
+
+    elif kwargs.get("config"):
+        callbacks = kwargs.get("config", {}).get("callbacks", [])
+    else:
+        callbacks = []
+    return callbacks
+
+
 def callback_patch(
-    method_name, task, tracer: Tracer, version, trace_output=True, trace_input=True
+    method_name, tracer: Tracer, version, trace_output=True, trace_input=True
 ):
     def traced_method(wrapped, instance, args, kwargs):
-        if len(args) > 1:
-            # args[1] is config which (may) contain the callbacks setting
-            callbacks = args[1].get("callbacks", [])
-        elif kwargs.get("config"):
-            callbacks = kwargs.get("config", {}).get("callbacks", [])
-        else:
-            callbacks = []
-
-        _add_callback(tracer, callbacks)
+        callbacks = check_for_exisiting_callbacks(args, kwargs)
+        inject_custom_callback(tracer, callbacks)
 
         if len(args) > 1:
             args[1]["callbacks"] = callbacks
@@ -263,20 +273,20 @@ def callback_patch(
     return traced_method
 
 
-def _add_callback(
+def inject_custom_callback(
     tracer: Tracer, callbacks: Union[List[BaseCallbackHandler], BaseCallbackManager]
 ):
-    cb = SyncCallBackHandler(tracer)
+    cb = LangtraceCallBackHandler(tracer)
     if isinstance(callbacks, BaseCallbackManager):
         for c in callbacks.handlers:
-            if isinstance(c, SyncCallBackHandler):
+            if isinstance(c, LangtraceCallBackHandler):
                 cb = c
                 break
         else:
             callbacks.add_handler(cb)
     elif isinstance(callbacks, list):
         for c in callbacks:
-            if isinstance(c, SyncCallBackHandler):
+            if isinstance(c, LangtraceCallBackHandler):
                 cb = c
                 break
         else:
@@ -284,20 +294,21 @@ def _add_callback(
 
 
 @dataclass
-class SpanHolder:
+class SpanMap:
     span: Span
     token: Any
     context: Context
     children: list[UUID]
 
 
-class SyncCallBackHandler(BaseCallbackHandler):
+class LangtraceCallBackHandler(BaseCallbackHandler):
     def __init__(self, tracer: Tracer):
         self.tracer = tracer
-        self.spans: dict[UUID, SpanHolder] = {}
+        self.spans: dict[UUID, SpanMap] = {}
 
-    @staticmethod
-    def extract_span_name(serialized: Dict[str, Any], kwargs: Dict[str, Any]) -> str:
+    def extract_span_name(
+        self, serialized: Dict[str, Any], kwargs: Dict[str, Any]
+    ) -> str:
         try:
             return serialized["kwargs"]["name"]
         except KeyError:
@@ -307,6 +318,20 @@ class SyncCallBackHandler(BaseCallbackHandler):
         except KeyError:
             return serialized["id"][-1]
 
+    def get_span(self, run_id: UUID) -> Span:
+        try:
+            return self.spans[run_id].span
+        except KeyError:
+            print("Span not found")
+            return
+
+    def end_span(self, span: Span, run_id: UUID) -> None:
+        for child_id in self.spans[run_id].children:
+            child_span = self.spans[child_id].span
+            if child_span.end_time is None:  # avoid warning on ended spans
+                child_span.end()
+        span.end()
+
     def create_span(
         self,
         run_id: UUID,
@@ -315,28 +340,23 @@ class SyncCallBackHandler(BaseCallbackHandler):
         kind: SpanKind = SpanKind.INTERNAL,
     ) -> trace.Span:
         try:
+            # if there is an exisiting parent, extend the newly created span from the parent
             if parent_run_id is not None:
-                print("PARENT", parent_run_id)
-                print("slefspas,", self.spans)
                 span = self.tracer.start_span(
-                    span_name, context=self.spans[parent_run_id].context, kind=kind
+                    span_name, context=self.spans[parent_run_id].context
                 )
             else:
                 span = self.tracer.start_span(span_name)
 
             current_context = set_span_in_context(span)
-            token = context_api.attach(
-                context_api.set_value(
-                    "SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY", True
-                )
-            )
-            self.spans[run_id] = SpanHolder(span, token, current_context, [])
+            token = context_api.attach(current_context)
+            self.spans[run_id] = SpanMap(span, token, current_context, [])
             if parent_run_id is not None:
                 self.spans[parent_run_id].children.append(run_id)
 
             return span
         except Exception as e:
-            print("ERROR", e)
+            print("ERROR create span", e)
 
     def on_chain_start(
         self,
@@ -350,19 +370,17 @@ class SyncCallBackHandler(BaseCallbackHandler):
         **kwargs: Any,
     ) -> Any:
         try:
-            print("ON CHAIN START")
             span_name = self.extract_span_name(serialized, kwargs)
             span = self.create_span(run_id, parent_run_id, span_name)
             span.set_attribute(
-                "entity",
-                json.dumps(
+                "langtrace.chain.args",
+                to_json_string(
                     {
                         "inputs": inputs,
                         "tags": tags,
                         "metadata": metadata,
                         "kwargs": kwargs,
-                    },
-                    cls=CustomJsonEncode,
+                    }
                 ),
             )
         except Exception as e:
@@ -376,48 +394,8 @@ class SyncCallBackHandler(BaseCallbackHandler):
         parent_run_id: UUID | None = None,
         **kwargs: Any,
     ) -> Any:
-        print("ON CHAIN END")
-
-    def on_chat_model_start(
-        self,
-        serialized: Dict[str, Any],
-        messages: List[List[BaseMessage]],
-        *,
-        run_id: UUID,
-        parent_run_id: UUID | None = None,
-        tags: List[str] | None = None,
-        metadata: Dict[str, Any] | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        print("ON CHAT MODEL START")
-
-    def on_llm_start(
-        self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
-        *,
-        run_id: UUID,
-        parent_run_id: UUID | None = None,
-        tags: List[str] | None = None,
-        metadata: Dict[str, Any] | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        print("ON LLM START")
-
-    def on_llm_end(
-        self,
-        response: LLMResult,
-        *,
-        run_id: UUID,
-        parent_run_id: UUID | None = None,
-        **kwargs: Any,
-    ) -> Any:
-        print("ON LLM END")
-
-
-class CustomJsonEncode(json.JSONEncoder):
-    def default(self, o: Any) -> str:
-        try:
-            return super().default(o)
-        except TypeError:
-            return str(o)
+        span = self.get_span(run_id)
+        span.set_attribute(
+            "langtrace.outputs", to_json_string({"outputs": outputs, "kwargs": kwargs})
+        )
+        self.end_span(span, run_id)
