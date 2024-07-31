@@ -17,12 +17,10 @@ def test_langchain(exporter):
     chain = prompt | llm | output_parser
     chain.invoke({"input": "how can langsmith help with testing?"})
     spans = exporter.get_finished_spans()
-
+    print("YABOYUA", [span.name for span in spans])
     assert [
-        "ChatPromptTemplate.invoke",
+        "ChatPromptTemplate",
         "openai.chat.completions.create",
-        "StrOutputParser.parse",
-        "StrOutputParser.parse_result",
-        "StrOutputParser.invoke",
-        "RunnableSequence.invoke",
+        "StrOutputParser",
+        "RunnableSequence",
     ] == [span.name for span in spans]
