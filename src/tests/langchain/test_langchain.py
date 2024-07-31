@@ -17,7 +17,6 @@ def test_langchain(exporter):
     chain = prompt | llm | output_parser
     chain.invoke({"input": "how can langsmith help with testing?"})
     spans = exporter.get_finished_spans()
-    print("YABOYUA", [span.name for span in spans])
     assert [
         "ChatPromptTemplate",
         "openai.chat.completions.create",
