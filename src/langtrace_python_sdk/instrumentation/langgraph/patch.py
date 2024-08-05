@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import json
+from langtrace_python_sdk.utils.llm import get_span_name
 from opentelemetry.trace.propagation import set_span_in_context
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
@@ -52,7 +53,7 @@ def patch_graph_methods(method_name, tracer, version):
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            method_name,
+            name=get_span_name(method_name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:

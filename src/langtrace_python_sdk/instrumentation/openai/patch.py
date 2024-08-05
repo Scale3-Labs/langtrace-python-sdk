@@ -37,6 +37,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     get_tool_calls,
     is_streaming,
     set_event_completion,
@@ -64,7 +65,7 @@ def images_generate(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"],
+            name=get_span_name(APIS["IMAGES_GENERATION"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -127,7 +128,7 @@ def async_images_generate(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"],
+            name=get_span_name(APIS["IMAGES_GENERATION"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -192,7 +193,7 @@ def images_edit(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_EDIT"]["METHOD"],
+            name=APIS["IMAGES_EDIT"]["METHOD"],
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -282,7 +283,7 @@ def chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"],
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -376,7 +377,7 @@ def async_chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"],
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -455,7 +456,7 @@ def embeddings_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"],
+            name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -512,7 +513,7 @@ def async_embeddings_create(original_method, version, tracer):
             )
 
         with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"],
+            name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:

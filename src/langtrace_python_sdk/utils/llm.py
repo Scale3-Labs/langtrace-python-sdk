@@ -33,6 +33,13 @@ from opentelemetry.trace.status import StatusCode
 import os
 
 
+def get_span_name(operation_name):
+    extra_attributes = get_extra_attributes()
+    if extra_attributes is not None and "langtrace.span.name" in extra_attributes:
+        return f'{operation_name}-{extra_attributes["langtrace.span.name"]}'
+    return operation_name
+
+
 def estimate_tokens(prompt):
     """
     Estimate the number of tokens in a prompt."""

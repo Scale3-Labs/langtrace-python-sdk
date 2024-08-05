@@ -18,6 +18,7 @@ import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.utils.llm import get_span_name
 from opentelemetry import baggage, trace
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace import SpanKind, StatusCode
@@ -57,7 +58,7 @@ def generic_patch(
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            method_name,
+            name=get_span_name(method_name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
