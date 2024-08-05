@@ -5,6 +5,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     set_event_completion,
     set_event_completion_chunk,
 )
@@ -35,7 +36,7 @@ def generic_patch(operation_name, version, tracer):
 
         attributes = LLMSpanAttributes(**span_attributes)
         with tracer.start_as_current_span(
-            f'ollama.{api["METHOD"]}', kind=SpanKind.CLIENT
+            name=get_span_name(f'ollama.{api["METHOD"]}'), kind=SpanKind.CLIENT
         ) as span:
             _set_input_attributes(span, kwargs, attributes)
 

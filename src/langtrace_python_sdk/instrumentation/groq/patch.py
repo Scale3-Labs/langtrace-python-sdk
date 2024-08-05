@@ -29,6 +29,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_llm_url,
     get_langtrace_attributes,
+    get_span_name,
     set_event_completion,
     set_event_completion_chunk,
     set_usage_attributes,
@@ -107,7 +108,7 @@ def chat_completions_create(original_method, version, tracer):
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"],
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -335,7 +336,7 @@ def async_chat_completions_create(original_method, version, tracer):
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
         #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
