@@ -14,6 +14,7 @@ from .qdrant import QdrantInstrumentation
 from .weaviate import WeaviateInstrumentation
 from .ollama import OllamaInstrumentor
 from .dspy import DspyInstrumentation
+from .autogen import AutogenInstrumentation
 from .vertexai import VertexAIInstrumentation
 from .gemini import GeminiInstrumentation
 
@@ -34,6 +35,7 @@ __all__ = [
     "WeaviateInstrumentation",
     "OllamaInstrumentor",
     "DspyInstrumentation",
+    "AutogenInstrumentation",
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
 ]

@@ -15,6 +15,7 @@ ENABLED_EXAMPLES = {
     "weaviate": False,
     "ollama": False,
     "groq": False,
+    "autogen": True,
     "vertexai": False,
     "gemini": True,
 }
@@ -91,6 +92,11 @@ if ENABLED_EXAMPLES["groq"]:
     print(Fore.BLUE + "Running Groq example" + Fore.RESET)
     GroqRunner().run()
 
+if ENABLED_EXAMPLES["autogen"]:
+    from examples.autogen_example import AutoGenRunner
+
+    print(Fore.BLUE + "Running Autogen example" + Fore.RESET)
+    AutoGenRunner().run()
 
 if ENABLED_EXAMPLES["vertexai"]:
     from examples.vertexai_example import VertexAIRunner
