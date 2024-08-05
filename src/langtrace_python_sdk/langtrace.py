@@ -53,6 +53,7 @@ from langtrace_python_sdk.instrumentation import (
     WeaviateInstrumentation,
     OllamaInstrumentor,
     DspyInstrumentation,
+    LiteLLMInstrumentation,
     VertexAIInstrumentation,
     GeminiInstrumentation,
 )
@@ -115,6 +116,7 @@ def init(
         "ollama": OllamaInstrumentor(),
         "dspy": DspyInstrumentation(),
         "crewai": CrewAIInstrumentation(),
+        "litellm": LiteLLMInstrumentation(),
         "vertexai": VertexAIInstrumentation(),
         "gemini": GeminiInstrumentation(),
     }
