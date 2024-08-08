@@ -167,20 +167,21 @@ def _handle_streaming_response(span, response, api):
     accumulated_tokens = None
     if api == "chat":
         accumulated_tokens = {"message": {"content": "", "role": ""}}
-    if api == "completion":
+    if api == "completion" or api == "generate":
         accumulated_tokens = {"response": ""}
     span.add_event(Event.STREAM_START.value)
     try:
         for chunk in response:
+            content = None
             if api == "chat":
+                content = chunk["message"]["content"]
                 accumulated_tokens["message"]["content"] += chunk["message"]["content"]
                 accumulated_tokens["message"]["role"] = chunk["message"]["role"]
             if api == "generate":
+                content = chunk["response"]
                 accumulated_tokens["response"] += chunk["response"]
 
-            set_event_completion_chunk(
-                span, chunk.get("response") or chunk.get("message").get("content")
-            )
+            set_event_completion_chunk(span, content)
 
         _set_response_attributes(span, chunk | accumulated_tokens)
     finally:
@@ -196,19 +197,22 @@ async def _ahandle_streaming_response(span, response, api):
     accumulated_tokens = None
     if api == "chat":
         accumulated_tokens = {"message": {"content": "", "role": ""}}
-    if api == "completion":
+    if api == "completion" or api == "generate":
         accumulated_tokens = {"response": ""}
 
     span.add_event(Event.STREAM_START.value)
     try:
         async for chunk in response:
+            content = None
             if api == "chat":
+                content = chunk["message"]["content"]
                 accumulated_tokens["message"]["content"] += chunk["message"]["content"]
                 accumulated_tokens["message"]["role"] = chunk["message"]["role"]
             if api == "generate":
+                content = chunk["response"]
                 accumulated_tokens["response"] += chunk["response"]
 
-            set_event_completion_chunk(span, chunk)
+            set_event_completion_chunk(span, content)
         _set_response_attributes(span, chunk | accumulated_tokens)
     finally:
         # Finalize span after processing all chunks
