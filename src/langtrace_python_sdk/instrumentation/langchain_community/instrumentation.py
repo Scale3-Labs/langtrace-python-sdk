@@ -43,7 +43,6 @@ def patch_module_classes(
     """
     # import the module
     module = importlib.import_module(module_name)
-    print(f"module: {module}")
     # loop through all public classes in the module
     for name, obj in inspect.getmembers(
         module,
@@ -54,7 +53,6 @@ def patch_module_classes(
             # Skip private methods
             if method_name.startswith("_"):
                 continue
-
             try:
                 method_path = f"{name}.{method_name}"
                 wrap_function_wrapper(
