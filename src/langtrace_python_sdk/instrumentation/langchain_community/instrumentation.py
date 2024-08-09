@@ -43,6 +43,7 @@ def patch_module_classes(
     """
     # import the module
     module = importlib.import_module(module_name)
+    print(f"module: {module}")
     # loop through all public classes in the module
     for name, obj in inspect.getmembers(
         module,
@@ -53,6 +54,7 @@ def patch_module_classes(
             # Skip private methods
             if method_name.startswith("_"):
                 continue
+
             try:
                 method_path = f"{name}.{method_name}"
                 wrap_function_wrapper(
@@ -82,6 +84,12 @@ class LangchainCommunityInstrumentation(BaseInstrumentor):
 
         # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
+            (
+                "langchain_community.llms.sagemaker_endpoint",
+                "sagemaker_endpoint",
+                True,
+                True,
+            ),
             ("langchain_community.document_loaders.pdf", "load_pdf", True, True),
             ("langchain_community.vectorstores.faiss", "vector_store", False, False),
             ("langchain_community.vectorstores.pgvector", "vector_store", False, False),
