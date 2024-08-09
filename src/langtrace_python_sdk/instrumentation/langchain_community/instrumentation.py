@@ -82,6 +82,12 @@ class LangchainCommunityInstrumentation(BaseInstrumentor):
 
         # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
+            (
+                "langchain_community.llms.sagemaker_endpoint",
+                "sagemaker_endpoint",
+                True,
+                True,
+            ),
             ("langchain_community.document_loaders.pdf", "load_pdf", True, True),
             ("langchain_community.vectorstores.faiss", "vector_store", False, False),
             ("langchain_community.vectorstores.pgvector", "vector_store", False, False),

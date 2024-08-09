@@ -108,5 +108,12 @@ def custom_serializer(obj):
 
 def to_json_string(any_object):
     """Converts any object to a JSON-parseable string, omitting empty or None values."""
-    cleaned_object = clean_empty(any_object)
-    return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+    try:
+        cleaned_object = clean_empty(any_object)
+        return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+    except NotImplementedError as e:
+        # Handle specific types that raise this error
+        return str(any_object)  # or another appropriate fallback
+    except TypeError as e:
+        # Handle cases where obj is not serializable
+        return str(any_object)
