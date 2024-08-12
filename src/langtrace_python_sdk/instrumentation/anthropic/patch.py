@@ -14,51 +14,78 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import json
-
-from langtrace.trace_attributes import Event, LLMSpanAttributes
-from langtrace_python_sdk.utils import set_span_attribute, silently_fail
+from typing import Any, Callable, Dict, List, Optional, Iterator, TypedDict, Union
+from langtrace.trace_attributes import Event, SpanAttributes, LLMSpanAttributes
 from langtrace_python_sdk.utils.llm import (
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
-    is_streaming,
     set_event_completion,
     set_event_completion_chunk,
     set_usage_attributes,
+    set_span_attribute
 )
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-from langtrace.trace_attributes import SpanAttributes
+from opentelemetry.trace import Span, Tracer, SpanKind
+from opentelemetry.trace.status import StatusCode
+from src.langtrace_python_sdk.constants.instrumentation.anthropic import APIS
+from src.langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from src.langtrace_python_sdk.instrumentation.anthropic.types import StreamingResult, ResultType, MessagesCreateKwargs, ContentItem, Usage
 
-from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from langtrace_python_sdk.constants.instrumentation.common import (
-    SERVICE_PROVIDERS,
-)
+def handle_streaming_response(result: StreamingResult, span: Span) -> Iterator[str]:
+    result_content: List[str] = []
+    span.add_event(Event.STREAM_START.value)
+    input_tokens: int = 0
+    output_tokens: int = 0
+    try:
+        for chunk in result:
+            if chunk['message']["model"] is not None:
+                span.set_attribute(
+                    SpanAttributes.LLM_RESPONSE_MODEL, chunk["message"]["model"]
+                )
+            content: str = ""
+            if chunk["delta"].get("text") is not None:
+                content = chunk["delta"]["text"] or ""
+            result_content.append(content if len(content) > 0 else "")
 
+            if chunk["message"]["usage"] is not None:
+                usage = chunk["message"]["usage"]
+                input_tokens += usage.get("input_tokens", 0)
+                output_tokens += usage.get("output_tokens", 0)
 
-def messages_create(original_method, version, tracer):
+            if content:
+                set_event_completion_chunk(span, "".join(content))
+
+            yield content
+    finally:
+        span.add_event(Event.STREAM_END.value)
+        set_usage_attributes(
+            span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
+        )
+        completion: List[Dict[str, str]] = [{"role": "assistant", "content": "".join(result_content)}]
+        set_event_completion(span, completion)
+
+        span.set_status(StatusCode.OK)
+        span.end()
+
+def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
     """Wrap the `messages_create` method."""
 
-    def traced_method(wrapped, instance, args, kwargs):
+    def traced_method(wrapped: Callable[..., Any], instance: Any, args: List[Any], kwargs: MessagesCreateKwargs) -> Any:
         service_provider = SERVICE_PROVIDERS["ANTHROPIC"]
 
-        # extract system from kwargs and attach as a role to the prompts
-        # we do this to keep it consistent with the openai
+        # Extract system from kwargs and attach as a role to the prompts
         prompts = kwargs.get("messages", [])
         system = kwargs.get("system")
         if system:
-            prompts = [{"role": "system", "content": system}] + kwargs.get(
-                "messages", []
-            )
-
+            prompts = [{"role": "system", "content": system}] + kwargs.get("messages", [])
+        extraAttributes = get_extra_attributes()
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["MESSAGES_CREATE"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **extraAttributes,
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -77,56 +104,43 @@ def messages_create(original_method, version, tracer):
             # Record the exception in the span
             span.record_exception(err)
             # Set the span status to indicate an error
-            span.set_status(Status(StatusCode.ERROR, str(err)))
+            span.set_status(StatusCode.ERROR, str(err))
             # Reraise the exception to ensure it's not swallowed
             span.end()
             raise
 
-    def handle_streaming_response(result, span):
+    def handle_streaming_response(result: StreamingResult, span: Span) -> Iterator[str]:
         """Process and yield streaming response chunks."""
-        result_content = []
+        result_content: List[str] = []
         span.add_event(Event.STREAM_START.value)
-        input_tokens = 0
-        output_tokens = 0
+        input_tokens: int = 0
+        output_tokens: int = 0
         try:
             for chunk in result:
-                if (
-                    hasattr(chunk, "message")
-                    and chunk.message is not None
-                    and hasattr(chunk.message, "model")
-                    and chunk.message.model is not None
-                ):
-                    span.set_attribute(
-                        SpanAttributes.LLM_RESPONSE_MODEL, chunk.message.model
-                    )
-                content = ""
-                if hasattr(chunk, "delta") and chunk.delta is not None:
-                    content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
-                # Assuming content needs to be aggregated before processing
+                span.set_attribute(
+                    SpanAttributes.LLM_RESPONSE_MODEL, chunk["message"]["model"] or ""
+                )
+                content: str = ""
+                if hasattr(chunk, "delta") and chunk["delta"] is not None:
+                    content = chunk["delta"]["text"] or ""
                 result_content.append(content if len(content) > 0 else "")
-
-                if hasattr(chunk, "message") and hasattr(chunk.message, "usage"):
+                if chunk["message"]["usage"] is not None:
                     input_tokens += (
-                        chunk.message.usage.input_tokens
-                        if hasattr(chunk.message.usage, "input_tokens")
+                        chunk["message"]["usage"]["input_tokens"]
+                        if hasattr(chunk["message"]["usage"], "input_tokens")
                         else 0
                     )
                     output_tokens += (
-                        chunk.message.usage.output_tokens
-                        if hasattr(chunk.message.usage, "output_tokens")
+                        chunk["message"]["usage"]["output_tokens"]
+                        if hasattr(chunk["message"]["usage"], "output_tokens")
                         else 0
                     )
 
-                # Assuming span.add_event is part of a larger logging or event system
-                # Add event for each chunk of content
                 if content:
                     set_event_completion_chunk(span, "".join(content))
 
-                # Assuming this is part of a generator, yield chunk or aggregated content
                 yield content
         finally:
-
-            # Finalize span after processing all chunks
             span.add_event(Event.STREAM_END.value)
             set_usage_attributes(
                 span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
@@ -137,36 +151,34 @@ def messages_create(original_method, version, tracer):
             span.set_status(StatusCode.OK)
             span.end()
 
-    def set_response_attributes(result, span, kwargs):
-        if not is_streaming(kwargs):
-            if hasattr(result, "content") and result.content is not None:
+    def set_response_attributes(result: Union[ResultType, StreamingResult], span: Span, kwargs: MessagesCreateKwargs) -> Any:
+        if not isinstance(result, Iterator):
+            if result["content"] is not None:
                 set_span_attribute(
-                    span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
+                    span, SpanAttributes.LLM_RESPONSE_MODEL, result["model"]
                 )
-                completion = [
+                content_item = result["content"][0]
+                completion: List[ContentItem] = [
                     {
-                        "role": result.role if result.role else "assistant",
-                        "content": result.content[0].text,
-                        "type": result.content[0].type,
+                        "role": result["role"] or "assistant",
+                        "content": content_item.get("text", ""),
+                        "type": content_item.get("type", ""),
                     }
                 ]
                 set_event_completion(span, completion)
 
             else:
-                responses = []
+                responses: List[ContentItem] = []
                 set_event_completion(span, responses)
 
-            if (
-                hasattr(result, "system_fingerprint")
-                and result.system_fingerprint is not None
-            ):
+            if result["system_fingerprint"] is not None:
                 span.set_attribute(
                     SpanAttributes.LLM_SYSTEM_FINGERPRINT,
-                    result.system_fingerprint,
+                    result["system_fingerprint"],
                 )
             # Get the usage
-            if hasattr(result, "usage") and result.usage is not None:
-                usage = result.usage
+            if result["usage"] is not None:
+                usage: Usage = result["usage"]
                 set_usage_attributes(span, dict(usage))
 
             span.set_status(StatusCode.OK)

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from typing import Any, Dict
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
 from openai import NOT_GIVEN
@@ -136,9 +137,9 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
     }
 
 
-def get_extra_attributes():
+def get_extra_attributes() -> Dict[str, Any]:
     extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-    return extra_attributes or {}
+    return extra_attributes.__dict__ or {}
 
 
 def get_llm_url(instance):

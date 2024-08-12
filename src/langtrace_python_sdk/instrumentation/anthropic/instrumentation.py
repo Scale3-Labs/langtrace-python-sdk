@@ -16,38 +16,39 @@ limitations under the License.
 
 import importlib.metadata
 import logging
-from typing import Collection
+from typing import Collection, Any
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from opentelemetry.trace import TracerProvider
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
-
-from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
+from typing import Any
+from src.langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
 
 logging.basicConfig(level=logging.FATAL)
 
 
-class AnthropicInstrumentation(BaseInstrumentor):
+class AnthropicInstrumentation(BaseInstrumentor): # type: ignore[misc]
     """
-    The AnthropicInstrumentation class represents the Anthropic instrumentation
+    The AnthropicInstrumentation class represents the Anthropic instrumentation.
     """
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["anthropic >= 0.19.1"]
 
-    def _instrument(self, **kwargs):
-        tracer_provider = kwargs.get("tracer_provider")
+    def _instrument(self, **kwargs: dict[str, Any]) -> None:
+        tracer_provider: TracerProvider = kwargs.get("tracer_provider") # type: ignore
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("anthropic")
 
         wrap_function_wrapper(
             "anthropic.resources.messages",
             "Messages.create",
-            messages_create("anthropic.messages.create", version, tracer),
+            messages_create(version, tracer),
         )
 
-    def _instrument_module(self, module_name):
+    def _instrument_module(self, module_name: str) -> None:
         pass
 
-    def _uninstrument(self, **kwargs):
+    def _uninstrument(self, **kwargs: dict[str, Any]) -> None:
         pass
