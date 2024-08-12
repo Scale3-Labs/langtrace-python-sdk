@@ -49,6 +49,8 @@ def generic_patch(
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
+        span_attributes["langchain.metadata"] = to_json_string(kwargs)
+
         if trace_input and len(args) > 0:
             span_attributes["langchain.inputs"] = to_json_string(args)
 
@@ -92,7 +94,7 @@ def clean_empty(d):
     return {
         k: v
         for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
+        if v is not None and v != {} and not isinstance(v, object)
     }
 
 
@@ -111,9 +113,9 @@ def to_json_string(any_object):
     try:
         cleaned_object = clean_empty(any_object)
         return json.dumps(cleaned_object, default=custom_serializer, indent=2)
-    except NotImplementedError as e:
+    except NotImplementedError:
         # Handle specific types that raise this error
         return str(any_object)  # or another appropriate fallback
-    except TypeError as e:
+    except TypeError:
         # Handle cases where obj is not serializable
         return str(any_object)

@@ -72,6 +72,8 @@ def generic_patch(
                     inputs["input"] = arg
             span_attributes["langchain.inputs"] = to_json_string(inputs)
 
+        span_attributes["langchain.metadata"] = to_json_string(kwargs)
+
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
@@ -206,7 +208,7 @@ def clean_empty(d):
     return {
         k: v
         for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
+        if v is not None and v != {} and not isinstance(v, object)
     }
 
 

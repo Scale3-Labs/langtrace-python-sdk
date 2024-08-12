@@ -1,15 +1,21 @@
+import sys
+
+sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
+
 import json
-import boto3
-from langtrace_python_sdk import langtrace, with_langtrace_root_span
-from langchain_core.documents import Document
 from typing import Dict
-from langchain.chains.question_answering import load_qa_chain
-from langchain_community.llms.sagemaker_endpoint import (
-    LLMContentHandler,
-    SagemakerEndpoint,
-)
-from langchain_core.prompts import PromptTemplate
+
+import boto3
 from dotenv import load_dotenv
+from langchain.chains.question_answering import load_qa_chain
+from langchain_community.llms.sagemaker_endpoint import (LLMContentHandler,
+                                                         SagemakerEndpoint)
+from langchain_core.documents import Document
+from langchain_core.prompts import PromptTemplate
+
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
+
+# Add the path to the root of the project to the sys.path
 
 load_dotenv()
 

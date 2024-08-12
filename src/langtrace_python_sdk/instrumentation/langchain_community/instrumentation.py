@@ -49,9 +49,8 @@ def patch_module_classes(
         lambda member: inspect.isclass(member) and member.__module__ == module.__name__,
     ):
         # loop through all public methods of the class
-        for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
-            # Skip private methods
-            if method_name.startswith("_"):
+        for method_name, method in inspect.getmembers(obj, predicate=inspect.isfunction):
+            if method.__qualname__.split('.')[0] != name:
                 continue
             try:
                 method_path = f"{name}.{method_name}"
