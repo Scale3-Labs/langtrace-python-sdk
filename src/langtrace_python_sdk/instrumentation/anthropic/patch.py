@@ -91,7 +91,7 @@ def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+            name=get_span_name(APIS["MESSAGES_CREATE"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
