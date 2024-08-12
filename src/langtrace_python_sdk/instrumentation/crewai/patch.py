@@ -2,6 +2,7 @@ import json
 from importlib_metadata import version as v
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.llm import get_span_name
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -143,7 +144,9 @@ def patch_crew(operation_name, version, tracer):
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(operation_name, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            get_span_name(operation_name), kind=SpanKind.CLIENT
+        ) as span:
             _set_input_attributes(span, kwargs, attributes)
 
             try:
