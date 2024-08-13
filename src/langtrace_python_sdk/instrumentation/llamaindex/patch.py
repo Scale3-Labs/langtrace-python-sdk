@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace_python_sdk.utils.llm import get_span_name
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
@@ -49,7 +50,7 @@ def generic_patch(method, task, tracer, version):
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            method,
+            name=get_span_name(method),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -94,7 +95,9 @@ def async_generic_patch(method, task, tracer, version):
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
-        with tracer.start_as_current_span(method, kind=SpanKind.CLIENT) as span:
+        with tracer.start_as_current_span(
+            name=get_span_name(method), kind=SpanKind.CLIENT
+        ) as span:
             async for field, value in attributes.model_dump(by_alias=True).items():
                 if value is not None:
                     span.set_attribute(field, value)
