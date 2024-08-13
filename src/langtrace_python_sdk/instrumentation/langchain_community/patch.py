@@ -87,15 +87,31 @@ def generic_patch(
 
 def clean_empty(d):
     """Recursively remove empty lists, empty dicts, or None elements from a dictionary."""
-    if not isinstance(d, (dict, list)):
+    if not isinstance(d, (dict, list, tuple)):
         return d
+    if isinstance(d, tuple):
+        return tuple(val for val in (clean_empty(val) for val in d) if val != () and val is not None)
     if isinstance(d, list):
-        return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {
-        k: v
-        for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {} and not isinstance(v, object)
-    }
+        return [val for val in (clean_empty(val) for val in d) if val != [] and val is not None]
+    result = {}
+    for k, val in d.items():
+        if isinstance(val, dict):
+            val = clean_empty(val)
+            if val != {} and val is not None:
+                result[k] = val
+        elif isinstance(val, list):
+            val = [clean_empty(value) for value in val]
+            if val != [] and val is not None:
+                result[k] = val
+        elif isinstance(val, str) and val is not None:
+            if val.strip() != "":
+                result[k] = val.strip()
+        elif isinstance(val, object):
+            # some langchain objects have a text attribute
+            val = getattr(val, 'text', None)
+            if val is not None and val.strip() != "":
+                result[k] = val.strip()
+    return result
 
 
 def custom_serializer(obj):
