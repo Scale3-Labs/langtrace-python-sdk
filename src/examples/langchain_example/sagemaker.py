@@ -1,3 +1,7 @@
+import sys
+
+sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
+
 import json
 from typing import Dict
 
