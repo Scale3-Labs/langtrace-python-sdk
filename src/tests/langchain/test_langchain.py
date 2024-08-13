@@ -21,11 +21,11 @@ def test_langchain(exporter):
     assert [
         "ChatPromptTemplate.__init__",
         "ChatPromptTemplate.invoke",
+        "RunnableSequence.__init__",
+        "RunnableSequence.__or__",
+        "RunnableSequence.invoke",
         "openai.chat.completions.create",
         "StrOutputParser.parse",
         "StrOutputParser.parse_result",
         "StrOutputParser.invoke",
-        "RunnableSequence.invoke",
-        "RunnableSequence.__init__",
-        "RunnableSequence.__or__"
     ] == [span.name for span in spans]
