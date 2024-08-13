@@ -23,6 +23,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     is_streaming,
     set_event_completion,
     set_event_completion_chunk,
@@ -64,7 +65,7 @@ def messages_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+            name=get_span_name(APIS["MESSAGES_CREATE"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
