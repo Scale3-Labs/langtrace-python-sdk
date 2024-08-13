@@ -1,15 +1,11 @@
 import json
 
 from dotenv import find_dotenv, load_dotenv
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 from openai import OpenAI
 
-from langtrace_python_sdk import langtrace
-
-# from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
-
-langtrace.init(write_spans_to_console=True)
 
 
 client = OpenAI()
@@ -43,6 +39,7 @@ def get_current_time(location):
         return json.dumps({"location": location, "time": "unknown"})
 
 
+@with_langtrace_root_span("Tool Calling Streaming")
 def run_conversation():
     # Step 1: send the conversation and available functions to the model
     messages = [
@@ -94,6 +91,7 @@ def run_conversation():
         tools=tools,
         tool_choice="auto",  # auto is default, but we'll be explicit
         stream=True,
+        stream_options={"include_usage": True},
     )
 
     # For streaming, uncomment the following lines
@@ -104,7 +102,8 @@ def run_conversation():
     arguments = ""
     for chunk in response:
         if (
-            chunk.choices[0].delta is not None
+            chunk.choices
+            and chunk.choices[0].delta is not None
             and chunk.choices[0].delta.tool_calls is not None
         ):
             for choice in chunk.choices:

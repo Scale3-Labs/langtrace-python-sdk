@@ -1,15 +1,9 @@
 from dotenv import find_dotenv, load_dotenv
 from openai import OpenAI
-
-from langtrace_python_sdk import langtrace
-from langtrace_python_sdk.utils.with_root_span import (
-    with_additional_attributes,
-    with_langtrace_root_span,
-)
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_spans_to_console=True)
 client = OpenAI()
 
 
@@ -21,6 +15,7 @@ def api():
             {"role": "user", "content": "Tell me a story in 3 sentences or less."},
         ],
         stream=True,
+        stream_options={"include_usage": True},
         # stream=False,
     )
     return response
@@ -33,7 +28,7 @@ def chat_completion():
     # Uncomment this for streaming
     result = []
     for chunk in response:
-        if chunk.choices[0].delta.content is not None:
+        if chunk.choices and chunk.choices[0].delta.content is not None:
             content = [
                 choice.delta.content if choice.delta and choice.delta.content else ""
                 for choice in chunk.choices

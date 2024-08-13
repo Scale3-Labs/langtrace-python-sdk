@@ -2,17 +2,13 @@
 import json
 
 from dotenv import find_dotenv, load_dotenv
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 from openai import OpenAI
 
-from langtrace_python_sdk import langtrace
 
 client = OpenAI()
 
 _ = load_dotenv(find_dotenv())
-
-langtrace.init(
-    write_spans_to_console=True,
-)
 
 
 # Example dummy function hard coded to return the same weather
@@ -31,6 +27,7 @@ def get_current_weather(location, unit="fahrenheit"):
         return json.dumps({"location": location, "temperature": "unknown"})
 
 
+@with_langtrace_root_span("Chat Completion tool choice")
 def run_conversation():
     # Step 1: send the conversation and available functions to the model
     messages = [

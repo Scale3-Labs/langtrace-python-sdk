@@ -1,13 +1,12 @@
 # import json
 
 from dotenv import find_dotenv, load_dotenv
+from langtrace_python_sdk.utils.with_root_span import with_langtrace_root_span
 from openai import OpenAI
 
-from langtrace_python_sdk import langtrace
 
 _ = load_dotenv(find_dotenv())
 
-langtrace.init(write_spans_to_console=True)
 
 client = OpenAI()
 
@@ -36,6 +35,7 @@ student_custom_functions = [
 ]
 
 
+@with_langtrace_root_span("Tool Calling")
 def tool_calling():
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",

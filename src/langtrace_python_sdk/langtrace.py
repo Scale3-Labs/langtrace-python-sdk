@@ -57,6 +57,7 @@ from langtrace_python_sdk.instrumentation import (
     GeminiInstrumentation,
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 from colorama import Fore
 from langtrace_python_sdk.utils import check_if_sdk_is_outdated
 import os
@@ -98,7 +99,7 @@ def init(
     # Initialize tracer
     trace.set_tracer_provider(provider)
     all_instrumentations = {
-        "openai": OpenAIInstrumentation(),
+        "openai": OpenAIInstrumentor(),
         "groq": GroqInstrumentation(),
         "pinecone": PineconeInstrumentation(),
         "llamaindex": LlamaindexInstrumentation(),
@@ -110,7 +111,7 @@ def init(
         "langgraph": LanggraphInstrumentation(),
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
-        "weaviate": WeaviateInstrumentation(),
+        # "weaviate": WeaviateInstrumentation(),
         "sqlalchemy": SQLAlchemyInstrumentor(),
         "ollama": OllamaInstrumentor(),
         "dspy": DspyInstrumentation(),
