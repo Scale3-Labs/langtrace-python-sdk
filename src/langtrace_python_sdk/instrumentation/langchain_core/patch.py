@@ -59,19 +59,10 @@ def generic_patch(
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        if len(args) > 0 and trace_input:
-            inputs = {}
-            for arg in args:
-                if isinstance(arg, dict):
-                    for key, value in arg.items():
-                        if isinstance(value, list):
-                            for item in value:
-                                inputs[key] = item.__class__.__name__
-                        elif isinstance(value, str):
-                            inputs[key] = value
-                elif isinstance(arg, str):
-                    inputs["input"] = arg
-            span_attributes["langchain.inputs"] = to_json_string(inputs)
+        if trace_input and len(args) > 0:
+            span_attributes["langchain.inputs"] = to_json_string(args)
+
+        span_attributes["langchain.metadata"] = to_json_string(kwargs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
@@ -200,15 +191,31 @@ def runnable_patch(
 
 def clean_empty(d):
     """Recursively remove empty lists, empty dicts, or None elements from a dictionary."""
-    if not isinstance(d, (dict, list)):
+    if not isinstance(d, (dict, list, tuple)):
         return d
+    if isinstance(d, tuple):
+        return tuple(val for val in (clean_empty(val) for val in d) if val != () and val is not None)
     if isinstance(d, list):
-        return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {
-        k: v
-        for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
-    }
+        return [val for val in (clean_empty(val) for val in d) if val != [] and val is not None]
+    result = {}
+    for k, val in d.items():
+        if isinstance(val, dict):
+            val = clean_empty(val)
+            if val != {} and val is not None:
+                result[k] = val
+        elif isinstance(val, list):
+            val = [clean_empty(value) for value in val]
+            if val != [] and val is not None:
+                result[k] = val
+        elif isinstance(val, str) and val is not None:
+            if val.strip() != "":
+                result[k] = val.strip()
+        elif isinstance(val, object):
+            # some langchain objects have a text attribute
+            val = getattr(val, 'text', None)
+            if val is not None and val.strip() != "":
+                result[k] = val.strip()
+    return result
 
 
 def custom_serializer(obj):
@@ -223,5 +230,12 @@ def custom_serializer(obj):
 
 def to_json_string(any_object):
     """Converts any object to a JSON-parseable string, omitting empty or None values."""
-    cleaned_object = clean_empty(any_object)
-    return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+    try:
+        cleaned_object = clean_empty(any_object)
+        return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+    except NotImplementedError:
+        # Handle specific types that raise this error
+        return str(any_object)  # or another appropriate fallback
+    except TypeError:
+        # Handle cases where obj is not serializable
+        return str(any_object)
