@@ -20,8 +20,8 @@ def test_langchain(exporter):
 
     assert [
         "ChatPromptTemplate.__init__",
-        "ChatPromptTemplate.invoke",
         "RunnableSequence.__init__",
+        "ChatPromptTemplate.invoke",
         "RunnableSequence.__or__",
         "RunnableSequence.invoke",
         "openai.chat.completions.create",
