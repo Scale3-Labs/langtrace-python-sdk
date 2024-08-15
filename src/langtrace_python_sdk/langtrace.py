@@ -33,7 +33,8 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 import sys
-from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.resources import Resource, SERVICE_NAME
+
 
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation import (
@@ -79,10 +80,14 @@ def init(
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
-    provider = TracerProvider(
-        resource=Resource.create({"service.name": service_name or sys.argv[0]}),
-        sampler=sampler,
+    resource = Resource.create(
+        attributes={
+            SERVICE_NAME: os.environ.get("OTEL_SERVICE_NAME")
+            or service_name
+            or sys.argv[0]
+        }
     )
+    provider = TracerProvider(resource=resource, sampler=sampler)
 
     remote_write_exporter = (
         LangTraceExporter(api_key=api_key, api_host=host)
