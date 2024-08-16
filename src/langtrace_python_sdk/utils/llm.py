@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, Union
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
 from openai import NOT_GIVEN
 from tiktoken import get_encoding
+from langtrace.trace_attributes import LLMSpanAttributes, DatabaseSpanAttributes, FrameworkSpanAttributes
 
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -227,7 +228,7 @@ def set_event_completion(span: Span, result_content):
     )
 
 
-def set_span_attributes(span: Span, attributes: dict):
+def set_span_attributes(span: Span, attributes: Any)-> None:
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
 
