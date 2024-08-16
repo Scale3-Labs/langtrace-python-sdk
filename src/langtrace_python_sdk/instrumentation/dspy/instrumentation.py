@@ -27,12 +27,12 @@ class DspyInstrumentation(BaseInstrumentor):
     The DspyInstrumentor class represents the DSPy instrumentation"""
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["dspy >= 0.1.5"]
+        return ["dspy-ai >= 2.0.0"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = v("dspy")
+        version = v("dspy-ai")
         _W(
             "dspy.teleprompt.bootstrap",
             "BootstrapFewShot.compile",

@@ -30,6 +30,14 @@ import json
 from opentelemetry import baggage
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
+import os
+
+
+def get_span_name(operation_name):
+    extra_attributes = get_extra_attributes()
+    if extra_attributes is not None and "langtrace.span.name" in extra_attributes:
+        return f'{operation_name}-{extra_attributes["langtrace.span.name"]}'
+    return operation_name
 
 
 def estimate_tokens(prompt):
@@ -42,6 +50,9 @@ def estimate_tokens(prompt):
 
 
 def set_event_completion_chunk(span: Span, chunk):
+    enabled = os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true")
+    if enabled.lower() == "false":
+        return
     span.add_event(
         name=SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK,
         attributes={
@@ -88,10 +99,11 @@ def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
         SpanAttributes.LANGTRACE_SERVICE_VERSION: version,
         SpanAttributes.LANGTRACE_SERVICE_NAME: service_provider,
         SpanAttributes.LANGTRACE_SERVICE_TYPE: vendor_type,
+        SpanAttributes.LLM_SYSTEM: service_provider.lower(),
     }
 
 
-def get_llm_request_attributes(kwargs, prompts=None, model=None):
+def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name="chat"):
 
     user = kwargs.get("user", None)
     if prompts is None:
@@ -110,6 +122,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
     tools = kwargs.get("tools", None)
     return {
+        SpanAttributes.LLM_OPERATION_NAME: operation_name,
         SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model"),
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
@@ -123,6 +136,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None):
         SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
         SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
         SpanAttributes.LLM_TOOLS: json.dumps(tools) if tools else None,
+        SpanAttributes.LLM_TOOL_CHOICE: kwargs.get("tool_choice"),
         SpanAttributes.LLM_REQUEST_LOGPROPS: kwargs.get("logprobs"),
         SpanAttributes.LLM_REQUEST_LOGITBIAS: kwargs.get("logit_bias"),
         SpanAttributes.LLM_REQUEST_TOP_LOGPROPS: kwargs.get("top_logprobs"),
@@ -200,6 +214,9 @@ def get_tool_calls(item):
 
 
 def set_event_completion(span: Span, result_content):
+    enabled = os.environ.get("TRACE_PROMPT_COMPLETION_DATA", "true")
+    if enabled.lower() == "false":
+        return
 
     span.add_event(
         name=SpanAttributes.LLM_CONTENT_COMPLETION,
@@ -349,15 +366,9 @@ class StreamWrapper:
                                 )
                                 self.completion_tokens += token_counts
                                 content.append(tool_call.function.arguments)
-            self.span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                        "".join(content)
-                        if len(content) > 0 and content[0] is not None
-                        else ""
-                    )
-                },
+            set_event_completion_chunk(
+                self.span,
+                "".join(content) if len(content) > 0 and content[0] is not None else "",
             )
             if content:
                 self.result_content.append(content[0])
@@ -366,16 +377,11 @@ class StreamWrapper:
             token_counts = estimate_tokens(chunk.text)
             self.completion_tokens += token_counts
             content = [chunk.text]
-            self.span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                        "".join(content)
-                        if len(content) > 0 and content[0] is not None
-                        else ""
-                    )
-                },
+            set_event_completion_chunk(
+                self.span,
+                "".join(content) if len(content) > 0 and content[0] is not None else "",
             )
+
             if content:
                 self.result_content.append(content[0])
 

@@ -33,21 +33,24 @@ class CrewAIInstrumentation(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = v("crewai")
-        _W(
-            "crewai.crew",
-            "Crew.kickoff",
-            patch_crew("Crew.kickoff", version, tracer),
-        )
-        _W(
-            "crewai.agent",
-            "Agent.execute_task",
-            patch_crew("Agent.execute_task", version, tracer),
-        )
-        _W(
-            "crewai.task",
-            "Task.execute",
-            patch_crew("Task.execute", version, tracer),
-        )
+        try:
+            _W(
+                "crewai.crew",
+                "Crew.kickoff",
+                patch_crew("Crew.kickoff", version, tracer),
+            )
+            _W(
+                "crewai.agent",
+                "Agent.execute_task",
+                patch_crew("Agent.execute_task", version, tracer),
+            )
+            _W(
+                "crewai.task",
+                "Task.execute",
+                patch_crew("Task.execute", version, tracer),
+            )
+        except Exception as e:
+            pass
 
     def _uninstrument(self, **kwargs):
         pass

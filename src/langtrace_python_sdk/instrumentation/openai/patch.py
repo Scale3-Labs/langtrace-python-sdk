@@ -37,6 +37,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     get_tool_calls,
     is_streaming,
     set_event_completion,
@@ -55,7 +56,7 @@ def images_generate(original_method, version, tracer):
         service_provider = SERVICE_PROVIDERS["OPENAI"]
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="images_generate"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
             **get_extra_attributes(),
@@ -64,8 +65,8 @@ def images_generate(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["IMAGES_GENERATION"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             set_span_attributes(span, attributes)
@@ -118,7 +119,7 @@ def async_images_generate(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="images_generate"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
             **get_extra_attributes(),
@@ -127,8 +128,8 @@ def async_images_generate(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_GENERATION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["IMAGES_GENERATION"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             set_span_attributes(span, attributes)
@@ -181,7 +182,7 @@ def images_edit(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="images_edit"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["IMAGES_EDIT"]["ENDPOINT"],
             SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("response_format"),
@@ -192,8 +193,8 @@ def images_edit(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["IMAGES_EDIT"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=APIS["IMAGES_EDIT"]["METHOD"],
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
             set_span_attributes(span, attributes)
@@ -282,8 +283,8 @@ def chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
         _set_input_attributes(span, kwargs, attributes)
@@ -294,7 +295,7 @@ def chat_completions_create(original_method, version, tracer):
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
-                        json.dumps(message), kwargs.get("model")
+                        json.dumps(str(message)), kwargs.get("model")
                     )
 
                 if (
@@ -376,8 +377,8 @@ def async_chat_completions_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
         _set_input_attributes(span, kwargs, attributes)
@@ -388,7 +389,7 @@ def async_chat_completions_create(original_method, version, tracer):
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
-                        json.dumps(message), kwargs.get("model")
+                        json.dumps((str(message))), kwargs.get("model")
                     )
 
                 if (
@@ -432,7 +433,7 @@ def embeddings_create(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="embed"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
@@ -455,8 +456,8 @@ def embeddings_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
@@ -490,7 +491,7 @@ def async_embeddings_create(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="embed"),
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),
@@ -512,8 +513,8 @@ def async_embeddings_create(original_method, version, tracer):
             )
 
         with tracer.start_as_current_span(
-            APIS["EMBEDDINGS_CREATE"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
 
@@ -582,12 +583,11 @@ def extract_content(choice):
 
 @silently_fail
 def _set_input_attributes(span, kwargs, attributes):
-
+    tools = []
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
 
     if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
-        tools = []
         for function in kwargs.get("functions"):
             tools.append(json.dumps({"type": "function", "function": function}))
 

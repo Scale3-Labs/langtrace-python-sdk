@@ -10,6 +10,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     is_streaming,
     set_event_completion,
     set_event_completion_chunk,
@@ -35,7 +36,7 @@ def patch_gemini(name, version, tracer: Tracer):
         }
         attributes = LLMSpanAttributes(**span_attributes)
         span = tracer.start_span(
-            name=name,
+            name=get_span_name(name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -76,7 +77,7 @@ def apatch_gemini(name, version, tracer: Tracer):
         }
         attributes = LLMSpanAttributes(**span_attributes)
         span = tracer.start_span(
-            name=name,
+            name=get_span_name(name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -110,7 +111,10 @@ def get_llm_model(instance):
 
 def serialize_prompts(args, kwargs, instance):
     prompts = []
-    if hasattr(instance, "_system_instruction") and instance._system_instruction is not None:
+    if (
+        hasattr(instance, "_system_instruction")
+        and instance._system_instruction is not None
+    ):
         system_prompt = {
             "role": "system",
             "content": instance._system_instruction.__dict__["_pb"].parts[0].text,

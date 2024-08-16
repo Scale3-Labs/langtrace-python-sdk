@@ -21,7 +21,9 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_extra_attributes,
     get_llm_url,
+    get_span_name,
     set_event_completion,
+    set_event_completion_chunk,
     set_usage_attributes,
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
@@ -44,7 +46,7 @@ def rerank(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="rerank"),
             **get_llm_url(instance),
             SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
             SpanAttributes.LLM_URL: APIS["RERANK"]["URL"],
@@ -56,7 +58,9 @@ def rerank(original_method, version, tracer):
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        span = tracer.start_span(APIS["RERANK"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(
+            name=get_span_name(APIS["RERANK"]["METHOD"]), kind=SpanKind.CLIENT
+        )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
         try:
@@ -121,7 +125,7 @@ def embed(original_method, version, tracer):
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
-            **get_llm_request_attributes(kwargs),
+            **get_llm_request_attributes(kwargs, operation_name="embed"),
             **get_llm_url(instance),
             SpanAttributes.LLM_URL: APIS["EMBED"]["URL"],
             SpanAttributes.LLM_PATH: APIS["EMBED"]["ENDPOINT"],
@@ -136,7 +140,10 @@ def embed(original_method, version, tracer):
 
         attributes = LLMSpanAttributes(**span_attributes)
 
-        span = tracer.start_span(APIS["EMBED"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(
+            name=get_span_name(APIS["EMBED"]["METHOD"]),
+            kind=SpanKind.CLIENT,
+        )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
         try:
@@ -224,7 +231,9 @@ def chat_create(original_method, version, tracer):
             # stringify the list of objects
             attributes.llm_tool_results = json.dumps(kwargs.get("tool_results"))
 
-        span = tracer.start_span(APIS["CHAT_CREATE"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(
+            name=get_span_name(APIS["CHAT_CREATE"]["METHOD"]), kind=SpanKind.CLIENT
+        )
 
         # Set the attributes on the span
         for field, value in attributes.model_dump(by_alias=True).items():
@@ -390,7 +399,9 @@ def chat_stream(original_method, version, tracer):
             # stringify the list of objects
             attributes.llm_tool_results = json.dumps(kwargs.get("tool_results"))
 
-        span = tracer.start_span(APIS["CHAT_STREAM"]["METHOD"], kind=SpanKind.CLIENT)
+        span = tracer.start_span(
+            name=get_span_name(APIS["CHAT_STREAM"]["METHOD"]), kind=SpanKind.CLIENT
+        )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
         try:
@@ -403,10 +414,7 @@ def chat_stream(original_method, version, tracer):
                         content = event.text
                     else:
                         content = ""
-                    span.add_event(
-                        Event.STREAM_OUTPUT.value,
-                        {SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: "".join(content)},
-                    )
+                    set_event_completion_chunk(span, "".join(content))
 
                     if (
                         hasattr(event, "finish_reason")
