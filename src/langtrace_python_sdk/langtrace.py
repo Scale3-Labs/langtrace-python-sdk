@@ -72,7 +72,10 @@ def init(
     disable_instrumentations: Optional[DisableInstrumentations] = None,
     disable_tracing_for_functions: Optional[InstrumentationMethods] = None,
     service_name: Optional[str] = None,
+    disable_logging = False
 ):
+    if disable_logging:
+        sys.stdout = open(os.devnull, "w")
 
     host = (
         os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
@@ -90,7 +93,7 @@ def init(
     provider = TracerProvider(resource=resource, sampler=sampler)
 
     remote_write_exporter = (
-        LangTraceExporter(api_key=api_key, api_host=host)
+        LangTraceExporter(api_key=api_key, api_host=host, disable_logging=disable_logging)
         if custom_remote_exporter is None
         else custom_remote_exporter
     )
@@ -145,6 +148,8 @@ def init(
     else:
         print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
         provider.add_span_processor(batch_processor_remote)
+
+    sys.stdout = sys.__stdout__
 
 
 def init_instrumentations(
