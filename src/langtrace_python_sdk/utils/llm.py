@@ -327,20 +327,6 @@ class StreamWrapper:
             self.cleanup()
             raise StopAsyncIteration
 
-    def process_anthropic_chunk(self, chunk):
-        if hasattr(chunk, "message") and chunk.message is not None:
-            if self._response_model is None:
-                self._response_model = chunk.message.model
-
-            self.prompt_tokens = chunk.message.usage.input_tokens
-
-        if hasattr(chunk, "usage") and chunk.usage is not None:
-            self.completion_tokens = chunk.usage.output_tokens
-
-        if hasattr(chunk, "delta"):
-            if hasattr(chunk.delta, "text") and chunk.delta.text is not None:
-                self.build_streaming_response(chunk.delta.text)
-
     def set_response_model(self, chunk):
         if self._response_model:
             return
@@ -416,10 +402,6 @@ class StreamWrapper:
             self.prompt_tokens = chunk.usage_metadata.prompt_token_count
 
     def process_chunk(self, chunk):
-
-        # 2. We save the completion text from the chunk
-        # 3. We save the prompt + completions tokens from the chunk
-
         self.set_response_model(chunk=chunk)
         self.build_streaming_response(chunk=chunk)
         self.set_usage_attributes(chunk=chunk)
