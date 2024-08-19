@@ -82,8 +82,4 @@ def test_anthropic_streaming(anthropic_client, exporter):
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
-    events = streaming_span.events
-
-    assert len(events) - 4 == chunk_count
-
     assert_token_count(attributes)

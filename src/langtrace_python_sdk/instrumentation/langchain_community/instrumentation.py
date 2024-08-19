@@ -49,9 +49,8 @@ def patch_module_classes(
         lambda member: inspect.isclass(member) and member.__module__ == module.__name__,
     ):
         # loop through all public methods of the class
-        for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
-            # Skip private methods
-            if method_name.startswith("_"):
+        for method_name, method in inspect.getmembers(obj, predicate=inspect.isfunction):
+            if method.__qualname__.split('.')[0] != name:
                 continue
             try:
                 method_path = f"{name}.{method_name}"
@@ -82,6 +81,12 @@ class LangchainCommunityInstrumentation(BaseInstrumentor):
 
         # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
+            (
+                "langchain_community.llms.sagemaker_endpoint",
+                "sagemaker_endpoint",
+                True,
+                True,
+            ),
             ("langchain_community.document_loaders.pdf", "load_pdf", True, True),
             ("langchain_community.vectorstores.faiss", "vector_store", False, False),
             ("langchain_community.vectorstores.pgvector", "vector_store", False, False),
