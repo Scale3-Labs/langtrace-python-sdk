@@ -366,10 +366,6 @@ class StreamWrapper:
                                 )
                                 self.completion_tokens += token_counts
                                 content.append(tool_call.function.arguments)
-            set_event_completion_chunk(
-                self.span,
-                "".join(content) if len(content) > 0 and content[0] is not None else "",
-            )
             if content:
                 self.result_content.append(content[0])
 
