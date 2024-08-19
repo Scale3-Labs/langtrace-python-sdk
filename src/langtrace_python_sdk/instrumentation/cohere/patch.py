@@ -407,15 +407,8 @@ def chat_stream(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            span.add_event(Event.STREAM_START.value)
             try:
                 for event in result:
-                    if hasattr(event, "text") and event.text is not None:
-                        content = event.text
-                    else:
-                        content = ""
-                    set_event_completion_chunk(span, "".join(content))
-
                     if (
                         hasattr(event, "finish_reason")
                         and event.finish_reason == "COMPLETE"
@@ -496,15 +489,14 @@ def chat_stream(original_method, version, tracer):
                                         (usage.input_tokens or 0)
                                         + (usage.output_tokens or 0),
                                     )
-
-                                    span.set_attribute(
-                                        "search_units",
-                                        usage.search_units or 0,
-                                    )
+                                    if usage.search_units is not None:
+                                        span.set_attribute(
+                                            "search_units",
+                                            usage.search_units or 0,
+                                        )
 
                     yield event
             finally:
-                span.add_event(Event.STREAM_END.value)
                 span.set_status(StatusCode.OK)
                 span.end()
 
