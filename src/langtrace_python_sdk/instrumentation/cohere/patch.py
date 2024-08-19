@@ -489,11 +489,11 @@ def chat_stream(original_method, version, tracer):
                                         (usage.input_tokens or 0)
                                         + (usage.output_tokens or 0),
                                     )
-
-                                    span.set_attribute(
-                                        "search_units",
-                                        usage.search_units or 0,
-                                    )
+                                    if usage.search_units is not None:
+                                        span.set_attribute(
+                                            "search_units",
+                                            usage.search_units or 0,
+                                        )
 
                     yield event
             finally:
