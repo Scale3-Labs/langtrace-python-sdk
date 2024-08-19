@@ -235,8 +235,9 @@ class StreamWrapper:
     span: Span
 
     def __init__(
-        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
+        self, stream, span, prompt_tokens=0, function_call=False, tool_calls=False
     ):
+
         self.stream = stream
         self.span = span
         self.prompt_tokens = prompt_tokens
@@ -245,6 +246,7 @@ class StreamWrapper:
         self.result_content = []
         self.completion_tokens = 0
         self._span_started = False
+        self._response_model = None
         self.setup()
 
     def setup(self):
@@ -253,6 +255,11 @@ class StreamWrapper:
 
     def cleanup(self):
         if self._span_started:
+            set_span_attribute(
+                self.span,
+                SpanAttributes.LLM_RESPONSE_MODEL,
+                self._response_model,
+            )
             set_span_attribute(
                 self.span,
                 SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
@@ -320,21 +327,40 @@ class StreamWrapper:
             self.cleanup()
             raise StopAsyncIteration
 
-    def process_chunk(self, chunk):
-        if hasattr(chunk, "model") and chunk.model is not None:
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_RESPONSE_MODEL,
-                chunk.model,
-            )
+    def process_anthropic_chunk(self, chunk):
+        if hasattr(chunk, "message") and chunk.message is not None:
+            if self._response_model is None:
+                self._response_model = chunk.message.model
 
+            self.prompt_tokens = chunk.message.usage.input_tokens
+
+        if hasattr(chunk, "usage") and chunk.usage is not None:
+            self.completion_tokens = chunk.usage.output_tokens
+
+        if hasattr(chunk, "delta"):
+            if hasattr(chunk.delta, "text") and chunk.delta.text is not None:
+                self.build_streaming_response(chunk.delta.text)
+
+    def set_response_model(self, chunk):
+        if self._response_model:
+            return
+
+        # OpenAI response model is set on all chunks
+        if hasattr(chunk, "model") and chunk.model is not None:
+            self._response_model = chunk.model
+
+        # Anthropic response model is set on the first chunk message
+        if hasattr(chunk, "message") and chunk.message is not None:
+            if hasattr(chunk.message, "model") and chunk.message.model is not None:
+                self._response_model = chunk.message.model
+
+    def build_streaming_response(self, chunk):
+        content = []
+        # OpenAI
         if hasattr(chunk, "choices") and chunk.choices is not None:
-            content = []
             if not self.function_call and not self.tool_calls:
                 for choice in chunk.choices:
                     if choice.delta and choice.delta.content is not None:
-                        token_counts = estimate_tokens(choice.delta.content)
-                        self.completion_tokens += token_counts
                         content = [choice.delta.content]
             elif self.function_call:
                 for choice in chunk.choices:
@@ -343,10 +369,6 @@ class StreamWrapper:
                         and choice.delta.function_call is not None
                         and choice.delta.function_call.arguments is not None
                     ):
-                        token_counts = estimate_tokens(
-                            choice.delta.function_call.arguments
-                        )
-                        self.completion_tokens += token_counts
                         content = [choice.delta.function_call.arguments]
             elif self.tool_calls:
                 for choice in chunk.choices:
@@ -359,26 +381,45 @@ class StreamWrapper:
                                 and tool_call.function is not None
                                 and tool_call.function.arguments is not None
                             ):
-                                token_counts = estimate_tokens(
-                                    tool_call.function.arguments
-                                )
-                                self.completion_tokens += token_counts
                                 content.append(tool_call.function.arguments)
-            if content:
-                self.result_content.append(content[0])
 
-        if hasattr(chunk, "text"):
-            token_counts = estimate_tokens(chunk.text)
-            self.completion_tokens += token_counts
+        # VertexAI
+        if hasattr(chunk, "text") and chunk.text is not None:
             content = [chunk.text]
-            set_event_completion_chunk(
-                self.span,
-                "".join(content) if len(content) > 0 and content[0] is not None else "",
-            )
 
-            if content:
-                self.result_content.append(content[0])
+        # Anthropic
+        if hasattr(chunk, "delta") and chunk.delta is not None:
+            content = [chunk.delta.text] if hasattr(chunk.delta, "text") else []
 
+        if content:
+            self.result_content.append(content[0])
+
+    def set_usage_attributes(self, chunk):
+
+        # Anthropic & OpenAI
+        if hasattr(chunk, "type") and chunk.type == "message_start":
+            self.prompt_tokens = chunk.message.usage.input_tokens
+
+        if hasattr(chunk, "usage") and chunk.usage is not None:
+            if hasattr(chunk.usage, "output_tokens"):
+                self.completion_tokens = chunk.usage.output_tokens
+
+            if hasattr(chunk.usage, "prompt_tokens"):
+                self.prompt_tokens = chunk.usage.prompt_tokens
+
+            if hasattr(chunk.usage, "completion_tokens"):
+                self.completion_tokens = chunk.usage.completion_tokens
+
+        # VertexAI
         if hasattr(chunk, "usage_metadata"):
             self.completion_tokens = chunk.usage_metadata.candidates_token_count
             self.prompt_tokens = chunk.usage_metadata.prompt_token_count
+
+    def process_chunk(self, chunk):
+
+        # 2. We save the completion text from the chunk
+        # 3. We save the prompt + completions tokens from the chunk
+
+        self.set_response_model(chunk=chunk)
+        self.build_streaming_response(chunk=chunk)
+        self.set_usage_attributes(chunk=chunk)
