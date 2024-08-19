@@ -410,12 +410,6 @@ def chat_stream(original_method, version, tracer):
             span.add_event(Event.STREAM_START.value)
             try:
                 for event in result:
-                    if hasattr(event, "text") and event.text is not None:
-                        content = event.text
-                    else:
-                        content = ""
-                    set_event_completion_chunk(span, "".join(content))
-
                     if (
                         hasattr(event, "finish_reason")
                         and event.finish_reason == "COMPLETE"
