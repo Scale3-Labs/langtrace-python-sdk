@@ -407,7 +407,6 @@ def chat_stream(original_method, version, tracer):
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            span.add_event(Event.STREAM_START.value)
             try:
                 for event in result:
                     if (
@@ -498,7 +497,6 @@ def chat_stream(original_method, version, tracer):
 
                     yield event
             finally:
-                span.add_event(Event.STREAM_END.value)
                 span.set_status(StatusCode.OK)
                 span.end()
 
