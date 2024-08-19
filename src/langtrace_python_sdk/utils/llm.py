@@ -249,12 +249,10 @@ class StreamWrapper:
 
     def setup(self):
         if not self._span_started:
-            self.span.add_event(Event.STREAM_START.value)
             self._span_started = True
 
     def cleanup(self):
         if self._span_started:
-            self.span.add_event(Event.STREAM_END.value)
             set_span_attribute(
                 self.span,
                 SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
