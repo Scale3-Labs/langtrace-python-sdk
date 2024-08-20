@@ -23,7 +23,6 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_span_name,
     set_event_completion,
-    set_event_completion_chunk,
     set_usage_attributes,
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
