@@ -237,7 +237,6 @@ class StreamWrapper:
     def __init__(
         self, stream, span, prompt_tokens=0, function_call=False, tool_calls=False
     ):
-
         self.stream = stream
         self.span = span
         self.prompt_tokens = prompt_tokens
@@ -284,7 +283,6 @@ class StreamWrapper:
                     }
                 ],
             )
-
             self.span.set_status(StatusCode.OK)
             self.span.end()
             self._span_started = False
@@ -377,6 +375,10 @@ class StreamWrapper:
         if hasattr(chunk, "delta") and chunk.delta is not None:
             content = [chunk.delta.text] if hasattr(chunk.delta, "text") else []
 
+        if isinstance(chunk, dict):
+            if "message" in chunk:
+                if "content" in chunk["message"]:
+                    content = [chunk["message"]["content"]]
         if content:
             self.result_content.append(content[0])
 
@@ -400,6 +402,13 @@ class StreamWrapper:
         if hasattr(chunk, "usage_metadata"):
             self.completion_tokens = chunk.usage_metadata.candidates_token_count
             self.prompt_tokens = chunk.usage_metadata.prompt_token_count
+
+        # Ollama
+        if isinstance(chunk, dict):
+            if "prompt_eval_count" in chunk:
+                self.prompt_tokens = chunk["prompt_eval_count"]
+            if "eval_count" in chunk:
+                self.completion_tokens = chunk["eval_count"]
 
     def process_chunk(self, chunk):
         self.set_response_model(chunk=chunk)
