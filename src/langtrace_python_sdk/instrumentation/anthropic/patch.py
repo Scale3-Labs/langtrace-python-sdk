@@ -17,12 +17,16 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import Event, LLMSpanAttributes
-from langtrace_python_sdk.utils import set_span_attribute, silently_fail
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.silently_fail import silently_fail
+
 from langtrace_python_sdk.utils.llm import (
+    StreamWrapper,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     is_streaming,
     set_event_completion,
     set_usage_attributes,
@@ -48,7 +52,9 @@ def messages_create(original_method, version, tracer):
         prompts = kwargs.get("messages", [])
         system = kwargs.get("system")
         if system:
-            prompts = [{"role": "system", "content": system}] + kwargs.get("messages", [])
+            prompts = [{"role": "system", "content": system}] + kwargs.get(
+                "messages", []
+            )
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
@@ -61,7 +67,7 @@ def messages_create(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+            name=get_span_name(APIS["MESSAGES_CREATE"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
@@ -79,64 +85,7 @@ def messages_create(original_method, version, tracer):
             span.end()
             raise
 
-    def handle_streaming_response(result, span):
-        """Process and yield streaming response chunks."""
-        result_content = []
-        span.add_event(Event.STREAM_START.value)
-        input_tokens = 0
-        output_tokens = 0
-        try:
-            for chunk in result:
-                if (
-                    hasattr(chunk, "message")
-                    and chunk.message is not None
-                    and hasattr(chunk.message, "model")
-                    and chunk.message.model is not None
-                ):
-                    span.set_attribute(
-                        SpanAttributes.LLM_RESPONSE_MODEL, chunk.message.model
-                    )
-                content = ""
-                if hasattr(chunk, "delta") and chunk.delta is not None:
-                    content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
-                # Assuming content needs to be aggregated before processing
-                result_content.append(content if len(content) > 0 else "")
-
-                if hasattr(chunk, "message") and hasattr(chunk.message, "usage"):
-                    input_tokens += (
-                        chunk.message.usage.input_tokens
-                        if hasattr(chunk.message.usage, "input_tokens")
-                        else 0
-                    )
-                    output_tokens += (
-                        chunk.message.usage.output_tokens
-                        if hasattr(chunk.message.usage, "output_tokens")
-                        else 0
-                    )
-
-                # Assuming span.add_event is part of a larger logging or event system
-                # Add event for each chunk of content
-                if content:
-                    span.add_event(
-                        Event.STREAM_OUTPUT.value,
-                        {SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: "".join(content)},
-                    )
-
-                # Assuming this is part of a generator, yield chunk or aggregated content
-                yield content
-        finally:
-
-            # Finalize span after processing all chunks
-            span.add_event(Event.STREAM_END.value)
-            set_usage_attributes(
-                span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
-            )
-            completion = [{"role": "assistant", "content": "".join(result_content)}]
-            set_event_completion(span, completion)
-
-            span.set_status(StatusCode.OK)
-            span.end()
-
+    @silently_fail
     def set_response_attributes(result, span, kwargs):
         if not is_streaming(kwargs):
             if hasattr(result, "content") and result.content is not None:
@@ -173,7 +122,7 @@ def messages_create(original_method, version, tracer):
             span.end()
             return result
         else:
-            return handle_streaming_response(result, span)
+            return StreamWrapper(result, span)
 
     # return the wrapped method
     return traced_method

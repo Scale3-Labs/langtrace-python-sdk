@@ -1,10 +1,12 @@
 from langtrace_python_sdk.constants.instrumentation.ollama import APIS
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.llm import (
+    StreamWrapper,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     set_event_completion,
 )
 from langtrace_python_sdk.utils.silently_fail import silently_fail
@@ -14,9 +16,10 @@ from opentelemetry.trace import SpanKind
 import json
 from opentelemetry.trace.status import Status, StatusCode
 from langtrace.trace_attributes import SpanAttributes
+from opentelemetry.trace import Tracer
 
 
-def generic_patch(operation_name, version, tracer):
+def generic_patch(operation_name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS["OLLAMA"]
@@ -33,36 +36,29 @@ def generic_patch(operation_name, version, tracer):
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(
-            f'ollama.{api["METHOD"]}', kind=SpanKind.CLIENT
-        ) as span:
-            _set_input_attributes(span, kwargs, attributes)
 
-            try:
-                result = wrapped(*args, **kwargs)
-                if result:
-                    if span.is_recording():
+        span = tracer.start_span(
+            name=get_span_name(f'ollama.{api["METHOD"]}'), kind=SpanKind.CLIENT
+        )
+        _set_input_attributes(span, kwargs, attributes)
 
-                        if kwargs.get("stream"):
-                            return _handle_streaming_response(
-                                span, result, api["METHOD"]
-                            )
+        try:
+            result = wrapped(*args, **kwargs)
+            if kwargs.get("stream"):
+                return StreamWrapper(result, span)
+            else:
+                _set_response_attributes(span, result)
+            return result
 
-                        _set_response_attributes(span, result)
-                        span.set_status(Status(StatusCode.OK))
+        except Exception as err:
+            # Record the exception in the span
+            span.record_exception(err)
 
-                span.end()
-                return result
+            # Set the span status to indicate an error
+            span.set_status(Status(StatusCode.ERROR, str(err)))
 
-            except Exception as err:
-                # Record the exception in the span
-                span.record_exception(err)
-
-                # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(err)))
-
-                # Reraise the exception to ensure it's not swallowed
-                raise
+            # Reraise the exception to ensure it's not swallowed
+            raise
 
     return traced_method
 
@@ -80,30 +76,28 @@ def ageneric_patch(operation_name, version, tracer):
             **get_extra_attributes(),
         }
         attributes = LLMSpanAttributes(**span_attributes)
-        with tracer.start_as_current_span(api["METHOD"], kind=SpanKind.CLIENT) as span:
-            _set_input_attributes(span, kwargs, attributes)
-            try:
-                result = await wrapped(*args, **kwargs)
-                if result:
-                    if span.is_recording():
-                        if kwargs.get("stream"):
-                            return _ahandle_streaming_response(
-                                span, result, api["METHOD"]
-                            )
+        span = tracer.start_span(
+            name=get_span_name(f'ollama.{api["METHOD"]}'), kind=SpanKind.CLIENT
+        )
 
-                        _set_response_attributes(span, result)
-                        span.set_status(Status(StatusCode.OK))
-                span.end()
-                return result
-            except Exception as err:
-                # Record the exception in the span
-                span.record_exception(err)
+        _set_input_attributes(span, kwargs, attributes)
+        try:
+            result = await wrapped(*args, **kwargs)
+            if kwargs.get("stream"):
+                return StreamWrapper(span, result)
+            else:
+                _set_response_attributes(span, result)
+            span.end()
+            return result
+        except Exception as err:
+            # Record the exception in the span
+            span.record_exception(err)
 
-                # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(err)))
+            # Set the span status to indicate an error
+            span.set_status(Status(StatusCode.ERROR, str(err)))
 
-                # Reraise the exception to ensure it's not swallowed
-                raise
+            # Reraise the exception to ensure it's not swallowed
+            raise
 
     return traced_method
 
@@ -160,68 +154,3 @@ def _set_input_attributes(span, kwargs, attributes):
             SpanAttributes.LLM_PRESENCE_PENALTY,
             options.get("presence_penalty"),
         )
-
-
-def _handle_streaming_response(span, response, api):
-    accumulated_tokens = None
-    if api == "chat":
-        accumulated_tokens = {"message": {"content": "", "role": ""}}
-    if api == "completion":
-        accumulated_tokens = {"response": ""}
-    span.add_event(Event.STREAM_START.value)
-    try:
-        for chunk in response:
-            if api == "chat":
-                accumulated_tokens["message"]["content"] += chunk["message"]["content"]
-                accumulated_tokens["message"]["role"] = chunk["message"]["role"]
-            if api == "generate":
-                accumulated_tokens["response"] += chunk["response"]
-
-            span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: chunk.get("response")
-                    or chunk.get("message").get("content"),
-                },
-            )
-
-        _set_response_attributes(span, chunk | accumulated_tokens)
-    finally:
-        # Finalize span after processing all chunks
-        span.add_event(Event.STREAM_END.value)
-        span.set_status(StatusCode.OK)
-        span.end()
-
-    return response
-
-
-async def _ahandle_streaming_response(span, response, api):
-    accumulated_tokens = None
-    if api == "chat":
-        accumulated_tokens = {"message": {"content": "", "role": ""}}
-    if api == "completion":
-        accumulated_tokens = {"response": ""}
-
-    span.add_event(Event.STREAM_START.value)
-    try:
-        async for chunk in response:
-            if api == "chat":
-                accumulated_tokens["message"]["content"] += chunk["message"]["content"]
-                accumulated_tokens["message"]["role"] = chunk["message"]["role"]
-            if api == "generate":
-                accumulated_tokens["response"] += chunk["response"]
-
-            span.add_event(
-                Event.STREAM_OUTPUT.value,
-                {
-                    SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: json.dumps(chunk),
-                },
-            )
-        _set_response_attributes(span, chunk | accumulated_tokens)
-    finally:
-        # Finalize span after processing all chunks
-        span.add_event(Event.STREAM_END.value)
-        span.set_status(StatusCode.OK)
-        span.end()
-
-    return response

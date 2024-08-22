@@ -33,7 +33,8 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 import sys
-from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.resources import Resource, SERVICE_NAME
+
 
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation import (
@@ -72,7 +73,10 @@ def init(
     disable_instrumentations: Optional[DisableInstrumentations] = None,
     disable_tracing_for_functions: Optional[InstrumentationMethods] = None,
     service_name: Optional[str] = None,
+    disable_logging = False
 ):
+    if disable_logging:
+        sys.stdout = open(os.devnull, "w")
 
     host = (
         os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
@@ -80,13 +84,17 @@ def init(
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
     sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
-    provider = TracerProvider(
-        resource=Resource.create({"service.name": service_name or sys.argv[0]}),
-        sampler=sampler,
+    resource = Resource.create(
+        attributes={
+            SERVICE_NAME: os.environ.get("OTEL_SERVICE_NAME")
+            or service_name
+            or sys.argv[0]
+        }
     )
+    provider = TracerProvider(resource=resource, sampler=sampler)
 
     remote_write_exporter = (
-        LangTraceExporter(api_key=api_key, api_host=host)
+        LangTraceExporter(api_key=api_key, api_host=host, disable_logging=disable_logging)
         if custom_remote_exporter is None
         else custom_remote_exporter
     )
@@ -142,6 +150,8 @@ def init(
     else:
         print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
         provider.add_span_processor(batch_processor_remote)
+
+    sys.stdout = sys.__stdout__
 
 
 def init_instrumentations(
