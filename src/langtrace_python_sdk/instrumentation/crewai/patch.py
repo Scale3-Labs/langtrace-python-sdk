@@ -33,8 +33,8 @@ crew_properties = {
     "share_crew": "bool",
     "step_callback": "object",
     "task_callback": "object",
-    "prompt_file": "object",
-    "output_log_file": "object",
+    "prompt_file": "str",
+    "output_log_file": "bool",
 }
 
 task_properties = {
@@ -90,9 +90,125 @@ agent_properties = {
 }
 
 
+def parse_crewai_tasks(tasks):
+    task_dict = {}
+    for task in tasks:
+        for key, value in task.__dict__.items():
+            if value is None:
+                continue
+
+            elif key == "id":
+                task_dict[key] = str(value)
+
+            elif key == "agent":
+                task_dict[key] = value.__dict__["role"]
+
+            elif key in [
+                "used_tools",
+                "tools_errors",
+                "delegations",
+                "description",
+                "expected_output",
+                "human_input",
+                "async_execution",
+                "prompt_context",
+                "expected_output",
+                "output_file",
+            ]:
+                task_dict[key] = value
+            else:
+                task_dict[key] = str(value)
+    return [task_dict]
+
+
+def parse_crewai_agents(agents):
+    agent_dict = {}
+    for agent in agents:
+        for key, value in agent.__dict__.items():
+            if value is None:
+                continue
+
+            elif key == "id":
+                agent_dict[key] = str(value)
+
+            elif key in [
+                "role" "formatting_errors",
+                "goal",
+                "backstory",
+                "cache",
+                "verbose",
+                "max_rpm",
+                "allow_delegation",
+                "max_iter",
+                "max_execution_time",
+            ]:
+                agent_dict[key] = value
+            else:
+                agent_dict[key] = str(value)
+    return [agent_dict]
+
+
+def set_crewai_attributes(instance):
+    crew_config = {}
+    class_name = instance.__class__.__name__
+    for key, value in instance.__dict__.items():
+        if value is None:
+            continue
+
+        if class_name == "Crew":
+            set_crew_attributes(key, value, crew_config)
+        elif class_name == "Agent":
+            set_agent_attributes(key, value, crew_config)
+        elif class_name == "Task":
+            set_task_attributes(key, value, crew_config)
+
+    return crew_config
+
+
+def set_crew_attributes(key, value, config: dict):
+    if key not in crew_properties:
+        return
+
+    if key == "tasks":
+        config[key] = parse_crewai_tasks(value)
+
+    if key == "agents":
+        config[key] = parse_crewai_agents(value)
+
+    # if crew_properties[key] == "json":
+    #     config[key] = json.dumps(value)
+    # elif crew_properties[key] == "object":
+    #     config[key] = str(value)
+    # else:
+    #     config[key] = value
+
+
+def set_agent_attributes(key, value, config: dict):
+    if key not in agent_properties:
+        return
+
+    if agent_properties[key] == "json":
+        config[key] = json.dumps(value)
+    elif agent_properties[key] == "object":
+        config[key] = str(value)
+    else:
+        config[key] = value
+
+
+def set_task_attributes(key, value, config: dict):
+    if key not in task_properties:
+        return
+
+    if task_properties[key] == "json":
+        config[key] = json.dumps(value)
+    elif task_properties[key] == "object":
+        config[key] = str(value)
+    else:
+        config[key] = value
+
+
 def patch_crew(operation_name, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
-
         service_provider = SERVICE_PROVIDERS["CREWAI"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
@@ -104,32 +220,8 @@ def patch_crew(operation_name, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        crew_config = {}
-        for key, value in instance.__dict__.items():
-            if instance.__class__.__name__ == "Crew":
-                if key in crew_properties and value is not None:
-                    if crew_properties[key] == "json":
-                        crew_config[key] = json.dumps(value)
-                    elif crew_properties[key] == "object":
-                        crew_config[key] = str(value)
-                    else:
-                        crew_config[key] = value
-            elif instance.__class__.__name__ == "Agent":
-                if key in agent_properties and value is not None:
-                    if agent_properties[key] == "json":
-                        crew_config[key] = json.dumps(value)
-                    elif agent_properties[key] == "object":
-                        crew_config[key] = str(value)
-                    else:
-                        crew_config[key] = value
-            elif instance.__class__.__name__ == "Task":
-                if key in task_properties and value is not None:
-                    if task_properties[key] == "json":
-                        crew_config[key] = json.dumps(value)
-                    elif task_properties[key] == "object":
-                        crew_config[key] = str(value)
-                    else:
-                        crew_config[key] = value
+        crew_config = set_crewai_attributes(instance)
+
         if crew_config:
             if instance.__class__.__name__ == "Crew":
                 if "inputs" in kwargs and kwargs["inputs"]:
