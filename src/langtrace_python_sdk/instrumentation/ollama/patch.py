@@ -8,7 +8,6 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_span_name,
     set_event_completion,
-    set_event_completion_chunk,
 )
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
