@@ -52,7 +52,8 @@ dev = [
     "ollama",
     "groq",
     "google-generativeai",
-    "google-cloud-aiplatform"
+    "google-cloud-aiplatform",
+    "mistralai"
 ]
 
 test = [
