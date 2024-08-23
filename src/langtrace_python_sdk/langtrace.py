@@ -54,7 +54,6 @@ from langtrace_python_sdk.instrumentation import (
     WeaviateInstrumentation,
     OllamaInstrumentor,
     DspyInstrumentation,
-    LiteLLMInstrumentation,
     VertexAIInstrumentation,
     GeminiInstrumentation,
 )
@@ -73,7 +72,7 @@ def init(
     disable_instrumentations: Optional[DisableInstrumentations] = None,
     disable_tracing_for_functions: Optional[InstrumentationMethods] = None,
     service_name: Optional[str] = None,
-    disable_logging = False
+    disable_logging=False,
 ):
     if disable_logging:
         sys.stdout = open(os.devnull, "w")
@@ -94,7 +93,9 @@ def init(
     provider = TracerProvider(resource=resource, sampler=sampler)
 
     remote_write_exporter = (
-        LangTraceExporter(api_key=api_key, api_host=host, disable_logging=disable_logging)
+        LangTraceExporter(
+            api_key=api_key, api_host=host, disable_logging=disable_logging
+        )
         if custom_remote_exporter is None
         else custom_remote_exporter
     )
@@ -124,7 +125,6 @@ def init(
         "ollama": OllamaInstrumentor(),
         "dspy": DspyInstrumentation(),
         "crewai": CrewAIInstrumentation(),
-        "litellm": LiteLLMInstrumentation(),
         "vertexai": VertexAIInstrumentation(),
         "gemini": GeminiInstrumentation(),
     }

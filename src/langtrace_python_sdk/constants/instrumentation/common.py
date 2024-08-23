@@ -27,7 +27,6 @@ SERVICE_PROVIDERS = {
     "QDRANT": "Qdrant",
     "WEAVIATE": "Weaviate",
     "OLLAMA": "Ollama",
-    "LITELLM": "Litellm",
     "VERTEXAI": "VertexAI",
     "GEMINI": "Gemini",
 }
