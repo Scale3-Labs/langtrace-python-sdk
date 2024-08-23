@@ -23,6 +23,7 @@ from opentelemetry.trace.propagation import set_span_in_context
 
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
+from langtrace.trace_attributes import SpanAttributes
 
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -70,6 +71,9 @@ def generic_patch(
                 result = wrapped(*args, **kwargs)
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
+                    span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, instance.get_num_tokens(result))
+                    span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0]))
+
 
                 span.set_status(StatusCode.OK)
                 return result
