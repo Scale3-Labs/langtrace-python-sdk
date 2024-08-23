@@ -7,6 +7,7 @@ class InstrumentationType(Enum):
     COHERE = "cohere"
     ANTHROPIC = "anthropic"
     GROQ = "groq"
+    MISTRAL = "mistral"
     PINECONE = "pinecone"
     LLAMAINDEX = "llamaindex"
     CHROMADB = "chromadb"
@@ -42,6 +43,11 @@ class VendorMethods(TypedDict):
         "openai.embeddings.create",
         "openai.images.generate",
         "openai.images.edit",
+    ]
+    MistralMethods = Literal[
+        "mistral.chat.complete",
+        "mistral.chat.stream",
+        "mistral.embeddings.create",
     ]
 
     ChromadbMethods = Literal[
@@ -93,6 +99,7 @@ class VendorMethods(TypedDict):
 class InstrumentationMethods(TypedDict):
     open_ai: List[VendorMethods.OpenaiMethods]
     groq: List[VendorMethods.GroqMethods]
+    mistral: List[VendorMethods.MistralMethods]
     pinecone: List[VendorMethods.PineconeMethods]
     llamaindex: List[VendorMethods.LlamaIndexMethods]
     chromadb: List[VendorMethods.ChromadbMethods]

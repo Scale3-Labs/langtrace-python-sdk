@@ -56,6 +56,7 @@ from langtrace_python_sdk.instrumentation import (
     DspyInstrumentation,
     VertexAIInstrumentation,
     GeminiInstrumentation,
+    MistralInstrumentation,
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from colorama import Fore
@@ -125,6 +126,7 @@ def init(
         "crewai": CrewAIInstrumentation(),
         "vertexai": VertexAIInstrumentation(),
         "gemini": GeminiInstrumentation(),
+        "mistral": MistralInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
