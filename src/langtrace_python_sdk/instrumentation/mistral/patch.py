@@ -32,17 +32,15 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from langtrace_python_sdk.constants.instrumentation.mistral import APIS
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
-    get_base_url,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
     get_span_name,
-    get_tool_calls,
-    is_streaming,
     set_event_completion,
     StreamWrapper,
     set_span_attributes,
+    set_usage_attributes,
 )
 
 from langtrace_python_sdk.instrumentation.openai.patch import extract_content
@@ -80,19 +78,6 @@ def chat_complete(original_method, version, tracer, is_async=False, is_streaming
             result = wrapped(*args, **kwargs)
             if is_streaming:
                 prompt_tokens = 0
-                for message in kwargs.get("messages", {}):
-                    prompt_tokens += calculate_prompt_tokens(
-                        json.dumps((str(message))), kwargs.get("model")
-                    )
-
-                if (
-                    kwargs.get("functions") is not None
-                ):
-                    for function in kwargs.get("functions"):
-                        prompt_tokens += calculate_prompt_tokens(
-                            json.dumps(function), kwargs.get("model")
-                        )
-
                 return StreamWrapper(
                     result,
                     span,
@@ -207,20 +192,4 @@ def _set_response_attributes(span, kwargs, result):
 
     # Get the usage
     if hasattr(result, "usage") and result.usage is not None:
-        usage = result.usage
-        if usage is not None:
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-                result.usage.prompt_tokens,
-            )
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-                result.usage.completion_tokens,
-            )
-            set_span_attribute(
-                span,
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                result.usage.total_tokens,
-            )
+        set_usage_attributes(span, result.usage)

@@ -20,9 +20,7 @@ from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
-from wrapt import wrap_function_wrapper
-
-from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+from wrapt import wrap_function_wrapper as _W
 
 from langtrace_python_sdk.instrumentation.mistral.patch import (
     chat_complete,
@@ -34,41 +32,41 @@ logging.basicConfig(level=logging.FATAL)
 class MistralInstrumentation(BaseInstrumentor):
     
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["mistralai >= 1.0.1", "trace-attributes >= 4.0.5"]
+        return ["mistralai >= 1.0.1"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("mistralai")
 
-        wrap_function_wrapper(
-            "mistralai.chat",
-            "Chat.complete",
-            chat_complete("mistral.chat.complete", version, tracer),
+        _W(
+            module="mistralai.chat",
+            name="Chat.complete",
+            wrapper=chat_complete("mistral.chat.complete", version, tracer),
         )
 
-        wrap_function_wrapper(
-            "mistralai.chat",
-            "Chat.stream",
-            chat_complete("mistral.chat.stream", version, tracer, is_streaming=True),
+        _W(
+            module="mistralai.chat",
+            name="Chat.stream",
+            wrapper=chat_complete("mistral.chat.stream", version, tracer, is_streaming=True),
         )
 
-        wrap_function_wrapper(
-            "mistralai.chat",
-            "Chat.complete_async",
-            chat_complete("mistral.chat.complete_async", version, tracer, is_async=True),
+        _W(
+            module="mistralai.chat",
+            name="Chat.complete_async",
+            wrapper=chat_complete("mistral.chat.complete_async", version, tracer, is_async=True),
         )
 
-        wrap_function_wrapper(
-            "mistralai.embeddings",
-            "Embeddings.create",
-            embeddings_create("mistral.embeddings.create", version, tracer),
+        _W(
+            module="mistralai.embeddings",
+            name="Embeddings.create",
+            wrapper=embeddings_create("mistral.embeddings.create", version, tracer),
         )
 
-        wrap_function_wrapper(
-            "mistralai.embeddings",
-            "Embeddings.create_async",
-            embeddings_create("mistral.embeddings.create_async", version, tracer, is_async=True),
+        _W(
+            module="mistralai.embeddings",
+            name="Embeddings.create_async",
+            wrapper=embeddings_create("mistral.embeddings.create_async", version, tracer, is_async=True),
         )
 
     def _uninstrument(self, **kwargs):
