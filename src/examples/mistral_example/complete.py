@@ -1,15 +1,15 @@
-import os
-from langtrace_python_sdk import langtrace
+from dotenv import find_dotenv, load_dotenv
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
 from mistralai import Mistral
 
-langtrace.init(api_key=os.environ["LANGTRACE_API_KEY"])
+_ = load_dotenv(find_dotenv())
 
-api_key = os.environ["MISTRAL_API_KEY"]
-model = "mistral-large-latest"
+langtrace.init()
 
-client = Mistral(api_key=api_key)
-
-def main():
+@with_langtrace_root_span("chat_complete")
+def chat_complete():
+    model = "mistral-large-latest"
+    client = Mistral()
     chat_response = client.chat.complete(
         model= model,
         messages = [
@@ -20,7 +20,3 @@ def main():
         ]
     )
     print(chat_response.choices[0].message.content)
-
-
-if __name__ == "__main__":
-    main()
