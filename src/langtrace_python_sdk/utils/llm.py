@@ -80,21 +80,6 @@ def calculate_prompt_tokens(prompt_content, model):
         return estimate_tokens(prompt_content)  # Fallback method
 
 
-def get_streaming_tokens(kwargs):
-    prompt_tokens = 0
-    for message in kwargs.get("messages", {}):
-        prompt_tokens += calculate_prompt_tokens(
-            json.dumps(message), kwargs.get("model")
-        )
-
-    if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
-        for function in kwargs.get("functions"):
-            prompt_tokens += calculate_prompt_tokens(
-                json.dumps(function), kwargs.get("model")
-            )
-    return prompt_tokens
-
-
 def calculate_price_from_usage(model, usage):
     """
     Calculate the price of a model based on its usage."""
@@ -178,12 +163,11 @@ def get_base_url(instance):
 
 
 def is_streaming(kwargs):
-    streaming = kwargs.get("stream", None)
-
-    if "optional_params" in kwargs:
-        streaming = kwargs.get("optional_params").get("stream", None)
-
-    return not (streaming is False or streaming is None or streaming == NOT_GIVEN)
+    return not (
+        kwargs.get("stream") is False
+        or kwargs.get("stream") is None
+        or kwargs.get("stream") == NOT_GIVEN
+    )
 
 
 def set_usage_attributes(span, usage):
