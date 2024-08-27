@@ -115,6 +115,7 @@ class LangTraceExporter(SpanExporter):
                 print(
                     Fore.GREEN + f"Exported {len(spans)} spans successfully." + Fore.RESET
                 )
+                print(Fore.WHITE + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace" + Fore.RESET)
             return SpanExportResult.SUCCESS
         except RequestException as err:
             if not self.disable_logging:
