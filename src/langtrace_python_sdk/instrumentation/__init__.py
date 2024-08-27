@@ -16,6 +16,7 @@ from .ollama import OllamaInstrumentor
 from .dspy import DspyInstrumentation
 from .vertexai import VertexAIInstrumentation
 from .gemini import GeminiInstrumentation
+from .mistral import MistralInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -36,4 +37,5 @@ __all__ = [
     "DspyInstrumentation",
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
+    "MistralInstrumentation",
 ]

@@ -411,6 +411,12 @@ class StreamWrapper:
                 self.completion_tokens = chunk["eval_count"]
 
     def process_chunk(self, chunk):
+        # Mistral nests the chunk data under a `data` attribute
+        if (
+            hasattr(chunk, "data") and chunk.data is not None
+            and hasattr(chunk.data, "choices") and chunk.data.choices is not None
+        ):
+            chunk = chunk.data
         self.set_response_model(chunk=chunk)
         self.build_streaming_response(chunk=chunk)
         self.set_usage_attributes(chunk=chunk)
