@@ -1,13 +1,11 @@
-from dotenv import find_dotenv, load_dotenv
+import os
 from langtrace_python_sdk import with_langtrace_root_span
 from mistralai import Mistral
-
-_ = load_dotenv(find_dotenv())
 
 @with_langtrace_root_span("chat_complete")
 def chat_complete():
     model = "mistral-large-latest"
-    client = Mistral()
+    client = Mistral(api_key=os.environ["MISTRAL_API_KEY"])
     chat_response = client.chat.complete(
         model= model,
         messages = [

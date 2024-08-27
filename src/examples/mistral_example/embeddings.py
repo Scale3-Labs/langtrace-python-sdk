@@ -1,15 +1,13 @@
-from dotenv import find_dotenv, load_dotenv
+import os
 from langtrace_python_sdk import with_langtrace_root_span
 from mistralai import Mistral
-
-_ = load_dotenv(find_dotenv())
 
 
 @with_langtrace_root_span("create_embeddings")
 def embeddings_create():
     model = "mistral-embed"
 
-    client = Mistral()
+    client = Mistral(api_key=os.environ["MISTRAL_API_KEY"])
 
     embeddings_batch_response = client.embeddings.create(
         model=model,

@@ -1,12 +1,10 @@
-from dotenv import find_dotenv, load_dotenv
+import os
 from langtrace_python_sdk import with_langtrace_root_span
 from mistralai import Mistral
 
-_ = load_dotenv(find_dotenv())
-
 @with_langtrace_root_span("chat_complete_async")
 async def complete_async():
-    client = Mistral()
+    client = Mistral(api_key=os.environ["MISTRAL_API_KEY"])
     res = await client.chat.complete_async(model="mistral-small-latest", messages=[
         {
             "content": "Which locations should I visit when I travel to New york? Answer in one short sentence.",
