@@ -16,7 +16,7 @@ limitations under the License.
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
-from openai import NOT_GIVEN
+from langtrace_python_sdk.types import NOT_GIVEN
 from tiktoken import get_encoding
 
 from langtrace_python_sdk.constants.instrumentation.common import (
