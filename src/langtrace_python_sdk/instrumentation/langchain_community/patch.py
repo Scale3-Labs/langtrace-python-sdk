@@ -71,8 +71,15 @@ def generic_patch(
                 result = wrapped(*args, **kwargs)
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
-                    span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, instance.get_num_tokens(result))
-                    span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0]))
+
+                    prompt_tokens = instance.get_num_tokens(args[0])
+                    completion_tokens = instance.get_num_tokens(result)
+                    if hasattr(result, 'usage'):
+                        prompt_tokens = result.usage.prompt_tokens
+                        completion_tokens = result.usage.completion_tokens
+
+                    span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, prompt_tokens)
+                    span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, completion_tokens)
 
 
                 span.set_status(StatusCode.OK)
