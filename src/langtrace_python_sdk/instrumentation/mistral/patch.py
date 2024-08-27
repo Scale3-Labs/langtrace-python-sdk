@@ -31,7 +31,6 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 )
 from langtrace_python_sdk.constants.instrumentation.mistral import APIS
 from langtrace_python_sdk.utils.llm import (
-    calculate_prompt_tokens,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
@@ -77,11 +76,9 @@ def chat_complete(original_method, version, tracer, is_async=False, is_streaming
         try:
             result = wrapped(*args, **kwargs)
             if is_streaming:
-                prompt_tokens = 0
                 return StreamWrapper(
                     result,
                     span,
-                    prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
                     tool_calls=kwargs.get("tools") is not None,
                 )
