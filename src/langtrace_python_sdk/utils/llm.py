@@ -18,6 +18,7 @@ from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
 from openai import NOT_GIVEN
 from tiktoken import get_encoding
+from tiktoken import get_encoding, list_encoding_names
 
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -30,6 +31,7 @@ import json
 from opentelemetry import baggage
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
+
 import os
 
 
@@ -253,6 +255,11 @@ class StreamWrapper:
             self._span_started = True
 
     def cleanup(self):
+        if self.completion_tokens==0:
+            response_model = 'cl100k_base'
+            if self._response_model in list_encoding_names():
+                response_model = self._response_model
+            self.completion_tokens = estimate_tokens_using_tiktoken("".join(self.result_content), response_model)
         if self._span_started:
             set_span_attribute(
                 self.span,
