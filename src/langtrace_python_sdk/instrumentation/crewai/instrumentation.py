@@ -20,7 +20,6 @@ from wrapt import wrap_function_wrapper as _W
 from typing import Collection
 from importlib_metadata import version as v
 from .patch import patch_crew
-import crewai
 
 
 class CrewAIInstrumentation(BaseInstrumentor):
