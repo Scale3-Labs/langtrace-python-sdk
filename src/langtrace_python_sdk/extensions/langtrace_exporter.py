@@ -123,4 +123,4 @@ class LangTraceExporter(SpanExporter):
             return SpanExportResult.FAILURE
 
     def shutdown(self) -> None:
-        pass
+        print(Fore.WHITE + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace" + Fore.RESET)
