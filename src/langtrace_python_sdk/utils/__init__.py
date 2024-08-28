@@ -1,4 +1,4 @@
-from openai import NOT_GIVEN
+from langtrace_python_sdk.types import NOT_GIVEN
 from .sdk_version_checker import SDKVersionChecker
 from opentelemetry.trace import Span
 from langtrace.trace_attributes import SpanAttributes
