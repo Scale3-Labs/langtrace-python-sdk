@@ -1,4 +1,4 @@
-from typing import List, Literal, TypeVar, TypedDict, Union, override
+from typing import List, Literal, TypeVar, TypedDict, Union
 from enum import Enum
 
 
@@ -134,7 +134,6 @@ class NotGiven:
     def __bool__(self) -> Literal[False]:
         return False
 
-    @override
     def __repr__(self) -> str:
         return "NOT_GIVEN"
 
