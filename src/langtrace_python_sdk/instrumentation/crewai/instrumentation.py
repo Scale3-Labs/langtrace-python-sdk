@@ -20,6 +20,7 @@ from wrapt import wrap_function_wrapper as _W
 from typing import Collection
 from importlib_metadata import version as v
 from .patch import patch_crew
+import crewai
 
 
 class CrewAIInstrumentation(BaseInstrumentor):
@@ -46,7 +47,7 @@ class CrewAIInstrumentation(BaseInstrumentor):
             )
             _W(
                 "crewai.task",
-                "Task.execute",
+                "Task.execute_sync",
                 patch_crew("Task.execute", version, tracer),
             )
         except Exception as e:

@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 import agentops
 
 load_dotenv()
-agentops.init()
-langtrace.init(write_spans_to_console=False, batch=False)
+langtrace.init()
 
 
 class PoetryCrew:
@@ -32,15 +31,15 @@ class PoetryCrew:
 if __name__ == "__main__":
     print("## Welcome to Poetry Crew")
     print("-------------------------------")
-    topic = input(
-        dedent(
-            """
-      What topic do you want to write a poem on?
-    """
-        )
-    )
+    # topic = input(
+    #     dedent(
+    #         """
+    #   What topic do you want to write a poem on?
+    # """
+    #     )
+    # )
 
-    poetry_crew = PoetryCrew(topic=topic)
+    poetry_crew = PoetryCrew(topic="cold")
     result = poetry_crew.run()
     print("\n\n########################")
     print("## Here is you poem")
