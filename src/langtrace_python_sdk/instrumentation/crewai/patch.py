@@ -2,15 +2,14 @@ import json
 from importlib_metadata import version as v
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.llm import get_span_name
-from langtrace_python_sdk.utils.silently_fail import silently_fail
+from langtrace_python_sdk.utils.llm import get_span_name, set_span_attributes
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
 from opentelemetry import baggage
 from langtrace.trace_attributes import FrameworkSpanAttributes
-from opentelemetry.trace import SpanKind
+from opentelemetry.trace import SpanKind, Span, Tracer
 from opentelemetry.trace.status import Status, StatusCode
 
 
@@ -33,8 +32,8 @@ crew_properties = {
     "share_crew": "bool",
     "step_callback": "object",
     "task_callback": "object",
-    "prompt_file": "object",
-    "output_log_file": "object",
+    "prompt_file": "str",
+    "output_log_file": "bool",
 }
 
 task_properties = {
@@ -90,9 +89,8 @@ agent_properties = {
 }
 
 
-def patch_crew(operation_name, version, tracer):
+def patch_crew(operation_name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
-
         service_provider = SERVICE_PROVIDERS["CREWAI"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {
@@ -104,52 +102,15 @@ def patch_crew(operation_name, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        crew_config = {}
-        for key, value in instance.__dict__.items():
-            if instance.__class__.__name__ == "Crew":
-                if key in crew_properties and value is not None:
-                    if crew_properties[key] == "json":
-                        crew_config[key] = json.dumps(value)
-                    elif crew_properties[key] == "object":
-                        crew_config[key] = str(value)
-                    else:
-                        crew_config[key] = value
-            elif instance.__class__.__name__ == "Agent":
-                if key in agent_properties and value is not None:
-                    if agent_properties[key] == "json":
-                        crew_config[key] = json.dumps(value)
-                    elif agent_properties[key] == "object":
-                        crew_config[key] = str(value)
-                    else:
-                        crew_config[key] = value
-            elif instance.__class__.__name__ == "Task":
-                if key in task_properties and value is not None:
-                    if task_properties[key] == "json":
-                        crew_config[key] = json.dumps(value)
-                    elif task_properties[key] == "object":
-                        crew_config[key] = str(value)
-                    else:
-                        crew_config[key] = value
-        if crew_config:
-            if instance.__class__.__name__ == "Crew":
-                if "inputs" in kwargs and kwargs["inputs"]:
-                    crew_config["inputs"] = json.dumps(kwargs["inputs"])
-                span_attributes["crewai.crew.config"] = json.dumps(crew_config)
-            elif instance.__class__.__name__ == "Agent":
-                if "context" in kwargs and kwargs["context"]:
-                    crew_config["context"] = json.dumps(kwargs["context"])
-                span_attributes["crewai.agent.config"] = json.dumps(crew_config)
-            elif instance.__class__.__name__ == "Task":
-                span_attributes["crewai.task.config"] = json.dumps(crew_config)
-
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             get_span_name(operation_name), kind=SpanKind.CLIENT
         ) as span:
-            _set_input_attributes(span, kwargs, attributes)
 
             try:
+                set_span_attributes(span, attributes)
+                CrewAISpanAttributes(span=span, instance=instance)
                 result = wrapped(*args, **kwargs)
                 if result:
                     span.set_status(Status(StatusCode.OK))
@@ -158,6 +119,7 @@ def patch_crew(operation_name, version, tracer):
                 return result
 
             except Exception as err:
+                print("Error", err)
                 # Record the exception in the span
                 span.record_exception(err)
 
@@ -170,7 +132,103 @@ def patch_crew(operation_name, version, tracer):
     return traced_method
 
 
-@silently_fail
-def _set_input_attributes(span, kwargs, attributes):
-    for field, value in attributes.model_dump(by_alias=True).items():
-        set_span_attribute(span, field, value)
+class CrewAISpanAttributes:
+    span: Span
+    crew: dict
+
+    def __init__(self, span: Span, instance) -> None:
+        self.span = span
+        self.instance = instance
+        self.crew = {
+            "tasks": [],
+            "agents": [],
+        }
+
+        self.run()
+
+    def run(self):
+        instance_name = self.instance.__class__.__name__
+        if instance_name == "Crew":
+            self.set_crew_attributes()
+            set_span_attribute(self.span, "crewai.crew.config", json.dumps(self.crew))
+
+        elif instance_name == "Agent":
+            agent = self.set_agent_attributes()
+            # for key, value in agent.items():
+            #     set_span_attribute(self.span, key, value)
+            set_span_attribute(self.span, "crewai.agent.config", json.dumps(agent))
+        elif instance_name == "Task":
+            task = self.set_task_attributes()
+            # uncomment if you want to spread attributes for the UI instead of dumping the whole object
+            # for key, value in task.items():
+            #     set_span_attribute(self.span, key, value)
+            set_span_attribute(self.span, "crewai.task.config", json.dumps(task))
+
+    def set_crew_attributes(self):
+        for key, value in self.instance.__dict__.items():
+            if key == "tasks":
+                self._parse_tasks(value)
+
+            elif key == "agents":
+                self._parse_agents(value)
+            else:
+                self.crew[key] = str(value)
+
+    def set_agent_attributes(self):
+        agent = {}
+        for key, value in self.instance.__dict__.items():
+            if value is None:
+                continue
+            agent[key] = str(value)
+
+        return agent
+
+    def set_task_attributes(self):
+        task = {}
+        for key, value in self.instance.__dict__.items():
+            if value is None:
+                continue
+
+            if key == "agent":
+                task[key] = value.role
+            else:
+                task[key] = str(value)
+        return task
+
+    def _parse_agents(self, agents):
+        for agent in agents:
+            model = None
+            if agent.llm is not None:
+                if hasattr(agent.llm, "model"):
+                    model = agent.llm.model
+                elif hasattr(agent.llm, "model_name"):
+                    model = agent.llm.model_name
+            self.crew["agents"].append(
+                {
+                    "id": str(agent.id),
+                    "role": agent.role,
+                    "goal": agent.goal,
+                    "backstory": agent.backstory,
+                    "cache": agent.cache,
+                    "config": agent.config,
+                    "verbose": agent.verbose,
+                    "allow_delegation": agent.allow_delegation,
+                    "tools": agent.tools,
+                    "max_iter": agent.max_iter,
+                    "llm": str(model if model is not None else ""),
+                }
+            )
+
+    def _parse_tasks(self, tasks):
+        for task in tasks:
+            self.crew["tasks"].append(
+                {
+                    "agent": task.agent.role,
+                    "description": task.description,
+                    "async_execution": task.async_execution,
+                    "expected_output": task.expected_output,
+                    "human_input": task.human_input,
+                    "tools": task.tools,
+                    "output_file": task.output_file,
+                }
+            )

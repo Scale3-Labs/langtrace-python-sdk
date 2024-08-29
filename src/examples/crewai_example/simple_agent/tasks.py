@@ -18,4 +18,5 @@ class PoetryTasks:
             ),
             expected_output="A creative and expressive poem that captures the essence of the given topic.",
             agent=agent,
+            output_file="poem.txt",
         )
