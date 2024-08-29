@@ -46,7 +46,7 @@ class CrewAIInstrumentation(BaseInstrumentor):
             )
             _W(
                 "crewai.task",
-                "Task.execute",
+                "Task.execute_sync",
                 patch_crew("Task.execute", version, tracer),
             )
         except Exception as e:
