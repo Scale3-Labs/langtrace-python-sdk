@@ -30,14 +30,6 @@ class PoetryCrew:
 if __name__ == "__main__":
     print("## Welcome to Poetry Crew")
     print("-------------------------------")
-    # topic = input(
-    #     dedent(
-    #         """
-    #   What topic do you want to write a poem on?
-    # """
-    #     )
-    # )
-
     poetry_crew = PoetryCrew(topic="cold")
     result = poetry_crew.run()
     print("\n\n########################")
