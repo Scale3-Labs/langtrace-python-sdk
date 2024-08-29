@@ -1,10 +1,6 @@
-import sys
-
-sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
-
 from crewai import Crew
-from agents import PoetryAgents
-from tasks import PoetryTasks
+from .agents import PoetryAgents
+from .tasks import PoetryTasks
 from langtrace_python_sdk import langtrace
 from dotenv import load_dotenv
 
@@ -30,6 +26,7 @@ class PoetryCrew:
 
 
 # This is the main function that you will use to run your custom crew.
+# You can run this file using `python -m src.examples.crewai_example.simple_agent.main`
 if __name__ == "__main__":
     print("## Welcome to Poetry Crew")
     print("-------------------------------")
