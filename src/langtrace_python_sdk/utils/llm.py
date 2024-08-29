@@ -17,9 +17,9 @@ limitations under the License.
 from typing import Any, Dict, Union
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
-from openai import NOT_GIVEN
+from langtrace_python_sdk.types import NOT_GIVEN
 from tiktoken import get_encoding
-from langtrace.trace_attributes import LLMSpanAttributes, DatabaseSpanAttributes, FrameworkSpanAttributes
+from tiktoken import get_encoding, list_encoding_names
 
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
@@ -32,6 +32,7 @@ import json
 from opentelemetry import baggage
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
+
 import os
 
 
@@ -237,7 +238,7 @@ class StreamWrapper:
     span: Span
 
     def __init__(
-        self, stream, span, prompt_tokens, function_call=False, tool_calls=False
+        self, stream, span, prompt_tokens=0, function_call=False, tool_calls=False
     ):
         self.stream = stream
         self.span = span
@@ -247,16 +248,25 @@ class StreamWrapper:
         self.result_content = []
         self.completion_tokens = 0
         self._span_started = False
+        self._response_model = None
         self.setup()
 
     def setup(self):
         if not self._span_started:
-            self.span.add_event(Event.STREAM_START.value)
             self._span_started = True
 
     def cleanup(self):
+        if self.completion_tokens==0:
+            response_model = 'cl100k_base'
+            if self._response_model in list_encoding_names():
+                response_model = self._response_model
+            self.completion_tokens = estimate_tokens_using_tiktoken("".join(self.result_content), response_model)
         if self._span_started:
-            self.span.add_event(Event.STREAM_END.value)
+            set_span_attribute(
+                self.span,
+                SpanAttributes.LLM_RESPONSE_MODEL,
+                self._response_model,
+            )
             set_span_attribute(
                 self.span,
                 SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
@@ -281,7 +291,6 @@ class StreamWrapper:
                     }
                 ],
             )
-
             self.span.set_status(StatusCode.OK)
             self.span.end()
             self._span_started = False
@@ -324,21 +333,26 @@ class StreamWrapper:
             self.cleanup()
             raise StopAsyncIteration
 
-    def process_chunk(self, chunk):
-        if hasattr(chunk, "model") and chunk.model is not None:
-            set_span_attribute(
-                self.span,
-                SpanAttributes.LLM_RESPONSE_MODEL,
-                chunk.model,
-            )
+    def set_response_model(self, chunk):
+        if self._response_model:
+            return
 
+        # OpenAI response model is set on all chunks
+        if hasattr(chunk, "model") and chunk.model is not None:
+            self._response_model = chunk.model
+
+        # Anthropic response model is set on the first chunk message
+        if hasattr(chunk, "message") and chunk.message is not None:
+            if hasattr(chunk.message, "model") and chunk.message.model is not None:
+                self._response_model = chunk.message.model
+
+    def build_streaming_response(self, chunk):
+        content = []
+        # OpenAI
         if hasattr(chunk, "choices") and chunk.choices is not None:
-            content = []
             if not self.function_call and not self.tool_calls:
                 for choice in chunk.choices:
                     if choice.delta and choice.delta.content is not None:
-                        token_counts = estimate_tokens(choice.delta.content)
-                        self.completion_tokens += token_counts
                         content = [choice.delta.content]
             elif self.function_call:
                 for choice in chunk.choices:
@@ -347,10 +361,6 @@ class StreamWrapper:
                         and choice.delta.function_call is not None
                         and choice.delta.function_call.arguments is not None
                     ):
-                        token_counts = estimate_tokens(
-                            choice.delta.function_call.arguments
-                        )
-                        self.completion_tokens += token_counts
                         content = [choice.delta.function_call.arguments]
             elif self.tool_calls:
                 for choice in chunk.choices:
@@ -363,30 +373,58 @@ class StreamWrapper:
                                 and tool_call.function is not None
                                 and tool_call.function.arguments is not None
                             ):
-                                token_counts = estimate_tokens(
-                                    tool_call.function.arguments
-                                )
-                                self.completion_tokens += token_counts
                                 content.append(tool_call.function.arguments)
-            set_event_completion_chunk(
-                self.span,
-                "".join(content) if len(content) > 0 and content[0] is not None else "",
-            )
-            if content:
-                self.result_content.append(content[0])
 
-        if hasattr(chunk, "text"):
-            token_counts = estimate_tokens(chunk.text)
-            self.completion_tokens += token_counts
+        # VertexAI
+        if hasattr(chunk, "text") and chunk.text is not None:
             content = [chunk.text]
-            set_event_completion_chunk(
-                self.span,
-                "".join(content) if len(content) > 0 and content[0] is not None else "",
-            )
 
-            if content:
-                self.result_content.append(content[0])
+        # Anthropic
+        if hasattr(chunk, "delta") and chunk.delta is not None:
+            content = [chunk.delta.text] if hasattr(chunk.delta, "text") else []
 
+        if isinstance(chunk, dict):
+            if "message" in chunk:
+                if "content" in chunk["message"]:
+                    content = [chunk["message"]["content"]]
+        if content:
+            self.result_content.append(content[0])
+
+    def set_usage_attributes(self, chunk):
+
+        # Anthropic & OpenAI
+        if hasattr(chunk, "type") and chunk.type == "message_start":
+            self.prompt_tokens = chunk.message.usage.input_tokens
+
+        if hasattr(chunk, "usage") and chunk.usage is not None:
+            if hasattr(chunk.usage, "output_tokens"):
+                self.completion_tokens = chunk.usage.output_tokens
+
+            if hasattr(chunk.usage, "prompt_tokens"):
+                self.prompt_tokens = chunk.usage.prompt_tokens
+
+            if hasattr(chunk.usage, "completion_tokens"):
+                self.completion_tokens = chunk.usage.completion_tokens
+
+        # VertexAI
         if hasattr(chunk, "usage_metadata"):
             self.completion_tokens = chunk.usage_metadata.candidates_token_count
             self.prompt_tokens = chunk.usage_metadata.prompt_token_count
+
+        # Ollama
+        if isinstance(chunk, dict):
+            if "prompt_eval_count" in chunk:
+                self.prompt_tokens = chunk["prompt_eval_count"]
+            if "eval_count" in chunk:
+                self.completion_tokens = chunk["eval_count"]
+
+    def process_chunk(self, chunk):
+        # Mistral nests the chunk data under a `data` attribute
+        if (
+            hasattr(chunk, "data") and chunk.data is not None
+            and hasattr(chunk.data, "choices") and chunk.data.choices is not None
+        ):
+            chunk = chunk.data
+        self.set_response_model(chunk=chunk)
+        self.build_streaming_response(chunk=chunk)
+        self.set_usage_attributes(chunk=chunk)

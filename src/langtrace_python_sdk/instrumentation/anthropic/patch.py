@@ -16,11 +16,16 @@ limitations under the License.
 
 from typing import Any, Callable, Dict, List, Optional, Iterator, TypedDict, Union
 from langtrace.trace_attributes import Event, SpanAttributes, LLMSpanAttributes
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.silently_fail import silently_fail
+
 from langtrace_python_sdk.utils.llm import (
+    StreamWrapper,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     set_event_completion,
     set_event_completion_chunk,
     set_usage_attributes,
@@ -185,7 +190,7 @@ def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
             span.end()
             return result
         else:
-            return handle_streaming_response(result, span)
+            return StreamWrapper(result, span)
 
     # return the wrapped method
     return traced_method

@@ -41,7 +41,7 @@ from langtrace_python_sdk.utils.llm import (
     StreamWrapper,
     set_span_attributes,
 )
-from openai._types import NOT_GIVEN
+from langtrace_python_sdk.types import NOT_GIVEN
 
 
 def images_generate(
