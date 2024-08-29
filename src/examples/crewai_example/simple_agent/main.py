@@ -1,10 +1,12 @@
+import sys
+
+sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
+
 from crewai import Crew
-from textwrap import dedent
-from .agents import PoetryAgents
-from .tasks import PoetryTasks
+from agents import PoetryAgents
+from tasks import PoetryTasks
 from langtrace_python_sdk import langtrace
 from dotenv import load_dotenv
-import agentops
 
 load_dotenv()
 langtrace.init()

@@ -28,5 +28,5 @@ class PoetryAgents:
             goal="""Create a poem that captures the essence of a given theme or emotion""",
             allow_delegation=False,
             verbose=True,
-            llm=self.ollama,
+            llm=self.open_ai,
         )

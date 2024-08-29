@@ -197,6 +197,12 @@ class CrewAISpanAttributes:
 
     def _parse_agents(self, agents):
         for agent in agents:
+            model = None
+            if agent.llm is not None:
+                if hasattr(agent.llm, "model"):
+                    model = agent.llm.model
+                elif hasattr(agent.llm, "model_name"):
+                    model = agent.llm.model_name
             self.crew["agents"].append(
                 {
                     "id": str(agent.id),
@@ -209,7 +215,7 @@ class CrewAISpanAttributes:
                     "allow_delegation": agent.allow_delegation,
                     "tools": agent.tools,
                     "max_iter": agent.max_iter,
-                    "llm": str(agent.llm.model),
+                    "llm": str(model if model is not None else ""),
                 }
             )
 
