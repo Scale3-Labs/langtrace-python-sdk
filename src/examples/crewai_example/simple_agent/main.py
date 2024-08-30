@@ -35,17 +35,10 @@ class PoetryCrew:
 
 
 # This is the main function that you will use to run your custom crew.
+# You can run this file using `python -m src.examples.crewai_example.simple_agent.main`
 if __name__ == "__main__":
     print("## Welcome to Poetry Crew")
     print("-------------------------------")
-    # topic = input(
-    #     dedent(
-    #         """
-    #   What topic do you want to write a poem on?
-    # """
-    #     )
-    # )
-
     poetry_crew = PoetryCrew(topic="cold")
     result = poetry_crew.run()
     print("\n\n########################")
