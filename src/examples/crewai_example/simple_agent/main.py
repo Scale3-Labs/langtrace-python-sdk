@@ -29,7 +29,7 @@ class PoetryCrew:
         create_poem_2 = tasks.create_poem(poetry_agent_2, self.topic)
         create_poem_3 = tasks.create_poem(poetry_agent_3, self.topic)
 
-        crew = Crew(agents=[poetry_agent, poetry_agent_2, poetry_agent_3], tasks=[create_poem, create_poem_2, create_poem_3], verbose=True, memory=True)
+        crew = Crew(agents=[poetry_agent], tasks=[create_poem], verbose=True, memory=True)
         res = crew.kickoff()
         return res
 
