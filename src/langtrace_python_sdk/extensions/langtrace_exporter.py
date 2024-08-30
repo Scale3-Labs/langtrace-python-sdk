@@ -1,6 +1,7 @@
 import json
 import os
 import typing
+import sys
 
 import requests
 from opentelemetry.sdk.trace.export import ReadableSpan, SpanExporter, SpanExportResult
@@ -49,11 +50,13 @@ class LangTraceExporter(SpanExporter):
 
     api_key: str
     api_host: str
+    disable_logging: bool
 
     def __init__(
         self,
         api_host,
         api_key: str = None,
+        disable_logging: bool = False,
     ) -> None:
         self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
         self.api_host = (
@@ -61,6 +64,7 @@ class LangTraceExporter(SpanExporter):
             if api_host == LANGTRACE_REMOTE_URL
             else api_host
         )
+        self.disable_logging = disable_logging
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         """
@@ -72,7 +76,7 @@ class LangTraceExporter(SpanExporter):
         Returns:
             The result of the export SUCCESS or FAILURE
         """
-        if not self.api_key:
+        if not self.api_key and not self.disable_logging:
             print(Fore.RED)
             print(
                 "Missing Langtrace API key, proceed to https://langtrace.ai to create one"
@@ -107,15 +111,16 @@ class LangTraceExporter(SpanExporter):
 
             if not response.ok:
                 raise RequestException(response.text)
-
-            print(
-                Fore.GREEN + f"Exported {len(spans)} spans successfully." + Fore.RESET
-            )
+            if not self.disable_logging:
+                print(
+                    Fore.GREEN + f"Exported {len(spans)} spans successfully." + Fore.RESET
+                )
             return SpanExportResult.SUCCESS
         except RequestException as err:
-            print(Fore.RED + "Failed to export spans.")
-            print(Fore.RED + f"Error: {err}" + Fore.RESET)
+            if not self.disable_logging:
+                print(Fore.RED + "Failed to export spans.")
+                print(Fore.RED + f"Error: {err}" + Fore.RESET)
             return SpanExportResult.FAILURE
 
     def shutdown(self) -> None:
-        pass
+        print(Fore.WHITE + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace" + Fore.RESET)

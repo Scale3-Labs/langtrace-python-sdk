@@ -16,7 +16,8 @@ ENABLED_EXAMPLES = {
     "ollama": False,
     "groq": False,
     "vertexai": False,
-    "gemini": True,
+    "gemini": False,
+    "mistral": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -103,3 +104,9 @@ if ENABLED_EXAMPLES["gemini"]:
 
     print(Fore.BLUE + "Running Gemini example" + Fore.RESET)
     GeminiRunner().run()
+
+if ENABLED_EXAMPLES["mistral"]:
+    from examples.mistral_example import MistralRunner
+
+    print(Fore.BLUE + "Running Mistral example" + Fore.RESET)
+    MistralRunner().run()

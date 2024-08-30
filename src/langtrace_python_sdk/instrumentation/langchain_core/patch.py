@@ -30,6 +30,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace.trace_attributes import SpanAttributes
 
 
 def generic_patch(
@@ -78,8 +79,22 @@ def generic_patch(
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
+
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
+                    if hasattr(result, 'usage'):
+                        prompt_tokens = result.usage.prompt_tokens
+                        completion_tokens = result.usage.completion_tokens
+                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+                        span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens)
+
+                    elif result.generations[0][0].text:
+                        span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, instance.get_num_tokens(result.generations[0][0].text))
+                    elif isinstance(args[0][0], str):
+                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0]))
+
+                    else:
+                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0].text))
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -156,6 +171,7 @@ def runnable_patch(
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
+
                 if trace_output:
                     outputs = {}
                     if isinstance(result, dict):
