@@ -1,8 +1,8 @@
 from crewai import Agent
-from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
 from langchain_cohere import ChatCohere
 from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 
 
 class PoetryAgents:
