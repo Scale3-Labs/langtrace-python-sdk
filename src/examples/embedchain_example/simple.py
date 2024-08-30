@@ -1,7 +1,3 @@
-import sys
-
-sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
-
 from dotenv import load_dotenv
 from embedchain import App
 from langtrace_python_sdk import langtrace

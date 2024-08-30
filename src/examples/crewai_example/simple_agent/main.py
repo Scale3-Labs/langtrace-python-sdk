@@ -1,7 +1,3 @@
-import sys
-
-sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
-
 from agents import PoetryAgents
 from crewai import Crew
 from dotenv import load_dotenv
