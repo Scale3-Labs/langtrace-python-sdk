@@ -255,6 +255,7 @@ Langtrace automatically captures traces from the following vendors:
 | Ollama       | Framework       | :x:                | :white_check_mark:              |
 | VertexAI     | Framework       | :x:                | :white_check_mark:              |
 | Vercel AI SDK| Framework       | :white_check_mark: | :x:                             |
+| EmbedChain   | Framework       | :x:                | :white_check_mark:              |
 | Pinecone     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | QDrant       | Vector Database | :white_check_mark: | :white_check_mark:              |

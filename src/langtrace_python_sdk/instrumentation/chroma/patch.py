@@ -51,7 +51,7 @@ def collection_patch(method, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "chromadb",
             "db.operation": api["OPERATION"],
-            "db.query": json.dumps(kwargs.get("query")),
+            "db.query": json.dumps(kwargs),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
