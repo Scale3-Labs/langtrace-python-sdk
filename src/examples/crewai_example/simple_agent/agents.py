@@ -7,9 +7,7 @@ from langchain_openai import ChatOpenAI
 
 class PoetryAgents:
     def __init__(self):
-        self.open_ai = ChatOpenAI(
-            model_name="gpt-4", temperature=0.7, stream_usage=True
-        )
+        self.open_ai = ChatOpenAI(model_name="gpt-4", temperature=0.7)
         self.anthropic = ChatAnthropic(
             model_name="claude-3-5-sonnet-20240620", temperature=0.7
         )
