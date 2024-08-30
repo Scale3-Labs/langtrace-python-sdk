@@ -1,8 +1,9 @@
+from agents import PoetryAgents
 from crewai import Crew
-from .agents import PoetryAgents
-from .tasks import PoetryTasks
-from langtrace_python_sdk import langtrace
 from dotenv import load_dotenv
+from tasks import PoetryTasks
+
+from langtrace_python_sdk import langtrace
 
 load_dotenv()
 langtrace.init()
@@ -17,10 +18,14 @@ class PoetryCrew:
         tasks = PoetryTasks()
 
         poetry_agent = agents.create_poet_agent()
+        poetry_agent_2 = agents.poet_agent_2()
+        poetry_agent_3 = agents.poet_agent_3()
 
         create_poem = tasks.create_poem(poetry_agent, self.topic)
+        create_poem_2 = tasks.create_poem(poetry_agent_2, self.topic)
+        create_poem_3 = tasks.create_poem(poetry_agent_3, self.topic)
 
-        crew = Crew(agents=[poetry_agent], tasks=[create_poem], verbose=True)
+        crew = Crew(agents=[poetry_agent], tasks=[create_poem], verbose=True, memory=True)
         res = crew.kickoff()
         return res
 

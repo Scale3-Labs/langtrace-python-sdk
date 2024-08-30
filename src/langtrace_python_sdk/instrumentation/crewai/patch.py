@@ -114,12 +114,23 @@ def patch_crew(operation_name, version, tracer: Tracer):
                 result = wrapped(*args, **kwargs)
                 if result:
                     span.set_status(Status(StatusCode.OK))
+                    if instance.__class__.__name__ == "Crew":
+                        span.set_attribute("crewai.crew.result", str(result))
+                        if hasattr(result, "tasks_output"):
+                            span.set_attribute("crewai.crew.tasks_output", str((result.tasks_output)))
+                        if hasattr(result, "token_usage"):
+                            span.set_attribute("crewai.crew.token_usage", str((result.token_usage)))
+                        if hasattr(result, "usage_metrics"):
+                            span.set_attribute("crewai.crew.usage_metrics", str((result.usage_metrics)))
+                    elif instance.__class__.__name__ == "Agent":
+                        span.set_attribute("crewai.agent.result", str(result))
+                    elif instance.__class__.__name__ == "Task":
+                        span.set_attribute("crewai.task.result", str(result))
 
                 span.end()
                 return result
 
             except Exception as err:
-                print("Error", err)
                 # Record the exception in the span
                 span.record_exception(err)
 
