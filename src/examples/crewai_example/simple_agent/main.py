@@ -2,11 +2,12 @@ import sys
 
 sys.path.insert(0, '/Users/karthikkalyanaraman/work/langtrace/langtrace-python-sdk/src')
 
-from crewai import Crew
 from agents import PoetryAgents
-from tasks import PoetryTasks
-from langtrace_python_sdk import langtrace
+from crewai import Crew
 from dotenv import load_dotenv
+from tasks import PoetryTasks
+
+from langtrace_python_sdk import langtrace
 
 load_dotenv()
 langtrace.init()
@@ -21,10 +22,14 @@ class PoetryCrew:
         tasks = PoetryTasks()
 
         poetry_agent = agents.create_poet_agent()
+        poetry_agent_2 = agents.poet_agent_2()
+        poetry_agent_3 = agents.poet_agent_3()
 
         create_poem = tasks.create_poem(poetry_agent, self.topic)
+        create_poem_2 = tasks.create_poem(poetry_agent_2, self.topic)
+        create_poem_3 = tasks.create_poem(poetry_agent_3, self.topic)
 
-        crew = Crew(agents=[poetry_agent], tasks=[create_poem], verbose=True)
+        crew = Crew(agents=[poetry_agent, poetry_agent_2, poetry_agent_3], tasks=[create_poem, create_poem_2, create_poem_3], verbose=True, memory=True)
         res = crew.kickoff()
         return res
 

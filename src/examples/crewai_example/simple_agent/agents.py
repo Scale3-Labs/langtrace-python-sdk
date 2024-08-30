@@ -30,3 +30,28 @@ class PoetryAgents:
             verbose=True,
             llm=self.open_ai,
         )
+    
+    def poet_agent_2(self):
+        return Agent(
+            role="Renaissance Poet",
+            backstory="""
+                    I am a Renaissance Poet. I am well-versed in the art of poetry and have a deep appreciation for the beauty of language and expression.
+                """,
+            goal="""Create a poem that is inspired by the works of the Renaissance poets""",
+            allow_delegation=False,
+            verbose=True,
+            llm=self.open_ai,
+        )
+
+    def poet_agent_3(self):
+        return Agent(
+            role="William Shakespeare",
+            backstory="""
+                    I am william shakespeare. I am an Expert in poetry writing and creative expression.
+                    I have been writing poetry for over 10 years and have published several collections.
+                """,
+            goal="""Create a poem that is inspired by the works of William Shakespeare""",
+            allow_delegation=False,
+            verbose=True,
+            llm=self.open_ai,
+        )
