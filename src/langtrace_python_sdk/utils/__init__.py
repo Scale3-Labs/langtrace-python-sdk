@@ -6,7 +6,7 @@ import os
 
 
 def set_span_attribute(span: Span, name, value):
-    if value is not None:
+    if value and value is not None:
         if value != "" or value != NOT_GIVEN:
             if name == SpanAttributes.LLM_PROMPTS:
                 set_event_prompt(span, value)

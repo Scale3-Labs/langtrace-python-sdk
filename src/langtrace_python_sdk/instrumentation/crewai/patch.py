@@ -11,82 +11,56 @@ from opentelemetry import baggage
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry.trace import SpanKind, Span, Tracer
 from opentelemetry.trace.status import Status, StatusCode
+from langtrace_python_sdk.utils.misc import serialize_args, serialize_kwargs
 
 
-crew_properties = {
-    "tasks": "object",
-    "agents": "object",
-    "cache": "bool",
-    "process": "object",
-    "verbose": "bool",
-    "memory": "bool",
-    "embedder": "json",
-    "full_output": "bool",
-    "manager_llm": "object",
-    "manager_agent": "object",
-    "manager_callbacks": "object",
-    "function_calling_llm": "object",
-    "config": "json",
-    "id": "object",
-    "max_rpm": "int",
-    "share_crew": "bool",
-    "step_callback": "object",
-    "task_callback": "object",
-    "prompt_file": "str",
-    "output_log_file": "bool",
-}
+def patch_memory(operation_name, version, tracer: Tracer):
+    def traced_method(wrapped, instance, args, kwargs):
+        service_provider = SERVICE_PROVIDERS["CREWAI"]
+        extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
+        span_attributes = {
+            "langtrace.sdk.name": "langtrace-python-sdk",
+            "langtrace.service.name": service_provider,
+            "langtrace.service.type": "framework",
+            "langtrace.service.version": version,
+            "langtrace.version": v(LANGTRACE_SDK_NAME),
+            **(extra_attributes if extra_attributes is not None else {}),
+        }
 
-task_properties = {
-    "id": "object",
-    "used_tools": "int",
-    "tools_errors": "int",
-    "delegations": "int",
-    "i18n": "object",
-    "thread": "object",
-    "prompt_context": "object",
-    "description": "str",
-    "expected_output": "str",
-    "config": "object",
-    "callback": "str",
-    "agent": "object",
-    "context": "object",
-    "async_execution": "bool",
-    "output_json": "object",
-    "output_pydantic": "object",
-    "output_file": "object",
-    "output": "object",
-    "tools": "object",
-    "human_input": "bool",
-}
+        inputs = {}
+        if len(args) > 0:
+            inputs["args"] = serialize_args(*args)
+        if len(kwargs) > 0:
+            inputs["kwargs"] = serialize_kwargs(**kwargs)
+        span_attributes["crewai.memory.storage.rag_storage.inputs"] = json.dumps(inputs)
 
-agent_properties = {
-    "formatting_errors": "int",
-    "id": "object",
-    "role": "str",
-    "goal": "str",
-    "backstory": "str",
-    "cache": "bool",
-    "config": "object",
-    "max_rpm": "int",
-    "verbose": "bool",
-    "allow_delegation": "bool",
-    "tools": "object",
-    "max_iter": "int",
-    "max_execution_time": "object",
-    "agent_executor": "object",
-    "tools_handler": "object",
-    "force_answer_max_iterations": "int",
-    "crew": "object",
-    "cache_handler": "object",
-    "step_callback": "object",
-    "i18n": "object",
-    "llm": "object",
-    "function_calling_llm": "object",
-    "callbacks": "object",
-    "system_template": "object",
-    "prompt_template": "object",
-    "response_template": "object",
-}
+        attributes = FrameworkSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(
+            get_span_name(operation_name), kind=SpanKind.CLIENT
+        ) as span:
+
+            try:
+                set_span_attributes(span, attributes)
+                result = wrapped(*args, **kwargs)
+                if result is not None and len(result) > 0:
+                    set_span_attribute(span, "crewai.memory.storage.rag_storage.outputs", str(result))
+                if result:
+                    span.set_status(Status(StatusCode.OK))
+                span.end()
+                return result
+
+            except Exception as err:
+                # Record the exception in the span
+                span.record_exception(err)
+
+                # Set the span status to indicate an error
+                span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
+                raise
+
+    return traced_method
 
 
 def patch_crew(operation_name, version, tracer: Tracer):
@@ -161,25 +135,26 @@ class CrewAISpanAttributes:
         instance_name = self.instance.__class__.__name__
         if instance_name == "Crew":
             self.set_crew_attributes()
-            set_span_attribute(self.span, "crewai.crew.config", json.dumps(self.crew))
+            for key, value in self.crew.items():
+                key = f"crewai.crew.{key}"
+                set_span_attribute(self.span, key, value)
 
         elif instance_name == "Agent":
             agent = self.set_agent_attributes()
-            # for key, value in agent.items():
-            #     set_span_attribute(self.span, key, value)
-            set_span_attribute(self.span, "crewai.agent.config", json.dumps(agent))
+            for key, value in agent.items():
+                key = f"crewai.agent.{key}"
+                set_span_attribute(self.span, key, value)
+
         elif instance_name == "Task":
             task = self.set_task_attributes()
-            # uncomment if you want to spread attributes for the UI instead of dumping the whole object
-            # for key, value in task.items():
-            #     set_span_attribute(self.span, key, value)
-            set_span_attribute(self.span, "crewai.task.config", json.dumps(task))
+            for key, value in task.items():
+                key = f"crewai.task.{key}"
+                set_span_attribute(self.span, key, value)
 
     def set_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
             if key == "tasks":
                 self._parse_tasks(value)
-
             elif key == "agents":
                 self._parse_agents(value)
             else:
