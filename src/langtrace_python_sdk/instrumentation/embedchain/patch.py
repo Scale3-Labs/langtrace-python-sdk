@@ -52,6 +52,11 @@ def generic_patch(method, version, tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
+        if hasattr(instance, 'config') and isinstance(instance.config, object):
+            config_dict = instance.config.__dict__
+            if isinstance(config_dict, dict):
+                span_attributes["embedchain.config"] = json.dumps(config_dict)
+
         if len(args) > 0:
             span_attributes["embedchain.inputs"] = json.dumps(args)
 
