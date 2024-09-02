@@ -81,8 +81,8 @@ def init(
 
     host = (
         os.environ.get("LANGTRACE_API_HOST", None)
-        or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", None)
         or os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)
+        or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", None)
         or api_host
         or LANGTRACE_REMOTE_URL
     )
