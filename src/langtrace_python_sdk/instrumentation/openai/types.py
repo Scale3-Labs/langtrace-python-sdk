@@ -12,41 +12,133 @@ limitations under the License.
 """
 
 from typing import Any, Dict, List, Union, Optional, TypedDict
-class ContentItem(TypedDict, total=False):
+
+
+class ContentItem:
     url: str
     revised_prompt: str
-    base64: Optional[str]  # Only used in images_edit
+    base64: Optional[str]
+
+    def __init__(
+        self,
+        url: str,
+        revised_prompt: str,
+        base64: Optional[str],
+    ):
+        self.url = url
+        self.revised_prompt = revised_prompt
+        self.base64 = base64
 
 
-class Message(TypedDict, total=False):
-    role: str
-    content: Union[str, List[ContentItem], Dict[str, Any]]
-    content_filter_results: Optional[Any]
-
-
-class ToolFunction(TypedDict, total=False):
+class ToolFunction:
     name: str
     arguments: str
 
+    def __init__(
+        self,
+        name: str,
+        arguments: str,
+    ):
+        self.name = name
+        self.arguments = arguments
 
-class ToolCall(TypedDict, total=False):
+
+class ToolCall:
     id: str
     type: str
-    function: Optional[ToolFunction]
+    function: ToolFunction
+
+    def __init__(
+        self,
+        id: str,
+        type: str,
+        function: ToolFunction,
+    ):
+        self.id = id
+        self.type = type
+        self.function = function
 
 
-class Usage(TypedDict, total=True):
+class Message:
+    role: str
+    content: Union[str, List[ContentItem], Dict[str, Any]]
+    tool_calls: Optional[List[ToolCall]]
+
+    def __init__(
+        self,
+        role: str,
+        content: Union[str, List[ContentItem], Dict[str, Any]],
+        content_filter_results: Optional[Any],
+    ):
+        self.role = role
+        self.content = content
+        self.content_filter_results = content_filter_results
+
+
+class Usage:
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
 
+    def __init__(
+        self,
+        prompt_tokens: int,
+        completion_tokens: int,
+        total_tokens: int,
+    ):
+        self.prompt_tokens = prompt_tokens
+        self.completion_tokens = completion_tokens
+        self.total_tokens = total_tokens
 
-class ResultType(TypedDict, total=True):
+
+class Choice:
+    message: Message
+    content_filter_results: Optional[Any]
+
+    def __init__(
+        self,
+        message: Message,
+        content_filter_results: Optional[Any],
+    ):
+        self.message = message
+        self.content_filter_results = content_filter_results
+
+
+class ResultType:
     model: Optional[str]
-    role: Optional[str]
     content: List[ContentItem]
     system_fingerprint: Optional[str]
     usage: Optional[Usage]
+    choices: Optional[List[Choice]]
+    response_format: Optional[str]
+    size: Optional[str]
+    encoding_format: Optional[str]
+
+    def __init__(
+        self,
+        model: Optional[str],
+        role: Optional[str],
+        content: List[ContentItem],
+        system_fingerprint: Optional[str],
+        usage: Optional[Usage],
+        functions: Optional[List[ToolCall]],
+        tools: Optional[List[ToolCall]],
+        choices: Optional[List[Choice]],
+        response_format: Optional[str],
+        size: Optional[str],
+        encoding_format: Optional[str],
+    ):
+        self.model = model
+        self.role = role
+        self.content = content
+        self.system_fingerprint = system_fingerprint
+        self.usage = usage
+        self.functions = functions
+        self.tools = tools
+        self.choices = choices
+        self.response_format = response_format
+        self.size = size
+        self.encoding_format = encoding_format
 
 
 class ImagesGenerateKwargs(TypedDict, total=False):
@@ -55,6 +147,9 @@ class ImagesGenerateKwargs(TypedDict, total=False):
     messages: Optional[List[Message]]
     functions: Optional[List[ToolCall]]
     tools: Optional[List[ToolCall]]
+    response_format: Optional[str]
+    size: Optional[str]
+    encoding_format: Optional[str]
 
 
 class ImagesEditKwargs(TypedDict, total=False):
@@ -73,4 +168,3 @@ class EmbeddingsCreateKwargs(TypedDict, total=False):
     dimensions: Optional[str]
     input: Union[str, List[str], None]
     encoding_format: Optional[Union[List[str], str]]
-

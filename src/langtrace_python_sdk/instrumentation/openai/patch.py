@@ -1,32 +1,18 @@
-"""
-Copyright (c) 2024 Scale3 Labs
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-    http://www.apache.org/licenses/LICENSE-2.0
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-"""
-
 import json
-from typing import Any, Callable, Dict, List, Union, Tuple
-from langtrace_python_sdk.instrumentation.openai.types import(
-    ChatCompletionsCreateKwargs,
-    EmbeddingsCreateKwargs,
-    ImagesEditKwargs,
-    ImagesGenerateKwargs
+from typing import Any, Dict, List, Optional, Callable, Awaitable, Union
+from langtrace.trace_attributes import (
+    LLMSpanAttributes,
+    SpanAttributes,
 )
-from langtrace.trace_attributes import LLMSpanAttributes, SpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry import trace
-from opentelemetry.trace import SpanKind, Tracer
+from opentelemetry.trace import SpanKind, Tracer, Span
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
-from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import (
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
@@ -36,6 +22,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_llm_url,
     get_span_name,
+    get_tool_calls,
     is_streaming,
     set_event_completion,
     StreamWrapper,
@@ -43,20 +30,31 @@ from langtrace_python_sdk.utils.llm import (
 )
 from langtrace_python_sdk.types import NOT_GIVEN
 
+from langtrace_python_sdk.instrumentation.openai.types import (
+    ImagesGenerateKwargs,
+    ChatCompletionsCreateKwargs,
+    EmbeddingsCreateKwargs,
+    ImagesEditKwargs,
+    ResultType,
+    ContentItem,
+)
 
-def images_generate(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
+
+def images_generate(version: str, tracer: Tracer) -> Callable:
+    """
+    Wrap the `generate` method of the `Images` class to trace it.
+    """
+
     def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: ImagesGenerateKwargs
+        wrapped: Callable, instance: Any, args: List[Any], kwargs: ImagesGenerateKwargs
     ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
-        span_attributes: Dict[str, Any] = {
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="images_generate"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -68,43 +66,61 @@ def images_generate(
         ) as span:
             set_span_attributes(span, attributes)
             try:
+                # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 if not is_streaming(kwargs):
-                    data = result.data[0] if hasattr(result, "data") and result.data else {}
-                    response = [
-                        {
-                            "role": "assistant",
-                            "content": {
-                                "url": getattr(data, "url", ""),
-                                "revised_prompt": getattr(data, "revised_prompt", ""),
-                            },
-                        }
-                    ]
-                    set_event_completion(span, response)
+                    data: Optional[ContentItem] = (
+                        result.data[0]
+                        if hasattr(result, "data") and len(result.data) > 0
+                        else None
+                    )
+                    if data is not None:
+                        response = [
+                            {
+                                "role": "assistant",
+                                "content": {
+                                    "url": data.url if hasattr(data, "url") else "",
+                                    "revised_prompt": (
+                                        data.revised_prompt
+                                        if hasattr(data, "revised_prompt")
+                                        else ""
+                                    ),
+                                },
+                            }
+                        ]
+                        set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
+                # Record the exception in the span
                 span.record_exception(err)
+
+                # Set the span status to indicate an error
                 span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
                 raise
 
     return traced_method
 
 
-def async_images_generate(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
+def async_images_generate(version: str, tracer: Tracer) -> Callable:
+    """
+    Wrap the `generate` method of the `Images` class to trace it.
+    """
+
     async def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: ImagesGenerateKwargs
-    ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
-        span_attributes: Dict[str, Any] = {
+        wrapped: Callable, instance: Any, args: List[Any], kwargs: ImagesGenerateKwargs
+    ) -> Awaitable[Any]:
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="images_generate"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -116,45 +132,63 @@ def async_images_generate(
         ) as span:
             set_span_attributes(span, attributes)
             try:
+                # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
                 if not is_streaming(kwargs):
-                    data = result.data[0] if hasattr(result, "data") and result.data else {}
-                    response = [
-                        {
-                            "role": "assistant",
-                            "content": {
-                                "url": getattr(data, "url", ""),
-                                "revised_prompt": getattr(data, "revised_prompt", ""),
-                            },
-                        }
-                    ]
-                    set_event_completion(span, response)
+                    data: Optional[ContentItem] = (
+                        result.data[0]
+                        if hasattr(result, "data") and len(result.data) > 0
+                        else None
+                    )
+                    if data is not None:
+                        response = [
+                            {
+                                "role": "assistant",
+                                "content": {
+                                    "url": data.url if hasattr(data, "url") else "",
+                                    "revised_prompt": (
+                                        data.revised_prompt
+                                        if hasattr(data, "revised_prompt")
+                                        else ""
+                                    ),
+                                },
+                            }
+                        ]
+                        set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
+                # Record the exception in the span
                 span.record_exception(err)
+
+                # Set the span status to indicate an error
                 span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
                 raise
 
     return traced_method
 
 
-def images_edit(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
+def images_edit(version: str, tracer: Tracer) -> Callable:
+    """
+    Wrap the `edit` method of the `Images` class to trace it.
+    """
+
     def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: ImagesEditKwargs
+        wrapped: Callable, instance: Any, args: List[Any], kwargs: ImagesEditKwargs
     ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
-        span_attributes: Dict[str, Any] = {
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="images_edit"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["IMAGES_EDIT"]["ENDPOINT"],
             SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("response_format"),
             SpanAttributes.LLM_IMAGE_SIZE: kwargs.get("size"),
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -166,110 +200,96 @@ def images_edit(
         ) as span:
             set_span_attributes(span, attributes)
             try:
+                # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
 
-                response = [
-                    {
-                        "role": "assistant",
-                        "content": {
-                            "url": each_data.url,
-                            "revised_prompt": each_data.revised_prompt,
-                            "base64": each_data.b64_json,
-                        },
-                    }
-                    for each_data in result.data
-                ]
+                response = []
+                # Parse each image object
+                for each_data in result.data:
+                    response.append(
+                        {
+                            "role": "assistant",
+                            "content": {
+                                "url": each_data.url,
+                                "revised_prompt": each_data.revised_prompt,
+                                "base64": each_data.b64_json,
+                            },
+                        }
+                    )
 
                 set_event_completion(span, response)
 
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
+                # Record the exception in the span
                 span.record_exception(err)
+
+                # Set the span status to indicate an error
                 span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
                 raise
 
     return traced_method
 
 
-def async_images_edit(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
-    async def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: ImagesEditKwargs
-    ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
-        span_attributes: Dict[str, Any] = {
-            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs, operation_name="images_edit"),
-            **get_llm_url(instance),
-            SpanAttributes.LLM_PATH: APIS["IMAGES_EDIT"]["ENDPOINT"],
-            SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("response_format"),
-            SpanAttributes.LLM_IMAGE_SIZE: kwargs.get("size"),
-            **get_extra_attributes(),
-        }
+def chat_completions_create(version: str, tracer: Tracer) -> Callable:
+    """Wrap the `create` method of the `ChatCompletion` class to trace it."""
 
-        attributes = LLMSpanAttributes(**span_attributes)
-
-        with tracer.start_as_current_span(
-            APIS["IMAGES_EDIT"]["METHOD"],
-            kind=SpanKind.CLIENT,
-            context=set_span_in_context(trace.get_current_span()),
-        ) as span:
-            set_span_attributes(span, attributes)
-            try:
-                result = await wrapped(*args, **kwargs)
-
-                response = [
-                    {
-                        "role": "assistant",
-                        "content": {
-                            "url": each_data.url,
-                            "revised_prompt": each_data.revised_prompt,
-                            "base64": each_data.b64_json,
-                        },
-                    }
-                    for each_data in result.data
-                ]
-
-                set_event_completion(span, response)
-
-                span.set_status(StatusCode.OK)
-                return result
-            except Exception as err:
-                span.record_exception(err)
-                span.set_status(Status(StatusCode.ERROR, str(err)))
-                raise
-
-    return traced_method
-
-
-def chat_completions_create(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
     def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: ChatCompletionsCreateKwargs
+        wrapped: Callable,
+        instance: Any,
+        args: List[Any],
+        kwargs: ChatCompletionsCreateKwargs,
     ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
         if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
         elif "groq" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["GROQ"]
+        llm_prompts = []
+        for item in kwargs.get("messages", []):
+            tools = get_tool_calls(item)
+            if tools is not None:
+                tool_calls = []
+                for tool_call in tools:
+                    tool_call_dict = {
+                        "id": tool_call.id if hasattr(tool_call, "id") else "",
+                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                    }
+                    if hasattr(tool_call, "function"):
+                        tool_call_dict["function"] = {
+                            "name": (
+                                tool_call.function.name
+                                if hasattr(tool_call.function, "name")
+                                else ""
+                            ),
+                            "arguments": (
+                                tool_call.function.arguments
+                                if hasattr(tool_call.function, "arguments")
+                                else ""
+                            ),
+                        }
+                    tool_calls.append(tool_call_dict)
+                llm_prompts.append(tool_calls)
+            else:
+                llm_prompts.append(item)
 
-        span_attributes: Dict[str, Any] = {
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs, operation_name="chat_completions_create"),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            name=get_span_name(APIS["CHAT_COMPƒLETION"]["METHOD"]),
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -283,12 +303,9 @@ def chat_completions_create(
                     prompt_tokens += calculate_prompt_tokens(
                         json.dumps(str(message)), kwargs.get("model")
                     )
-
-                if (
-                    kwargs.get("functions") is not None
-                    and kwargs.get("functions") != NOT_GIVEN
-                ):
-                    for function in kwargs.get("functions") or []:
+                functions = kwargs.get("functions")
+                if functions is not None and functions != NOT_GIVEN:
+                    for function in functions:
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
                         )
@@ -315,26 +332,54 @@ def chat_completions_create(
     return traced_method
 
 
-def async_chat_completions_create(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
+def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
+    """Wrap the `create` method of the `ChatCompletion` class to trace it."""
+
     async def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: ChatCompletionsCreateKwargs
-    ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
+        wrapped: Callable,
+        instance: Any,
+        args: List[Any],
+        kwargs: ChatCompletionsCreateKwargs,
+    ) -> Awaitable[Any]:
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
         if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
-        elif "groq" in get_base_url(instance):
-            service_provider = SERVICE_PROVIDERS["GROQ"]
+        llm_prompts = []
+        for item in kwargs.get("messages", []):
+            tools = get_tool_calls(item)
+            if tools is not None:
+                tool_calls = []
+                for tool_call in tools:
+                    tool_call_dict = {
+                        "id": tool_call.id if hasattr(tool_call, "id") else "",
+                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                    }
+                    if hasattr(tool_call, "function"):
+                        tool_call_dict["function"] = {
+                            "name": (
+                                tool_call.function.name
+                                if hasattr(tool_call.function, "name")
+                                else ""
+                            ),
+                            "arguments": (
+                                tool_call.function.arguments
+                                if hasattr(tool_call.function, "arguments")
+                                else ""
+                            ),
+                        }
+                    tool_calls.append(json.dumps(tool_call_dict))
+                llm_prompts.append(tool_calls)
+            else:
+                llm_prompts.append(item)
 
-        span_attributes: Dict[str, Any] = {
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
-            **get_llm_request_attributes(kwargs, operation_name="chat_completions_create"),
+            **get_llm_request_attributes(kwargs, prompts=llm_prompts),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -352,14 +397,12 @@ def async_chat_completions_create(
                 prompt_tokens = 0
                 for message in kwargs.get("messages", {}):
                     prompt_tokens += calculate_prompt_tokens(
-                        json.dumps(str(message)), kwargs.get("model")
+                        json.dumps((str(message))), kwargs.get("model")
                     )
 
-                if (
-                    kwargs.get("functions") is not None
-                    and kwargs.get("functions") != NOT_GIVEN
-                ):
-                    for function in kwargs.get("functions") or []:
+                functions = kwargs.get("functions")
+                if functions is not None and functions != NOT_GIVEN:
+                    for function in functions:
                         prompt_tokens += calculate_prompt_tokens(
                             json.dumps(function), kwargs.get("model")
                         )
@@ -370,7 +413,7 @@ def async_chat_completions_create(
                     prompt_tokens,
                     function_call=kwargs.get("functions") is not None,
                     tool_calls=kwargs.get("tools") is not None,
-                )
+                )  # type: ignore
             else:
                 _set_response_attributes(span, result)
                 span.set_status(StatusCode.OK)
@@ -386,28 +429,35 @@ def async_chat_completions_create(
     return traced_method
 
 
-def embeddings_create(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
-    def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: EmbeddingsCreateKwargs
-    ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
+def embeddings_create(version: str, tracer: Tracer) -> Callable:
+    """
+    Wrap the `create` method of the `Embeddings` class to trace it.
+    """
 
-        span_attributes: Dict[str, Any] = {
+    def traced_method(
+        wrapped: Callable,
+        instance: Any,
+        args: List[Any],
+        kwargs: EmbeddingsCreateKwargs,
+    ) -> Any:
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         encoding_format = kwargs.get("encoding_format")
         if encoding_format is not None:
             if not isinstance(encoding_format, list):
                 encoding_format = [encoding_format]
-            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = encoding_format
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = (
+                encoding_format
+            )
 
         if kwargs.get("input") is not None:
             span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
@@ -424,46 +474,59 @@ def embeddings_create(
 
             set_span_attributes(span, attributes)
             try:
+                # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
+                # Record the exception in the span
                 span.record_exception(err)
+
+                # Set the span status to indicate an error
                 span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
                 raise
 
     return traced_method
 
 
-def async_embeddings_create(
-    version: str, tracer: Tracer
-) -> Callable[..., Any]:
-    async def traced_method(
-        wrapped: Callable[..., Any], instance: Any, args: Tuple[Any, ...], kwargs: EmbeddingsCreateKwargs
-    ) -> Any:
-        service_provider: str = SERVICE_PROVIDERS["OPENAI"]
+def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
+    """
+    Wrap the `create` method of the `Embeddings` class to trace it.
+    """
 
-        span_attributes: Dict[str, Any] = {
+    async def traced_method(
+        wrapped: Callable,
+        instance: Any,
+        args: List[Any],
+        kwargs: EmbeddingsCreateKwargs,
+    ) -> Awaitable[Any]:
+
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+
+        span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
-            **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
+
+        attributes = LLMSpanAttributes(**span_attributes)
 
         encoding_format = kwargs.get("encoding_format")
         if encoding_format is not None:
             if not isinstance(encoding_format, list):
                 encoding_format = [encoding_format]
-            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = encoding_format
+            span_attributes[SpanAttributes.LLM_REQUEST_ENCODING_FORMATS] = (
+                encoding_format
+            )
 
         if kwargs.get("input") is not None:
             span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
                 [kwargs.get("input", "")]
             )
-
-        attributes = LLMSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
             name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
@@ -473,26 +536,31 @@ def async_embeddings_create(
 
             set_span_attributes(span, attributes)
             try:
+                # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
+                # Record the exception in the span
                 span.record_exception(err)
+
+                # Set the span status to indicate an error
                 span.set_status(Status(StatusCode.ERROR, str(err)))
+
+                # Reraise the exception to ensure it's not swallowed
                 raise
 
     return traced_method
 
 
-def extract_content(choice: Any) -> Union[str, List[Dict[str, Any]], Dict[str, str]]:
+def extract_content(choice: Any) -> Union[str, List[Dict[str, Any]], Dict[str, Any]]:
     # Check if choice.message exists and has a content attribute
     if (
         hasattr(choice, "message")
         and hasattr(choice.message, "content")
         and choice.message.content is not None
     ):
-        result: str = choice.message.content
-        return result
+        return choice.message.content
 
     # Check if choice.message has tool_calls and extract information accordingly
     elif (
@@ -500,7 +568,7 @@ def extract_content(choice: Any) -> Union[str, List[Dict[str, Any]], Dict[str, s
         and hasattr(choice.message, "tool_calls")
         and choice.message.tool_calls is not None
     ):
-        return [
+        result = [
             {
                 "id": tool_call.id,
                 "type": tool_call.type,
@@ -511,6 +579,7 @@ def extract_content(choice: Any) -> Union[str, List[Dict[str, Any]], Dict[str, s
             }
             for tool_call in choice.message.tool_calls
         ]
+        return result
 
     # Check if choice.message has a function_call and extract information accordingly
     elif (
@@ -528,14 +597,16 @@ def extract_content(choice: Any) -> Union[str, List[Dict[str, Any]], Dict[str, s
         return ""
 
 
-@silently_fail # type: ignore
-def _set_input_attributes(span: Any, kwargs: ChatCompletionsCreateKwargs, attributes: LLMSpanAttributes) -> None:
-    tools: List[str] = []
+@silently_fail
+def _set_input_attributes(
+    span: Span, kwargs: ChatCompletionsCreateKwargs, attributes: LLMSpanAttributes
+) -> None:
+    tools = []
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
-
-    if kwargs.get("functions") is not None and kwargs.get("functions") != NOT_GIVEN:
-        for function in kwargs.get("functions") or []:
+    functions = kwargs.get("functions")
+    if functions is not None and functions != NOT_GIVEN:
+        for function in functions:
             tools.append(json.dumps({"type": "function", "function": function}))
 
     if kwargs.get("tools") is not None and kwargs.get("tools") != NOT_GIVEN:
@@ -545,8 +616,8 @@ def _set_input_attributes(span: Any, kwargs: ChatCompletionsCreateKwargs, attrib
         set_span_attribute(span, SpanAttributes.LLM_TOOLS, json.dumps(tools))
 
 
-@silently_fail # type: ignore
-def _set_response_attributes(span: Any, result: Any) -> None:
+@silently_fail
+def _set_response_attributes(span: Span, result: ResultType) -> None:
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, result.model)
     if hasattr(result, "choices") and result.choices is not None:
         responses = [
@@ -558,8 +629,8 @@ def _set_response_attributes(span: Any, result: Any) -> None:
                 ),
                 "content": extract_content(choice),
                 **(
-                    {"content_filter_results": choice["content_filter_results"]}
-                    if "content_filter_results" in choice
+                    {"content_filter_results": choice.content_filter_results}
+                    if hasattr(choice, "content_filter_results")
                     else {}
                 ),
             }

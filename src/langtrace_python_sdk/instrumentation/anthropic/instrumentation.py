@@ -23,12 +23,12 @@ from opentelemetry.trace import TracerProvider
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 from typing import Any
-from src.langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
+from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
 
 logging.basicConfig(level=logging.FATAL)
 
 
-class AnthropicInstrumentation(BaseInstrumentor): # type: ignore[misc]
+class AnthropicInstrumentation(BaseInstrumentor):  # type: ignore[misc]
     """
     The AnthropicInstrumentation class represents the Anthropic instrumentation.
     """
@@ -37,7 +37,7 @@ class AnthropicInstrumentation(BaseInstrumentor): # type: ignore[misc]
         return ["anthropic >= 0.19.1"]
 
     def _instrument(self, **kwargs: dict[str, Any]) -> None:
-        tracer_provider: TracerProvider = kwargs.get("tracer_provider") # type: ignore
+        tracer_provider: TracerProvider = kwargs.get("tracer_provider")  # type: ignore
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("anthropic")
 

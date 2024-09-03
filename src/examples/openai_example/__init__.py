@@ -20,3 +20,4 @@ class OpenAIRunner:
         chat_completion_example()
         embeddings_create_example()
         function_example()
+        image_edit()

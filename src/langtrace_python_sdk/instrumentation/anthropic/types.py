@@ -12,37 +12,94 @@ limitations under the License.
 """
 
 from typing import Dict, List, Optional, Iterator, TypedDict
+
+
 class MessagesCreateKwargs(TypedDict, total=False):
-    system: str
+    system: Optional[str]
     messages: List[Dict[str, str]]
 
-class Usage(TypedDict, total=True):
+
+class Usage:
     input_tokens: int
     output_tokens: int
 
-class Message(TypedDict, total=True):
+    def __init__(self, input_tokens: int, output_tokens: int):
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+
+
+class Message:
+    def __init__(
+        self,
+        id: str,
+        model: Optional[str],
+        usage: Optional[Usage],
+    ):
+        self.id = id
+        self.model = model
+        self.usage = usage
+
     model: Optional[str]
     usage: Optional[Usage]
 
-class Delta(TypedDict, total=True):
+
+class Delta:
     text: Optional[str]
 
-class Chunk(TypedDict, total=True):
+    def __init__(
+        self,
+        text: Optional[str],
+    ):
+        self.text = text
+
+
+class Chunk:
     message: Message
     delta: Delta
 
-class ContentItem(TypedDict, total=False):
+    def __init__(
+        self,
+        message: Message,
+        delta: Delta,
+    ):
+        self.message = message
+        self.delta = delta
+
+
+class ContentItem:
     role: str
     content: str
     text: str
     type: str
 
-class ResultType(TypedDict, total=True):
+    def __init__(self, role: str, content: str, text: str, type: str):
+        self.role = role
+        self.content = content
+        self.text = text
+        self.type = type
+
+
+class ResultType:
     model: Optional[str]
     role: Optional[str]
     content: List[ContentItem]
     system_fingerprint: Optional[str]
     usage: Optional[Usage]
+
+    def __init__(
+        self,
+        model: Optional[str],
+        role: Optional[str],
+        content: Optional[List[ContentItem]],
+        system_fingerprint: Optional[str],
+        usage: Optional[Usage],
+    ):
+        self.model = model
+        self.role = role
+        self.content = content if content is not None else []
+        self.system_fingerprint = system_fingerprint
+        self.usage = usage
+
 
 # The result would be an iterator that yields these Chunk objects
 StreamingResult = Iterator[Chunk]
