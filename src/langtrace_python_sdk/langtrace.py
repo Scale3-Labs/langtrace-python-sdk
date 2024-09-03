@@ -80,11 +80,19 @@ def init(
         sys.stdout = open(os.devnull, "w")
 
     host = (
-        os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
+        os.environ.get("LANGTRACE_API_HOST", None)
+        or os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)
+        or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+        or api_host
+        or LANGTRACE_REMOTE_URL
     )
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
-    print(Fore.WHITE + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace" + Fore.RESET)
+    print(
+        Fore.WHITE
+        + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace"
+        + Fore.RESET
+    )
     sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
     resource = Resource.create(
         attributes={
