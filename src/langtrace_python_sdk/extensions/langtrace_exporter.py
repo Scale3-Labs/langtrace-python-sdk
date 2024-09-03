@@ -120,7 +120,7 @@ class LangTraceExporter(SpanExporter):
             if not self.disable_logging:
                 print(Fore.RED + "Failed to export spans.")
                 print(Fore.RED + f"Error: {err}\r\n" + Fore.RESET)
-                if "invalid api key" in str(err).lower():
+                if "invalid api key" in str(err).lower() and self.api_host == f"{LANGTRACE_REMOTE_URL}/api/trace":
                     print(Fore.YELLOW + "If you're self-hosting Langtrace, make sure to do one of the following to configure your trace endpoint (e.g., http://localhost:3000/api/trace):" + Fore.YELLOW)
                     print(Fore.YELLOW + "1. Set the `LANGTRACE_API_HOST` environment variable, or\r\n2. Pass the `api_host` parameter to the `langtrace.init()` method.\r\n" + Fore.YELLOW)
             return SpanExportResult.FAILURE
