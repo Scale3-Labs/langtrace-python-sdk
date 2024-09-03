@@ -87,20 +87,13 @@ def patch_crew(operation_name, version, tracer: Tracer):
                 CrewAISpanAttributes(span=span, instance=instance)
                 result = wrapped(*args, **kwargs)
                 if result:
+                    class_name = instance.__class__.__name__
+                    span.set_attribute(f"crewai.{class_name.lower()}.result", str(result))
                     span.set_status(Status(StatusCode.OK))
-                    if instance.__class__.__name__ == "Crew":
-                        span.set_attribute("crewai.crew.result", str(result))
-                        if hasattr(result, "tasks_output"):
-                            span.set_attribute("crewai.crew.tasks_output", str((result.tasks_output)))
-                        if hasattr(result, "token_usage"):
-                            span.set_attribute("crewai.crew.token_usage", str((result.token_usage)))
-                        if hasattr(result, "usage_metrics"):
-                            span.set_attribute("crewai.crew.usage_metrics", str((result.usage_metrics)))
-                    elif instance.__class__.__name__ == "Agent":
-                        span.set_attribute("crewai.agent.result", str(result))
-                    elif instance.__class__.__name__ == "Task":
-                        span.set_attribute("crewai.task.result", str(result))
-
+                    if class_name == "Crew":
+                        for attr in ["tasks_output", "token_usage", "usage_metrics"]:
+                            if hasattr(result, attr):
+                                span.set_attribute(f"crewai.crew.{attr}", str(getattr(result, attr)))
                 span.end()
                 return result
 

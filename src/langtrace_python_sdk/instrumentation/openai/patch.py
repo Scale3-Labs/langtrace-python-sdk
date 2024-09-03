@@ -83,12 +83,8 @@ def images_generate(original_method, version, tracer):
                         {
                             "role": "assistant",
                             "content": {
-                                "url": data.url if hasattr(data, "url") else "",
-                                "revised_prompt": (
-                                    data.revised_prompt
-                                    if hasattr(data, "revised_prompt")
-                                    else ""
-                                ),
+                                "url": getattr(data, "url", ""),
+                                "revised_prompt": getattr(data, "revised_prompt", ""),
                             },
                         }
                     ]
@@ -146,12 +142,8 @@ def async_images_generate(original_method, version, tracer):
                         {
                             "role": "assistant",
                             "content": {
-                                "url": data.url if hasattr(data, "url") else "",
-                                "revised_prompt": (
-                                    data.revised_prompt
-                                    if hasattr(data, "revised_prompt")
-                                    else ""
-                                ),
+                                "url": getattr(data, "url", ""),
+                                "revised_prompt": getattr(data, "revised_prompt", ""),
                             },
                         }
                     ]
@@ -251,21 +243,13 @@ def chat_completions_create(original_method, version, tracer):
                 tool_calls = []
                 for tool_call in tools:
                     tool_call_dict = {
-                        "id": tool_call.id if hasattr(tool_call, "id") else "",
-                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                        "id": getattr(tool_call, "id", ""),
+                        "type": getattr(tool_call, "type", ""),
                     }
                     if hasattr(tool_call, "function"):
                         tool_call_dict["function"] = {
-                            "name": (
-                                tool_call.function.name
-                                if hasattr(tool_call.function, "name")
-                                else ""
-                            ),
-                            "arguments": (
-                                tool_call.function.arguments
-                                if hasattr(tool_call.function, "arguments")
-                                else ""
-                            ),
+                            "name": getattr(tool_call.function, "name", ""),
+                            "arguments": getattr(tool_call.function, "arguments", ""),
                         }
                     tool_calls.append(tool_call_dict)
                 llm_prompts.append(tool_calls)
@@ -345,21 +329,13 @@ def async_chat_completions_create(original_method, version, tracer):
                 tool_calls = []
                 for tool_call in tools:
                     tool_call_dict = {
-                        "id": tool_call.id if hasattr(tool_call, "id") else "",
-                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                        "id": getattr(tool_call, "id", ""),
+                        "type": getattr(tool_call, "type", ""),
                     }
                     if hasattr(tool_call, "function"):
                         tool_call_dict["function"] = {
-                            "name": (
-                                tool_call.function.name
-                                if hasattr(tool_call.function, "name")
-                                else ""
-                            ),
-                            "arguments": (
-                                tool_call.function.arguments
-                                if hasattr(tool_call.function, "arguments")
-                                else ""
-                            ),
+                            "name": getattr(tool_call.function, "name", ""),
+                            "arguments": getattr(tool_call.function, "arguments", ""),
                         }
                     tool_calls.append(json.dumps(tool_call_dict))
                 llm_prompts.append(tool_calls)
