@@ -30,6 +30,7 @@ SERVICE_PROVIDERS = {
     "VERTEXAI": "VertexAI",
     "GEMINI": "Gemini",
     "MISTRAL": "Mistral",
+    "EMBEDCHAIN": "Embedchain",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

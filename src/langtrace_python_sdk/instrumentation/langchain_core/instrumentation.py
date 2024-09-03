@@ -114,6 +114,8 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
             "format",
             "format_messages",
             "format_prompt",
+            "transform",
+            "stream",
             "__or__",
             "__init__",
             "__repr__",

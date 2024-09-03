@@ -14,33 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import json
-
 from langtrace.trace_attributes import FrameworkSpanAttributes
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.llm import get_span_name
 from opentelemetry import baggage, trace
+from opentelemetry.trace import SpanKind
+from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
-from opentelemetry.trace import SpanKind, StatusCode
-from opentelemetry.trace.status import Status
-
+from langtrace_python_sdk.constants.instrumentation.embedchain import APIS
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
+import json
 from importlib_metadata import version as v
-from langtrace_python_sdk.utils.misc import serialize_args, serialize_kwargs
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 
-def generic_patch(
-    method_name, task, tracer, version, trace_output=True, trace_input=True
-):
+def generic_patch(method, version, tracer):
     """
-    patch method for generic methods.
+    A generic patch method that wraps a function with a span
     """
 
     def traced_method(wrapped, instance, args, kwargs):
-        service_provider = SERVICE_PROVIDERS["LANGCHAIN"]
+        api = APIS[method]
+        service_provider = SERVICE_PROVIDERS["EMBEDCHAIN"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
 
         span_attributes = {
@@ -49,21 +48,22 @@ def generic_patch(
             "langtrace.service.type": "framework",
             "langtrace.service.version": version,
             "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "langchain.task.name": task,
+            "embedchain.api": api["OPERATION"],
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        inputs = {}
-        if len(args) > 0 and trace_input:
-            inputs["args"] = serialize_args(*args)
-        if len(kwargs) > 0 and trace_input:
-            inputs["kwargs"] = serialize_kwargs(**kwargs)
-        span_attributes["langchain.inputs"] = json.dumps(inputs)
+        if hasattr(instance, 'config') and isinstance(instance.config, object):
+            config_dict = instance.config.__dict__
+            if isinstance(config_dict, dict):
+                span_attributes["embedchain.config"] = json.dumps(config_dict)
+
+        if len(args) > 0:
+            span_attributes["embedchain.inputs"] = json.dumps(args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            name=get_span_name(method_name),
+            name=get_span_name(api["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -71,11 +71,8 @@ def generic_patch(
                 if value is not None:
                     span.set_attribute(field, value)
             try:
-                # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                if trace_output:
-                    span.set_attribute("langchain.outputs", to_json_string(result))
-
+                set_span_attribute(span, "embedchain.outputs", json.dumps(result))
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
@@ -91,30 +88,9 @@ def generic_patch(
     return traced_method
 
 
-def clean_empty(d):
-    """Recursively remove empty lists, empty dicts, or None elements from a dictionary."""
-    if not isinstance(d, (dict, list)):
-        return d
-    if isinstance(d, list):
-        return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {
-        k: v
-        for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
-    }
+def get_count_or_none(value):
+    return len(value) if value is not None else None
 
 
-def custom_serializer(obj):
-    """Fallback function to convert unserializable objects."""
-    if hasattr(obj, "__dict__"):
-        # Attempt to serialize custom objects by their __dict__ attribute.
-        return clean_empty(obj.__dict__)
-    else:
-        # For other types, just convert to string
-        return str(obj)
-
-
-def to_json_string(any_object):
-    """Converts any object to a JSON-parseable string, omitting empty or None values."""
-    cleaned_object = clean_empty(any_object)
-    return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+def handle_null_params(param):
+    return str(param) if param else None
