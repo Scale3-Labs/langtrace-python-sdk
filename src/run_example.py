@@ -8,7 +8,7 @@ ENABLED_EXAMPLES = {
     "langchain": False,
     "llamaindex": False,
     "hiveagent": False,
-    "openai": False,
+    "openai": True,
     "perplexity": False,
     "pinecone": False,
     "qdrant": False,
@@ -17,7 +17,7 @@ ENABLED_EXAMPLES = {
     "groq": False,
     "vertexai": False,
     "gemini": False,
-    "mistral": True,
+    "mistral": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:

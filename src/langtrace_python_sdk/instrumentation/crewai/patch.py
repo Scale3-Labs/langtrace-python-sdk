@@ -1,16 +1,18 @@
 import json
+
 from importlib_metadata import version as v
+from langtrace.trace_attributes import FrameworkSpanAttributes
+from opentelemetry import baggage
+from opentelemetry.trace import Span, SpanKind, Tracer
+from opentelemetry.trace.status import Status, StatusCode
+
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
-from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.llm import get_span_name, set_span_attributes
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
-from opentelemetry import baggage
-from langtrace.trace_attributes import FrameworkSpanAttributes
-from opentelemetry.trace import SpanKind, Span, Tracer
-from opentelemetry.trace.status import Status, StatusCode
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.llm import get_span_name, set_span_attributes
 from langtrace_python_sdk.utils.misc import serialize_args, serialize_kwargs
 
 
@@ -44,7 +46,9 @@ def patch_memory(operation_name, version, tracer: Tracer):
                 set_span_attributes(span, attributes)
                 result = wrapped(*args, **kwargs)
                 if result is not None and len(result) > 0:
-                    set_span_attribute(span, "crewai.memory.storage.rag_storage.outputs", str(result))
+                    set_span_attribute(
+                        span, "crewai.memory.storage.rag_storage.outputs", str(result)
+                    )
                 if result:
                     span.set_status(Status(StatusCode.OK))
                 span.end()
@@ -88,12 +92,16 @@ def patch_crew(operation_name, version, tracer: Tracer):
                 result = wrapped(*args, **kwargs)
                 if result:
                     class_name = instance.__class__.__name__
-                    span.set_attribute(f"crewai.{class_name.lower()}.result", str(result))
+                    span.set_attribute(
+                        f"crewai.{class_name.lower()}.result", str(result)
+                    )
                     span.set_status(Status(StatusCode.OK))
                     if class_name == "Crew":
                         for attr in ["tasks_output", "token_usage", "usage_metrics"]:
                             if hasattr(result, attr):
-                                span.set_attribute(f"crewai.crew.{attr}", str(getattr(result, attr)))
+                                span.set_attribute(
+                                    f"crewai.crew.{attr}", str(getattr(result, attr))
+                                )
                 span.end()
                 return result
 
@@ -130,22 +138,27 @@ class CrewAISpanAttributes:
             self.set_crew_attributes()
             for key, value in self.crew.items():
                 key = f"crewai.crew.{key}"
-                set_span_attribute(self.span, key, value)
+                if value is not None:
+                    set_span_attribute(self.span, key, value)
 
         elif instance_name == "Agent":
             agent = self.set_agent_attributes()
             for key, value in agent.items():
                 key = f"crewai.agent.{key}"
-                set_span_attribute(self.span, key, value)
+                if value is not None:
+                    set_span_attribute(self.span, key, value)
 
         elif instance_name == "Task":
             task = self.set_task_attributes()
             for key, value in task.items():
                 key = f"crewai.task.{key}"
-                set_span_attribute(self.span, key, value)
+                if value is not None:
+                    set_span_attribute(self.span, key, value)
 
     def set_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
+            if value is None:
+                continue
             if key == "tasks":
                 self._parse_tasks(value)
             elif key == "agents":
@@ -156,6 +169,8 @@ class CrewAISpanAttributes:
     def set_agent_attributes(self):
         agent = {}
         for key, value in self.instance.__dict__.items():
+            if key == "tools":
+                value = self._parse_tools(value)
             if value is None:
                 continue
             agent[key] = str(value)
@@ -167,8 +182,10 @@ class CrewAISpanAttributes:
         for key, value in self.instance.__dict__.items():
             if value is None:
                 continue
-
-            if key == "agent":
+            if key == "tools":
+                value = self._parse_tools(value)
+                task[key] = value
+            elif key == "agent":
                 task[key] = value.role
             else:
                 task[key] = str(value)
@@ -211,3 +228,15 @@ class CrewAISpanAttributes:
                     "output_file": task.output_file,
                 }
             )
+
+    def _parse_tools(self, tools):
+        result = []
+        for tool in tools:
+            res = {}
+            if hasattr(tool, "name") and tool.name is not None:
+                res["name"] = tool.name
+            if hasattr(tool, "description") and tool.description is not None:
+                res["description"] = tool.description
+            if res:
+                result.append(res)
+        return json.dumps(result)
