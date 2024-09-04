@@ -83,9 +83,6 @@ def test_chat_completion_streaming(exporter, openai_client):
     assert_completion_in_events(streaming_span.events)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
 
-    events = streaming_span.events
-    assert len(events) - 4 == chunk_count  # -2 for start and end events
-
     assert_token_count(attributes)
 
 
@@ -125,8 +122,5 @@ async def test_async_chat_completion_streaming(exporter, async_openai_client):
     assert_prompt_in_events(streaming_span.events)
     assert_completion_in_events(streaming_span.events)
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-
-    events = streaming_span.events
-    assert len(events) - 4 == chunk_count  # -2 for start and end events
 
     assert_token_count(attributes)

@@ -15,13 +15,14 @@ from pathlib import Path
 import requests
 import weaviate
 import weaviate.classes as wvc
+import weaviate.classes.config as wc
+from dotenv import load_dotenv
 from weaviate.classes.aggregate import GroupByAggregate
 from weaviate.classes.query import Filter, HybridFusion, MetadataQuery
 from weaviate.collections.classes.grpc import Move
 
 import langtrace_python_sdk.langtrace as langtrace
 from langtrace_python_sdk import with_langtrace_root_span
-from dotenv import load_dotenv
 
 load_dotenv()
 # Set these environment variables
@@ -44,11 +45,16 @@ def create():
     if not client.collections.get("Question"):
         questions = client.collections.create(
             name="Question",
-            # Set the vectorizer to "text2vec-openai" to use the OpenAI API for vector-related operations
-            vectorizer_config=wvc.config.Configure.Vectorizer.text2vec_openai(),
-            # Ensure the `generative-openai` module is used for generative queries
-            generative_config=wvc.config.Configure.Generative.openai(),
-        )
+        properties=[
+            wc.Property(name="answer", data_type=wc.DataType.TEXT),
+            wc.Property(name="question", data_type=wc.DataType.TEXT),
+            wc.Property(name="category", data_type=wc.DataType.TEXT),
+        ],
+        # Define the vectorizer module
+        vectorizer_config=wc.Configure.Vectorizer.text2vec_openai(),
+        # Define the generative module
+        generative_config=wc.Configure.Generative.openai(),
+    )
 
 
 @with_langtrace_root_span("insert")

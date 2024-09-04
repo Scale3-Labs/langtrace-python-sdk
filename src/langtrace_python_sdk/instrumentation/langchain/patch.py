@@ -29,6 +29,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     SERVICE_PROVIDERS,
 )
 from importlib_metadata import version as v
+from langtrace_python_sdk.utils.misc import serialize_args, serialize_kwargs
 
 
 def generic_patch(
@@ -52,8 +53,12 @@ def generic_patch(
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
+        inputs = {}
         if len(args) > 0 and trace_input:
-            span_attributes["langchain.inputs"] = to_json_string(args)
+            inputs["args"] = serialize_args(*args)
+        if len(kwargs) > 0 and trace_input:
+            inputs["kwargs"] = serialize_kwargs(**kwargs)
+        span_attributes["langchain.inputs"] = json.dumps(inputs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 

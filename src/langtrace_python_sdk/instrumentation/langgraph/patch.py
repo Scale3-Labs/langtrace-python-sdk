@@ -124,7 +124,7 @@ def get_atrribute_key_value(method_name, args):
                             else str(args[1])
                         )
                     ),
-                    "path_map": args[2],
+                    "path_map": args[2] if len(args) > 2 else None,
                 }
             ),
             "langgraph.task.name": "add_conditional_edges",

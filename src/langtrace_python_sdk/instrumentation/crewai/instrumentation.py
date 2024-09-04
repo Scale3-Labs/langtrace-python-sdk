@@ -19,7 +19,7 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
 from typing import Collection
 from importlib_metadata import version as v
-from .patch import patch_crew
+from .patch import patch_crew, patch_memory
 
 
 class CrewAIInstrumentation(BaseInstrumentor):
@@ -40,16 +40,47 @@ class CrewAIInstrumentation(BaseInstrumentor):
                 patch_crew("Crew.kickoff", version, tracer),
             )
             _W(
+                "crewai.crew",
+                "Crew.kickoff_for_each",
+                patch_crew("Crew.kickoff_for_each", version, tracer),
+            )
+            _W(
+                "crewai.crew",
+                "Crew.kickoff_async",
+                patch_crew("Crew.kickoff_async", version, tracer),
+            )
+            _W(
+                "crewai.crew",
+                "Crew.kickoff_for_each_async",
+                patch_crew("Crew.kickoff_for_each_async", version, tracer),
+            )
+            _W(
                 "crewai.agent",
                 "Agent.execute_task",
                 patch_crew("Agent.execute_task", version, tracer),
             )
             _W(
                 "crewai.task",
-                "Task.execute",
+                "Task.execute_sync",
                 patch_crew("Task.execute", version, tracer),
             )
-        except Exception as e:
+            _W(
+                "crewai.memory.storage.rag_storage",
+                "RAGStorage.save",
+                patch_memory("RAGStorage.save", version, tracer),
+            )
+            _W(
+                "crewai.memory.storage.rag_storage",
+                "RAGStorage.search",
+                patch_memory("RAGStorage.search", version, tracer),
+            )
+            _W(
+                "crewai.memory.storage.rag_storage",
+                "RAGStorage.reset",
+                patch_memory("RAGStorage.reset", version, tracer),
+            )
+        # pylint: disable=broad-except
+        except Exception:
             pass
 
     def _uninstrument(self, **kwargs):

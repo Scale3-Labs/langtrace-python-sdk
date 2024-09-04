@@ -16,12 +16,15 @@ from .ollama import OllamaInstrumentor
 from .dspy import DspyInstrumentation
 from .vertexai import VertexAIInstrumentation
 from .gemini import GeminiInstrumentation
+from .mistral import MistralInstrumentation
+from .embedchain import EmbedchainInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
     "ChromaInstrumentation",
     "CohereInstrumentation",
     "CrewAIInstrumentation",
+    "EmbedchainInstrumentation",
     "GroqInstrumentation",
     "LangchainInstrumentation",
     "LangchainCommunityInstrumentation",
@@ -36,4 +39,5 @@ __all__ = [
     "DspyInstrumentation",
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
+    "MistralInstrumentation",
 ]

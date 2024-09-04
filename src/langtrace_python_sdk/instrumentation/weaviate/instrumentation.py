@@ -37,7 +37,7 @@ class WeaviateInstrumentation(BaseInstrumentor):
     """
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["weaviate-client >= 4.6.1", "trace-attributes >= 4.0.2"]
+        return ["weaviate-client >= 4.6.1", "trace-attributes >= 7.0.3"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")

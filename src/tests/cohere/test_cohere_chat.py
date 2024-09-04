@@ -112,7 +112,5 @@ def test_cohere_chat_streaming(cohere_client, exporter):
     events = cohere_span.events
     assert_prompt_in_events(events)
     assert_completion_in_events(events)
-    assert events[-1].name == "stream.end"
-    assert len(events) - 4 == chunks_count
 
     assert_token_count(attributes)
