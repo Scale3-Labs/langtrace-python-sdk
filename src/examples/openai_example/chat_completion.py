@@ -21,7 +21,6 @@ def api():
     return response
 
 
-@with_langtrace_root_span("Chat Completion")
 def chat_completion():
     response = api()
     # print(response)

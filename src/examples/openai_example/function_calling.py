@@ -43,13 +43,15 @@ def function_calling():
             }
         ],
         functions=student_custom_functions,
+
         stream=True,
+        stream_options={"include_usage": True},
     )
     # return response
 
     result = []
     for chunk in response:
-        if chunk.choices[0].delta.function_call is not None:
+        if chunk.choices and chunk.choices[0].delta.function_call is not None:
             content = [
                 (
                     choice.delta.function_call.arguments
