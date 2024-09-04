@@ -40,6 +40,21 @@ class CrewAIInstrumentation(BaseInstrumentor):
                 patch_crew("Crew.kickoff", version, tracer),
             )
             _W(
+                "crewai.crew",
+                "Crew.kickoff_for_each",
+                patch_crew("Crew.kickoff_for_each", version, tracer),
+            )
+            _W(
+                "crewai.crew",
+                "Crew.kickoff_async",
+                patch_crew("Crew.kickoff_async", version, tracer),
+            )
+            _W(
+                "crewai.crew",
+                "Crew.kickoff_for_each_async",
+                patch_crew("Crew.kickoff_for_each_async", version, tracer),
+            )
+            _W(
                 "crewai.agent",
                 "Agent.execute_task",
                 patch_crew("Agent.execute_task", version, tracer),
