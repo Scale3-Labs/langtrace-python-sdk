@@ -100,12 +100,9 @@ def apatch_gemini(name, version, tracer: Tracer):
 
 
 def get_llm_model(instance):
-    llm_model = "unknown"
-    if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("models/", "")
-    return llm_model
+        return instance._model_name.replace("models/", "")
+    return getattr(instance, "_model_id", "unknown")
 
 
 def serialize_prompts(args, kwargs, instance):

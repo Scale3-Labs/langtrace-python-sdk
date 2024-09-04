@@ -367,10 +367,7 @@ def chat_stream(original_method, version, tracer):
                 }
                 for item in chat_history
             ]
-        if len(history) > 0:
-            prompts = history + prompts
-        if len(system_prompts) > 0:
-            prompts = system_prompts + prompts
+        prompts = system_prompts + history + prompts
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),

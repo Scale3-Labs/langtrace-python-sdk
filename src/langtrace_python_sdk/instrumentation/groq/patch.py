@@ -158,7 +158,7 @@ def chat_completions_create(original_method, version, tracer):
                     usage = result.usage
                     set_usage_attributes(span, dict(usage))
 
-                span.set_status(StatusCode.OK)
+                span.set_status(Status(StatusCode.OK))
                 span.end()
                 return result
             else:
@@ -257,7 +257,7 @@ def chat_completions_create(original_method, version, tracer):
                 span, [{"role": "assistant", "content": "".join(result_content)}]
             )
 
-            span.set_status(StatusCode.OK)
+            span.set_status(Status(StatusCode.OK))
             span.end()
 
     # return the wrapped method
@@ -282,21 +282,13 @@ def async_chat_completions_create(original_method, version, tracer):
                 tool_calls = []
                 for tool_call in item.tool_calls:
                     tool_call_dict = {
-                        "id": tool_call.id if hasattr(tool_call, "id") else "",
-                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                        "id": getattr(tool_call, "id", ""),
+                        "type": getattr(tool_call, "type", ""),
                     }
                     if hasattr(tool_call, "function"):
                         tool_call_dict["function"] = {
-                            "name": (
-                                tool_call.function.name
-                                if hasattr(tool_call.function, "name")
-                                else ""
-                            ),
-                            "arguments": (
-                                tool_call.function.arguments
-                                if hasattr(tool_call.function, "arguments")
-                                else ""
-                            ),
+                            "name": getattr(tool_call.function, "name", ""),
+                            "arguments": getattr(tool_call.function, "arguments", ""),
                         }
                     tool_calls.append(tool_call_dict)
                 llm_prompts.append(tool_calls)
@@ -459,11 +451,7 @@ def async_chat_completions_create(original_method, version, tracer):
                                             tool_call.function.arguments
                                         )
                                         completion_tokens += token_counts
-                                        content = content + [
-                                            tool_call.function.arguments
-                                        ]
-                                    else:
-                                        content = content + []
+                                        content += [tool_call.function.arguments]
                 else:
                     content = []
                 span.add_event(

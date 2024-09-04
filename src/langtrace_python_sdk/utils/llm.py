@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from typing import Any, Dict, Union
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.types import NOT_GIVEN
@@ -145,7 +146,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
     }
 
 
-def get_extra_attributes():
+def get_extra_attributes() -> Union[Dict[str, Any], object]:
     extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
     return extra_attributes or {}
 
@@ -228,7 +229,7 @@ def set_event_completion(span: Span, result_content):
     )
 
 
-def set_span_attributes(span: Span, attributes: dict):
+def set_span_attributes(span: Span, attributes: Any) -> None:
     for field, value in attributes.model_dump(by_alias=True).items():
         set_span_attribute(span, field, value)
 
@@ -255,11 +256,13 @@ class StreamWrapper:
             self._span_started = True
 
     def cleanup(self):
-        if self.completion_tokens==0:
-            response_model = 'cl100k_base'
+        if self.completion_tokens == 0:
+            response_model = "cl100k_base"
             if self._response_model in list_encoding_names():
                 response_model = self._response_model
-            self.completion_tokens = estimate_tokens_using_tiktoken("".join(self.result_content), response_model)
+            self.completion_tokens = estimate_tokens_using_tiktoken(
+                "".join(self.result_content), response_model
+            )
         if self._span_started:
             set_span_attribute(
                 self.span,
@@ -420,8 +423,10 @@ class StreamWrapper:
     def process_chunk(self, chunk):
         # Mistral nests the chunk data under a `data` attribute
         if (
-            hasattr(chunk, "data") and chunk.data is not None
-            and hasattr(chunk.data, "choices") and chunk.data.choices is not None
+            hasattr(chunk, "data")
+            and chunk.data is not None
+            and hasattr(chunk.data, "choices")
+            and chunk.data.choices is not None
         ):
             chunk = chunk.data
         self.set_response_model(chunk=chunk)
