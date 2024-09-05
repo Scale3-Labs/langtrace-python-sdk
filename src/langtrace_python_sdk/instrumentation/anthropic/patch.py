@@ -112,7 +112,7 @@ def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
                     if typ == "text":
                         content = result.content[0].text
                         set_event_completion(
-                            span, [{type: typ, role: role, content: content}]
+                            span, [{"type": typ, role: role, content: content}]
                         )
 
             if (
