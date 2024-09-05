@@ -14,9 +14,9 @@ def api():
             {"role": "system", "content": "Talk like a pirate"},
             {"role": "user", "content": "Tell me a story in 3 sentences or less."},
         ],
-        stream=True,
-        stream_options={"include_usage": True},
-        # stream=False,
+        # stream=True,
+        # stream_options={"include_usage": True},
+        stream=False,
     )
     return response
 
@@ -25,14 +25,14 @@ def chat_completion():
     response = api()
     # print(response)
     # Uncomment this for streaming
-    result = []
-    for chunk in response:
-        if chunk.choices and chunk.choices[0].delta.content is not None:
-            content = [
-                choice.delta.content if choice.delta and choice.delta.content else ""
-                for choice in chunk.choices
-            ]
-            result.append(content[0] if len(content) > 0 else "")
+    # result = []
+    # for chunk in response:
+    #     if chunk.choices and chunk.choices[0].delta.content is not None:
+    #         content = [
+    #             choice.delta.content if choice.delta and choice.delta.content else ""
+    #             for choice in chunk.choices
+    #         ]
+    #         result.append(content[0] if len(content) > 0 else "")
 
-    # print("".join(result))
+    # # print("".join(result))
     return response

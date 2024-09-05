@@ -92,6 +92,9 @@ def run_conversation():
         tool_choice="auto",  # auto is default, but we'll be explicit
         stream=True,
         stream_options={"include_usage": True},
+        logprobs=True,
+        top_logprobs=1,
+        logit_bias={"2435": -100, "640": -100},
     )
 
     # For streaming, uncomment the following lines
@@ -162,10 +165,11 @@ def run_conversation():
             model="gpt-4",
             messages=messages,
             stream=True,
+            stream_options={"include_usage": True},
         )  # get a new response from the model where it can see the function response
         result = []
         for chunk in second_response:
-            if chunk.choices[0].delta.content is not None:
+            if chunk.choices and chunk.choices[0].delta.content is not None:
                 content = [
                     (
                         choice.delta.content
