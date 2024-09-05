@@ -61,7 +61,7 @@ def messages_create(original_method, version, tracer):
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["MESSAGES_CREATE"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **get_extra_attributes(),  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -88,22 +88,26 @@ def messages_create(original_method, version, tracer):
     @silently_fail
     def set_response_attributes(result, span, kwargs):
         if not is_streaming(kwargs):
+
             if hasattr(result, "content") and result.content is not None:
                 set_span_attribute(
                     span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
-                completion = [
-                    {
-                        "role": result.role if result.role else "assistant",
-                        "content": result.content[0].text,
-                        "type": result.content[0].type,
-                    }
-                ]
-                set_event_completion(span, completion)
-
-            else:
-                responses = []
-                set_event_completion(span, responses)
+                if hasattr(result, "content") and result.content[0] is not None:
+                    content = result.content[0]
+                    typ = content.type
+                    role = result.role if result.role else "assistant"
+                    if typ == "tool_result" or typ == "tool_use":
+                        content = content.json()
+                        set_span_attribute(
+                            span, SpanAttributes.LLM_TOOL_RESULTS, json.dumps(content)
+                        )
+                    if typ == "text":
+                        content = result.content[0].text
+                        content = content.text
+                        set_event_completion(
+                            span, [{type: typ, role: role, content: content}]
+                        )
 
             if (
                 hasattr(result, "system_fingerprint")
