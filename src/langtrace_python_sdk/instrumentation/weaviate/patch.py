@@ -47,9 +47,12 @@ METADATA_ATTRIBUTES = [
 
 def extract_inputs(args, kwargs):
     extracted_params = {}
-    kwargs_without_properties = {k: v for k, v in kwargs.items() if k != "properties"}
+    kwargs_without_properties = {
+        k: v for k, v in kwargs.items() if k not in ["properties", "fusion_type"]
+    }
     extracted_params.update(extract_input_params(args, kwargs_without_properties))
-
+    if kwargs.get("fusion_type", None):
+        extracted_params["fusion_type"] = kwargs["fusion_type"].value
     if kwargs.get("properties", None):
         extracted_params["properties"] = []
         for each_prop in kwargs.get("properties"):
@@ -96,19 +99,9 @@ def get_response_object_attributes(response_object):
     response_attributes = {
         **response_object.properties,
         "uuid": str(response_object.uuid) if hasattr(response_object, "uuid") else None,
-        "collection": (
-            response_object.collection
-            if hasattr(response_object, "collection")
-            else None
-        ),
-        "vector": (
-            response_object.vector if hasattr(response_object, "vector") else None
-        ),
-        "references": (
-            response_object.references
-            if hasattr(response_object, "references")
-            else None
-        ),
+        "collection": getattr(response_object, "collection", None),
+        "vector": getattr(response_object, "vector", None),
+        "references": getattr(response_object, "references", None),
         "metadata": (
             extract_metadata(response_object.metadata)
             if hasattr(response_object, "metadata")

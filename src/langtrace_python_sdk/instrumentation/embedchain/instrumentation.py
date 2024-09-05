@@ -16,39 +16,50 @@ limitations under the License.
 
 import importlib.metadata
 import logging
-from typing import Collection, Any
+from typing import Collection
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
-from opentelemetry.trace import TracerProvider
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
-from typing import Any
-from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
+
+from langtrace_python_sdk.instrumentation.embedchain.patch import generic_patch
 
 logging.basicConfig(level=logging.FATAL)
 
 
-class AnthropicInstrumentation(BaseInstrumentor):  # type: ignore[misc]
+class EmbedchainInstrumentation(BaseInstrumentor):
     """
-    The AnthropicInstrumentation class represents the Anthropic instrumentation.
+    The EmbedchainInstrumentation class represents the Embedchain instrumentation
     """
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["anthropic >= 0.19.1"]
+        return ["embedchain >= 0.1.113"]
 
-    def _instrument(self, **kwargs: dict[str, Any]) -> None:
-        tracer_provider: TracerProvider = kwargs.get("tracer_provider")  # type: ignore
+    def _instrument(self, **kwargs):
+        tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = importlib.metadata.version("anthropic")
+        version = importlib.metadata.version("embedchain")
 
         wrap_function_wrapper(
-            "anthropic.resources.messages",
-            "Messages.create",
-            messages_create(version, tracer),
+            "embedchain.embedchain",
+            "EmbedChain.add",
+            generic_patch("ADD", version, tracer),
         )
 
-    def _instrument_module(self, module_name: str) -> None:
+        wrap_function_wrapper(
+            "embedchain.embedchain",
+            "EmbedChain.query",
+            generic_patch("QUERY", version, tracer),
+        )
+
+        wrap_function_wrapper(
+            "embedchain.embedchain",
+            "EmbedChain.search",
+            generic_patch("SEARCH", version, tracer),
+        )
+
+    def _instrument_module(self, module_name):
         pass
 
-    def _uninstrument(self, **kwargs: dict[str, Any]) -> None:
+    def _uninstrument(self, **kwargs):
         pass

@@ -1,14 +1,12 @@
+from agents import PoetryAgents
 from crewai import Crew
-from textwrap import dedent
-from .agents import PoetryAgents
-from .tasks import PoetryTasks
-from langtrace_python_sdk import langtrace
 from dotenv import load_dotenv
-import agentops
+from tasks import PoetryTasks
+
+from langtrace_python_sdk import langtrace
 
 load_dotenv()
-agentops.init()
-langtrace.init(write_spans_to_console=False, batch=False)
+langtrace.init()
 
 
 class PoetryCrew:
@@ -20,27 +18,24 @@ class PoetryCrew:
         tasks = PoetryTasks()
 
         poetry_agent = agents.create_poet_agent()
+        # poetry_agent_2 = agents.poet_agent_2()
+        # poetry_agent_3 = agents.poet_agent_3()
 
         create_poem = tasks.create_poem(poetry_agent, self.topic)
+        # create_poem_2 = tasks.create_poem(poetry_agent_2, self.topic)
+        # create_poem_3 = tasks.create_poem(poetry_agent_3, self.topic)
 
-        crew = Crew(agents=[poetry_agent], tasks=[create_poem], verbose=True)
+        crew = Crew(agents=[poetry_agent], tasks=[create_poem], verbose=True, memory=True)
         res = crew.kickoff()
         return res
 
 
 # This is the main function that you will use to run your custom crew.
+# You can run this file using `python -m src.examples.crewai_example.simple_agent.main`
 if __name__ == "__main__":
     print("## Welcome to Poetry Crew")
     print("-------------------------------")
-    topic = input(
-        dedent(
-            """
-      What topic do you want to write a poem on?
-    """
-        )
-    )
-
-    poetry_crew = PoetryCrew(topic=topic)
+    poetry_crew = PoetryCrew(topic="cold")
     result = poetry_crew.run()
     print("\n\n########################")
     print("## Here is you poem")
