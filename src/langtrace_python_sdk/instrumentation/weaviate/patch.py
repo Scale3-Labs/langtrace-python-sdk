@@ -47,9 +47,12 @@ METADATA_ATTRIBUTES = [
 
 def extract_inputs(args, kwargs):
     extracted_params = {}
-    kwargs_without_properties = {k: v for k, v in kwargs.items() if k != "properties"}
+    kwargs_without_properties = {
+        k: v for k, v in kwargs.items() if k not in ["properties", "fusion_type"]
+    }
     extracted_params.update(extract_input_params(args, kwargs_without_properties))
-
+    if kwargs.get("fusion_type", None):
+        extracted_params["fusion_type"] = kwargs["fusion_type"].value
     if kwargs.get("properties", None):
         extracted_params["properties"] = []
         for each_prop in kwargs.get("properties"):
