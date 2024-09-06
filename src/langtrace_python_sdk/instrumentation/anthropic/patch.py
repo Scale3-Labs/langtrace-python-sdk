@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Iterator, TypedDict, Uni
 from langtrace.trace_attributes import Event, SpanAttributes, LLMSpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.silently_fail import silently_fail
+import json
 
 from langtrace_python_sdk.utils.llm import (
     StreamWrapper,
@@ -99,15 +100,20 @@ def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
                 set_span_attribute(
                     span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
-                content_item = result.content[0]
-                completion = [
-                    {
-                        "role": result.role or "assistant",
-                        "content": content_item.text,
-                        "type": content_item.type,
-                    }
-                ]
-                set_event_completion(span, completion)
+                if hasattr(result, "content") and result.content[0] is not None:
+                    content = result.content[0]
+                    typ = content.type
+                    role = result.role if result.role else "assistant"
+                    if typ == "tool_result" or typ == "tool_use":
+                        content = content.json()  # type: ignore
+                        set_span_attribute(
+                            span, SpanAttributes.LLM_TOOL_RESULTS, json.dumps(content)
+                        )
+                    if typ == "text":
+                        content = result.content[0].text
+                        set_event_completion(
+                            span, [{"type": typ, role: role, content: content}]
+                        )
 
             if (
                 hasattr(result, "system_fingerprint")

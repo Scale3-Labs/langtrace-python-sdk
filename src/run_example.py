@@ -5,7 +5,7 @@ ENABLED_EXAMPLES = {
     "chroma": False,
     "cohere": False,
     "fastapi": False,
-    "langchain": False,
+    "langchain": True,
     "llamaindex": False,
     "hiveagent": False,
     "openai": True,
