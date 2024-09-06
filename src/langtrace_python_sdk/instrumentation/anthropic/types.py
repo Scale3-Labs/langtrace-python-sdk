@@ -68,7 +68,6 @@ class Chunk:
 
 class ContentItem:
     role: str
-    content: str
     text: str
     type: str
 

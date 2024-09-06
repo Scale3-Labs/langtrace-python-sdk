@@ -126,7 +126,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
     tools = kwargs.get("tools", None)
     return {
         SpanAttributes.LLM_OPERATION_NAME: operation_name,
-        SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model"),
+        SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model") or "gpt-3.5-turbo",
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
         SpanAttributes.LLM_TOP_K: top_k,
