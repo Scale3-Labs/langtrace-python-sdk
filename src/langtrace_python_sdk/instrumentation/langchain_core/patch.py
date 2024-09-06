@@ -87,13 +87,11 @@ def generic_patch(
                         completion_tokens = result.usage.completion_tokens
                         span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
                         span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens)
-
-                    elif result.generations[0][0].text:
+                    elif hasattr(result, 'generations') and len(result.generations) > 0 and len(result.generations[0]) > 0 and hasattr(result.generations[0][0], 'text') and isinstance(result.generations[0][0].text, str):
                         span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, instance.get_num_tokens(result.generations[0][0].text))
-                    elif isinstance(args[0][0], str):
+                    elif len(args) > 0 and len(args[0]) > 0 and not hasattr(args[0][0], 'text') and hasattr(instance, 'get_num_tokens'):
                         span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0]))
-
-                    else:
+                    elif len(args) > 0 and len(args[0]) > 0 and hasattr(args[0][0], 'text') and isinstance(args[0][0].text, str) and hasattr(instance, 'get_num_tokens'):
                         span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0].text))
 
                 span.set_status(StatusCode.OK)
