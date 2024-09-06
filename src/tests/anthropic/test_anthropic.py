@@ -27,6 +27,7 @@ def test_anthropic(anthropic_client, exporter):
         "stream": False,
         "max_tokens": 1024,
     }
+
     anthropic_client.messages.create(**kwargs)
     spans = exporter.get_finished_spans()
     completion_span = spans[-1]
