@@ -31,7 +31,7 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
             span_attributes["dspy.optimizer"] = instance.__class__.__name__
         if len(args) > 0:
             span_attributes["dspy.optimizer.module"] = args[0].__class__.__name__
-            if args[0].prog:
+            if hasattr(args[0], "prog") and args[0].prog:
                 prog = {
                     "name": args[0].prog.__class__.__name__,
                     "signature": (
