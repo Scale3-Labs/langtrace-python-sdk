@@ -16,20 +16,21 @@ limitations under the License.
 
 import json
 
+from importlib_metadata import version as v
 from langtrace.trace_attributes import DatabaseSpanAttributes
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind
-from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.status import Status, StatusCode
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
     SERVICE_PROVIDERS,
 )
 from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
+from langtrace_python_sdk.utils.llm import get_span_name
 from langtrace_python_sdk.utils.misc import extract_input_params, to_iso_format
-from importlib_metadata import version as v
-
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 # Predefined metadata response attributes
 METADATA_ATTRIBUTES = [
@@ -42,6 +43,25 @@ METADATA_ATTRIBUTES = [
     "is_consistent",
     "rerank_score",
 ]
+
+
+def extract_inputs(args, kwargs):
+    extracted_params = {}
+    kwargs_without_properties = {
+        k: v for k, v in kwargs.items() if k not in ["properties", "fusion_type"]
+    }
+    extracted_params.update(extract_input_params(args, kwargs_without_properties))
+    if kwargs.get("fusion_type", None):
+        extracted_params["fusion_type"] = kwargs["fusion_type"].value
+    if kwargs.get("properties", None):
+        extracted_params["properties"] = []
+        for each_prop in kwargs.get("properties"):
+            if hasattr(each_prop, "_to_dict"):
+                # append properties to extracted_params
+                extracted_params["properties"].append(each_prop._to_dict())
+
+        extracted_params["properties"] = json.dumps(extracted_params["properties"])
+    return extracted_params
 
 
 def extract_metadata(metadata):
@@ -79,19 +99,9 @@ def get_response_object_attributes(response_object):
     response_attributes = {
         **response_object.properties,
         "uuid": str(response_object.uuid) if hasattr(response_object, "uuid") else None,
-        "collection": (
-            response_object.collection
-            if hasattr(response_object, "collection")
-            else None
-        ),
-        "vector": (
-            response_object.vector if hasattr(response_object, "vector") else None
-        ),
-        "references": (
-            response_object.references
-            if hasattr(response_object, "references")
-            else None
-        ),
+        "collection": getattr(response_object, "collection", None),
+        "vector": getattr(response_object, "vector", None),
+        "references": getattr(response_object, "references", None),
         "metadata": (
             extract_metadata(response_object.metadata)
             if hasattr(response_object, "metadata")
@@ -125,14 +135,14 @@ def create_traced_method(method_name, version, tracer, get_collection_name=None)
             "db.system": "weaviate",
             "db.operation": api["OPERATION"],
             "db.collection.name": collection_name,
-            "db.query": json.dumps(extract_input_params(args, kwargs)),
+            "db.query": json.dumps(extract_inputs(args, kwargs)),
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
         attributes = DatabaseSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            method_name,
+            name=get_span_name(method_name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -142,7 +152,6 @@ def create_traced_method(method_name, version, tracer, get_collection_name=None)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-                print(result)
                 if api["OPERATION"] in ["query", "generate"]:
                     span.add_event(
                         name="db.response",

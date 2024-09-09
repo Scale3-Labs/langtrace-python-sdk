@@ -5,6 +5,7 @@ TIKTOKEN_MODEL_MAPPING = {
     "gpt-4-1106-preview": "cl100k_base",
     "gpt-4-1106-vision-preview": "cl100k_base",
     "gpt-4o": "0200k_base",
+    "gpt-4o-mini": "0200k_base",
 }
 
 SERVICE_PROVIDERS = {
@@ -28,6 +29,8 @@ SERVICE_PROVIDERS = {
     "OLLAMA": "Ollama",
     "VERTEXAI": "VertexAI",
     "GEMINI": "Gemini",
+    "MISTRAL": "Mistral",
+    "EMBEDCHAIN": "Embedchain",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

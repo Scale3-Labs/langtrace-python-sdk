@@ -8,6 +8,7 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     set_event_completion,
     set_span_attributes,
     set_usage_attributes,
@@ -39,7 +40,7 @@ def patch_vertexai(name, version, tracer: Tracer):
         }
         attributes = LLMSpanAttributes(**span_attributes)
         span = tracer.start_span(
-            name=name,
+            name=get_span_name(name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -101,12 +102,9 @@ def is_streaming_response(response):
 
 
 def get_llm_model(instance):
-    llm_model = "unknown"
-    if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("publishers/google/models/", "")
-    return llm_model
+        return instance._model_name.replace("models/", "")
+    return getattr(instance, "_model_id", "unknown")
 
 
 def serialize_prompts(args, kwargs):

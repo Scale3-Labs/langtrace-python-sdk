@@ -14,39 +14,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import os
+import sys
 from typing import Optional
 
-from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL,
-)
-from langtrace_python_sdk.types import (
-    DisableInstrumentations,
-    InstrumentationType,
-    InstrumentationMethods,
-)
-from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
+from colorama import Fore
 from opentelemetry import trace
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
     SimpleSpanProcessor,
 )
-import sys
-from opentelemetry.sdk.resources import Resource
 
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
+    LANGTRACE_REMOTE_URL,
+)
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation import (
     AnthropicInstrumentation,
     ChromaInstrumentation,
     CohereInstrumentation,
     CrewAIInstrumentation,
+    DspyInstrumentation,
+    EmbedchainInstrumentation,
+    GeminiInstrumentation,
     GroqInstrumentation,
-    LangchainInstrumentation,
     LangchainCommunityInstrumentation,
     LangchainCoreInstrumentation,
+    LangchainInstrumentation,
     LanggraphInstrumentation,
     LlamaindexInstrumentation,
+    MistralInstrumentation,
+    OllamaInstrumentor,
     OpenAIInstrumentation,
     PineconeInstrumentation,
     QdrantInstrumentation,
@@ -55,12 +57,15 @@ from langtrace_python_sdk.instrumentation import (
     DspyInstrumentation,
     AutogenInstrumentation,
     VertexAIInstrumentation,
-    GeminiInstrumentation,
+    WeaviateInstrumentation,
 )
-from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from colorama import Fore
+from langtrace_python_sdk.types import (
+    DisableInstrumentations,
+    InstrumentationMethods,
+    InstrumentationType,
+)
 from langtrace_python_sdk.utils import check_if_sdk_is_outdated
-import os
+from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 
 
 def init(
@@ -72,21 +77,39 @@ def init(
     disable_instrumentations: Optional[DisableInstrumentations] = None,
     disable_tracing_for_functions: Optional[InstrumentationMethods] = None,
     service_name: Optional[str] = None,
+    disable_logging=False,
 ):
+    if disable_logging:
+        sys.stdout = open(os.devnull, "w")
 
     host = (
-        os.environ.get("LANGTRACE_API_HOST", None) or api_host or LANGTRACE_REMOTE_URL
+        os.environ.get("LANGTRACE_API_HOST", None)
+        or os.environ.get("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", None)
+        or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", None)
+        or api_host
+        or LANGTRACE_REMOTE_URL
     )
     check_if_sdk_is_outdated()
     print(Fore.GREEN + "Initializing Langtrace SDK.." + Fore.RESET)
-    sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
-    provider = TracerProvider(
-        resource=Resource.create({"service.name": service_name or sys.argv[0]}),
-        sampler=sampler,
+    print(
+        Fore.WHITE
+        + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace"
+        + Fore.RESET
     )
+    sampler = LangtraceSampler(disabled_methods=disable_tracing_for_functions)
+    resource = Resource.create(
+        attributes={
+            SERVICE_NAME: os.environ.get("OTEL_SERVICE_NAME")
+            or service_name
+            or sys.argv[0]
+        }
+    )
+    provider = TracerProvider(resource=resource, sampler=sampler)
 
     remote_write_exporter = (
-        LangTraceExporter(api_key=api_key, api_host=host)
+        LangTraceExporter(
+            api_key=api_key, api_host=host, disable_logging=disable_logging
+        )
         if custom_remote_exporter is None
         else custom_remote_exporter
     )
@@ -104,6 +127,7 @@ def init(
         "pinecone": PineconeInstrumentation(),
         "llamaindex": LlamaindexInstrumentation(),
         "chroma": ChromaInstrumentation(),
+        "embedchain": EmbedchainInstrumentation(),
         "qdrant": QdrantInstrumentation(),
         "langchain": LangchainInstrumentation(),
         "langchain_core": LangchainCoreInstrumentation(),
@@ -119,6 +143,7 @@ def init(
         "autogen": AutogenInstrumentation(),
         "vertexai": VertexAIInstrumentation(),
         "gemini": GeminiInstrumentation(),
+        "mistral": MistralInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
@@ -142,6 +167,8 @@ def init(
     else:
         print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
         provider.add_span_processor(batch_processor_remote)
+
+    sys.stdout = sys.__stdout__
 
 
 def init_instrumentations(

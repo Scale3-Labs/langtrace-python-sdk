@@ -17,6 +17,7 @@ limitations under the License.
 import json
 
 from langtrace.trace_attributes import FrameworkSpanAttributes
+from langtrace_python_sdk.utils.llm import get_span_name
 from opentelemetry import baggage, trace
 from opentelemetry.trace import SpanKind, StatusCode
 from opentelemetry.trace.status import Status
@@ -29,6 +30,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace.trace_attributes import SpanAttributes
 
 
 def generic_patch(
@@ -58,24 +60,15 @@ def generic_patch(
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        if len(args) > 0 and trace_input:
-            inputs = {}
-            for arg in args:
-                if isinstance(arg, dict):
-                    for key, value in arg.items():
-                        if isinstance(value, list):
-                            for item in value:
-                                inputs[key] = item.__class__.__name__
-                        elif isinstance(value, str):
-                            inputs[key] = value
-                elif isinstance(arg, str):
-                    inputs["input"] = arg
-            span_attributes["langchain.inputs"] = to_json_string(inputs)
+        if trace_input and len(args) > 0:
+            span_attributes["langchain.inputs"] = to_json_string(args)
+
+        span_attributes["langchain.metadata"] = to_json_string(kwargs)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
         with tracer.start_as_current_span(
-            method_name,
+            name=get_span_name(method_name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
@@ -86,8 +79,20 @@ def generic_patch(
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
+
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
+                    if hasattr(result, 'usage'):
+                        prompt_tokens = result.usage.prompt_tokens
+                        completion_tokens = result.usage.completion_tokens
+                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
+                        span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens)
+                    elif hasattr(result, 'generations') and len(result.generations) > 0 and len(result.generations[0]) > 0 and hasattr(result.generations[0][0], 'text') and isinstance(result.generations[0][0].text, str):
+                        span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, instance.get_num_tokens(result.generations[0][0].text))
+                    elif len(args) > 0 and len(args[0]) > 0 and not hasattr(args[0][0], 'text') and hasattr(instance, 'get_num_tokens'):
+                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0]))
+                    elif len(args) > 0 and len(args[0]) > 0 and hasattr(args[0][0], 'text') and isinstance(args[0][0].text, str) and hasattr(instance, 'get_num_tokens'):
+                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0].text))
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -164,6 +169,7 @@ def runnable_patch(
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
+
                 if trace_output:
                     outputs = {}
                     if isinstance(result, dict):
@@ -199,15 +205,31 @@ def runnable_patch(
 
 def clean_empty(d):
     """Recursively remove empty lists, empty dicts, or None elements from a dictionary."""
-    if not isinstance(d, (dict, list)):
+    if not isinstance(d, (dict, list, tuple)):
         return d
+    if isinstance(d, tuple):
+        return tuple(val for val in (clean_empty(val) for val in d) if val != () and val is not None)
     if isinstance(d, list):
-        return [v for v in (clean_empty(v) for v in d) if v != [] and v is not None]
-    return {
-        k: v
-        for k, v in ((k, clean_empty(v)) for k, v in d.items())
-        if v is not None and v != {}
-    }
+        return [val for val in (clean_empty(val) for val in d) if val != [] and val is not None]
+    result = {}
+    for k, val in d.items():
+        if isinstance(val, dict):
+            val = clean_empty(val)
+            if val != {} and val is not None:
+                result[k] = val
+        elif isinstance(val, list):
+            val = [clean_empty(value) for value in val]
+            if val != [] and val is not None:
+                result[k] = val
+        elif isinstance(val, str) and val is not None:
+            if val.strip() != "":
+                result[k] = val.strip()
+        elif isinstance(val, object):
+            # some langchain objects have a text attribute
+            val = getattr(val, 'text', None)
+            if val is not None and val.strip() != "":
+                result[k] = val.strip()
+    return result
 
 
 def custom_serializer(obj):
@@ -222,5 +244,12 @@ def custom_serializer(obj):
 
 def to_json_string(any_object):
     """Converts any object to a JSON-parseable string, omitting empty or None values."""
-    cleaned_object = clean_empty(any_object)
-    return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+    try:
+        cleaned_object = clean_empty(any_object)
+        return json.dumps(cleaned_object, default=custom_serializer, indent=2)
+    except NotImplementedError:
+        # Handle specific types that raise this error
+        return str(any_object)  # or another appropriate fallback
+    except TypeError:
+        # Handle cases where obj is not serializable
+        return str(any_object)

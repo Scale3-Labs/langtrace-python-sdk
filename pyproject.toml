@@ -12,55 +12,53 @@ description = "Python SDK for LangTrace"
 readme = "README.md"
 authors = [{ name = "Scale3 Labs", email = "engineering@scale3labs.com" }]
 license = "Apache-2.0"
-classifiers=[
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
-    "Operating System :: OS Independent",
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
-  'trace-attributes>=6.0.0,<7.0.0',
+  'trace-attributes==7.0.4',
   'opentelemetry-api>=1.25.0',
   'opentelemetry-sdk>=1.25.0',
-  'opentelemetry-instrumentation>=0.46b0',
+  'opentelemetry-instrumentation>=0.47b0',
   'opentelemetry-instrumentation-sqlalchemy>=0.46b0',
   'opentelemetry-exporter-otlp-proto-http>=1.25.0',
   'opentelemetry-exporter-otlp-proto-grpc>=1.25.0',
   'tiktoken>=0.1.1',
   'colorama>=0.4.6',
   'sqlalchemy',
-  'fsspec>=2024.6.0'
+  'fsspec>=2024.6.0',
+  "transformers>=4.11.3",
 ]
 
 requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-    "openai",
-    "anthropic",
-    "chromadb",
-    "qdrant-client",
-    "python-dotenv",
-    "pinecone-client",
-    "langchain",
-    "langchain-community",
-    "langchain-openai",
-    "langchain-openai",
-    "chromadb",
-    "cohere",
-    "qdrant_client",
-    "weaviate-client",
-    "ollama",
-    "groq",
-    "google-generativeai",
-    "google-cloud-aiplatform"
+  "openai==1.30.1",
+  "anthropic",
+  "chromadb",
+  "qdrant-client",
+  "python-dotenv",
+  "pinecone-client",
+  "langchain",
+  "langchain-community",
+  "langchain-openai",
+  "langchain-openai",
+  "chromadb",
+  "cohere",
+  "qdrant_client",
+  "weaviate-client",
+  "ollama",
+  "groq",
+  "google-generativeai",
+  "google-cloud-aiplatform",
+  "mistralai",
+  "embedchain",
 ]
 
-test = [
-    "pytest",
-    "pytest-vcr",
-    "pytest-asyncio",
-]
-
+test = ["pytest", "pytest-vcr", "pytest-asyncio"]
 
 
 [project.urls]
@@ -71,9 +69,7 @@ Homepage = "https://github.com/Scale3-Labs/langtrace-python-sdk"
 path = "src/langtrace_python_sdk/version.py"
 
 [tool.hatch.build.targets.sdist]
-include = [
-  "/src",
-]
+include = ["/src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/langtrace_python_sdk", "src/examples", "src/tests"]

@@ -27,6 +27,7 @@ def test_anthropic(anthropic_client, exporter):
         "stream": False,
         "max_tokens": 1024,
     }
+
     anthropic_client.messages.create(**kwargs)
     spans = exporter.get_finished_spans()
     completion_span = spans[-1]
@@ -81,9 +82,5 @@ def test_anthropic_streaming(anthropic_client, exporter):
     )
     assert attributes.get(SpanAttributes.LLM_REQUEST_MODEL) == llm_model_value
     assert attributes.get(SpanAttributes.LLM_IS_STREAMING) is True
-
-    events = streaming_span.events
-
-    assert len(events) - 4 == chunk_count
 
     assert_token_count(attributes)

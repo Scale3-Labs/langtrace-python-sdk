@@ -25,6 +25,9 @@ from opentelemetry import baggage, context, trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.propagation import set_span_in_context
 
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
+    LANGTRACE_REMOTE_URL,
+)
 from langtrace_python_sdk.constants.instrumentation.common import (
     LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
 )
@@ -142,7 +145,10 @@ class SendUserFeedback:
     _langtrace_api_key: str
 
     def __init__(self):
-        self._langtrace_host = os.environ["LANGTRACE_API_HOST"]
+        self._langtrace_host = os.environ.get("LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL)
+        # When the host is set to /api/trace, remove the /api/trace
+        if self._langtrace_host.endswith("/api/trace"):
+            self._langtrace_host = self._langtrace_host.replace("/api/trace", "")
         self._langtrace_api_key = os.environ.get("LANGTRACE_API_KEY", None)
 
     def evaluate(self, data: EvaluationAPIData) -> None:
@@ -155,6 +161,16 @@ class SendUserFeedback:
                 print("Set the API key as an environment variable LANGTRACE_API_KEY")
                 print(Fore.RESET)
                 return
+
+            # convert spanId and traceId to hexadecimals
+            span_hex_number = hex(int(data["spanId"], 10))[2:]  # Convert to hex and remove the '0x' prefix
+            formatted_span_hex_number = span_hex_number.zfill(16)  # Pad with zeros to 16 characters
+            data["spanId"] = f"0x{formatted_span_hex_number}"
+
+            trace_hex_number = hex(int(data["traceId"], 10))[2:]  # Convert to hex and remove the '0x' prefix
+            formatted_trace_hex_number = trace_hex_number.zfill(32)  # Pad with zeros to 32 characters
+            data["traceId"] = f"0x{formatted_trace_hex_number}"
+
             evaluation = self.get_evaluation(data["spanId"])
             headers = {"x-api-key": self._langtrace_api_key}
             if evaluation is not None:

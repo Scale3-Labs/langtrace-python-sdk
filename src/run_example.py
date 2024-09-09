@@ -2,10 +2,11 @@ from colorama import Fore
 
 ENABLED_EXAMPLES = {
     "anthropic": False,
+    "azureopenai": True,
     "chroma": False,
     "cohere": False,
     "fastapi": False,
-    "langchain": False,
+    "langchain": True,
     "llamaindex": False,
     "hiveagent": False,
     "openai": False,
@@ -17,7 +18,8 @@ ENABLED_EXAMPLES = {
     "groq": False,
     "autogen": True,
     "vertexai": False,
-    "gemini": True,
+    "gemini": False,
+    "mistral": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -109,3 +111,15 @@ if ENABLED_EXAMPLES["gemini"]:
 
     print(Fore.BLUE + "Running Gemini example" + Fore.RESET)
     GeminiRunner().run()
+
+if ENABLED_EXAMPLES["mistral"]:
+    from examples.mistral_example import MistralRunner
+
+    print(Fore.BLUE + "Running Mistral example" + Fore.RESET)
+    MistralRunner().run()
+
+if ENABLED_EXAMPLES["azureopenai"]:
+    from examples.azureopenai_example import AzureOpenAIRunner
+
+    print(Fore.BLUE + "Running Azure OpenAI example" + Fore.RESET)
+    AzureOpenAIRunner().run()

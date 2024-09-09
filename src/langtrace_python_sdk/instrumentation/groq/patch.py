@@ -29,6 +29,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_request_attributes,
     get_llm_url,
     get_langtrace_attributes,
+    get_span_name,
     set_event_completion,
     set_usage_attributes,
 )
@@ -104,10 +105,10 @@ def chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT.value) as span:
+        #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"],
-            kind=SpanKind.CLIENT.value,
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
+            kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
         for field, value in attributes.model_dump(by_alias=True).items():
@@ -157,7 +158,7 @@ def chat_completions_create(original_method, version, tracer):
                     usage = result.usage
                     set_usage_attributes(span, dict(usage))
 
-                span.set_status(StatusCode.OK)
+                span.set_status(Status(StatusCode.OK))
                 span.end()
                 return result
             else:
@@ -242,16 +243,7 @@ def chat_completions_create(original_method, version, tracer):
                                         content = content + []
                 else:
                     content = []
-                span.add_event(
-                    Event.STREAM_OUTPUT.value,
-                    {
-                        SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: (
-                            "".join(content)
-                            if len(content) > 0 and content[0] is not None
-                            else ""
-                        )
-                    },
-                )
+
                 result_content.append(content[0] if len(content) > 0 else "")
                 yield chunk
         finally:
@@ -265,7 +257,7 @@ def chat_completions_create(original_method, version, tracer):
                 span, [{"role": "assistant", "content": "".join(result_content)}]
             )
 
-            span.set_status(StatusCode.OK)
+            span.set_status(Status(StatusCode.OK))
             span.end()
 
     # return the wrapped method
@@ -290,21 +282,13 @@ def async_chat_completions_create(original_method, version, tracer):
                 tool_calls = []
                 for tool_call in item.tool_calls:
                     tool_call_dict = {
-                        "id": tool_call.id if hasattr(tool_call, "id") else "",
-                        "type": tool_call.type if hasattr(tool_call, "type") else "",
+                        "id": getattr(tool_call, "id", ""),
+                        "type": getattr(tool_call, "type", ""),
                     }
                     if hasattr(tool_call, "function"):
                         tool_call_dict["function"] = {
-                            "name": (
-                                tool_call.function.name
-                                if hasattr(tool_call.function, "name")
-                                else ""
-                            ),
-                            "arguments": (
-                                tool_call.function.arguments
-                                if hasattr(tool_call.function, "arguments")
-                                else ""
-                            ),
+                            "name": getattr(tool_call.function, "name", ""),
+                            "arguments": getattr(tool_call.function, "arguments", ""),
                         }
                     tool_calls.append(tool_call_dict)
                 llm_prompts.append(tool_calls)
@@ -333,9 +317,9 @@ def async_chat_completions_create(original_method, version, tracer):
 
         # TODO(Karthik): Gotta figure out how to handle streaming with context
         # with tracer.start_as_current_span(APIS["CHAT_COMPLETION"]["METHOD"],
-        #                                   kind=SpanKind.CLIENT.value) as span:
+        #                                   kind=SpanKind.CLIENT) as span:
         span = tracer.start_span(
-            APIS["CHAT_COMPLETION"]["METHOD"], kind=SpanKind.CLIENT.value
+            name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
@@ -467,11 +451,7 @@ def async_chat_completions_create(original_method, version, tracer):
                                             tool_call.function.arguments
                                         )
                                         completion_tokens += token_counts
-                                        content = content + [
-                                            tool_call.function.arguments
-                                        ]
-                                    else:
-                                        content = content + []
+                                        content += [tool_call.function.arguments]
                 else:
                     content = []
                 span.add_event(

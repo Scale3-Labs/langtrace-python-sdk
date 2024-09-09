@@ -14,147 +14,106 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from typing import Any, Callable, Dict, List, Optional, Iterator, TypedDict, Union
+from langtrace.trace_attributes import Event, SpanAttributes, LLMSpanAttributes
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.silently_fail import silently_fail
 import json
 
-from langtrace.trace_attributes import Event, LLMSpanAttributes
-from langtrace_python_sdk.utils import set_span_attribute, silently_fail
 from langtrace_python_sdk.utils.llm import (
+    StreamWrapper,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
-    is_streaming,
+    get_span_name,
     set_event_completion,
     set_usage_attributes,
+    set_span_attribute,
 )
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace.status import Status, StatusCode
-from langtrace.trace_attributes import SpanAttributes
-
+from opentelemetry.trace import Span, Tracer, SpanKind
+from opentelemetry.trace.status import StatusCode
 from langtrace_python_sdk.constants.instrumentation.anthropic import APIS
-from langtrace_python_sdk.constants.instrumentation.common import (
-    SERVICE_PROVIDERS,
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from langtrace_python_sdk.instrumentation.anthropic.types import (
+    StreamingResult,
+    ResultType,
+    MessagesCreateKwargs,
+    ContentItem,
+    Usage,
 )
 
 
-def messages_create(original_method, version, tracer):
+def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
     """Wrap the `messages_create` method."""
 
-    def traced_method(wrapped, instance, args, kwargs):
+    def traced_method(
+        wrapped: Callable[..., Any],
+        instance: Any,
+        args: List[Any],
+        kwargs: MessagesCreateKwargs,
+    ) -> Any:
         service_provider = SERVICE_PROVIDERS["ANTHROPIC"]
 
-        # extract system from kwargs and attach as a role to the prompts
-        # we do this to keep it consistent with the openai
+        # Extract system from kwargs and attach as a role to the prompts
         prompts = kwargs.get("messages", [])
         system = kwargs.get("system")
         if system:
-            prompts = [{"role": "system", "content": system}] + kwargs.get("messages", [])
-
+            prompts = [{"role": "system", "content": system}] + kwargs.get(
+                "messages", []
+            )
+        extraAttributes = get_extra_attributes()
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["MESSAGES_CREATE"]["ENDPOINT"],
-            **get_extra_attributes(),
+            **extraAttributes,  # type: ignore
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            APIS["MESSAGES_CREATE"]["METHOD"], kind=SpanKind.CLIENT
+            name=get_span_name(APIS["MESSAGES_CREATE"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
-            return set_response_attributes(result, span, kwargs)
+            return set_response_attributes(result, span)
 
         except Exception as err:
             # Record the exception in the span
             span.record_exception(err)
             # Set the span status to indicate an error
-            span.set_status(Status(StatusCode.ERROR, str(err)))
+            span.set_status(StatusCode.ERROR, str(err))
             # Reraise the exception to ensure it's not swallowed
             span.end()
             raise
 
-    def handle_streaming_response(result, span):
-        """Process and yield streaming response chunks."""
-        result_content = []
-        span.add_event(Event.STREAM_START.value)
-        input_tokens = 0
-        output_tokens = 0
-        try:
-            for chunk in result:
-                if (
-                    hasattr(chunk, "message")
-                    and chunk.message is not None
-                    and hasattr(chunk.message, "model")
-                    and chunk.message.model is not None
-                ):
-                    span.set_attribute(
-                        SpanAttributes.LLM_RESPONSE_MODEL, chunk.message.model
-                    )
-                content = ""
-                if hasattr(chunk, "delta") and chunk.delta is not None:
-                    content = chunk.delta.text if hasattr(chunk.delta, "text") else ""
-                # Assuming content needs to be aggregated before processing
-                result_content.append(content if len(content) > 0 else "")
-
-                if hasattr(chunk, "message") and hasattr(chunk.message, "usage"):
-                    input_tokens += (
-                        chunk.message.usage.input_tokens
-                        if hasattr(chunk.message.usage, "input_tokens")
-                        else 0
-                    )
-                    output_tokens += (
-                        chunk.message.usage.output_tokens
-                        if hasattr(chunk.message.usage, "output_tokens")
-                        else 0
-                    )
-
-                # Assuming span.add_event is part of a larger logging or event system
-                # Add event for each chunk of content
-                if content:
-                    span.add_event(
-                        Event.STREAM_OUTPUT.value,
-                        {SpanAttributes.LLM_CONTENT_COMPLETION_CHUNK: "".join(content)},
-                    )
-
-                # Assuming this is part of a generator, yield chunk or aggregated content
-                yield content
-        finally:
-
-            # Finalize span after processing all chunks
-            span.add_event(Event.STREAM_END.value)
-            set_usage_attributes(
-                span, {"input_tokens": input_tokens, "output_tokens": output_tokens}
-            )
-            completion = [{"role": "assistant", "content": "".join(result_content)}]
-            set_event_completion(span, completion)
-
-            span.set_status(StatusCode.OK)
-            span.end()
-
-    def set_response_attributes(result, span, kwargs):
-        if not is_streaming(kwargs):
+    def set_response_attributes(
+        result: Union[ResultType, StreamingResult], span: Span
+    ) -> Any:
+        if not isinstance(result, Iterator):
             if hasattr(result, "content") and result.content is not None:
                 set_span_attribute(
                     span, SpanAttributes.LLM_RESPONSE_MODEL, result.model
                 )
-                completion = [
-                    {
-                        "role": result.role if result.role else "assistant",
-                        "content": result.content[0].text,
-                        "type": result.content[0].type,
-                    }
-                ]
-                set_event_completion(span, completion)
-
-            else:
-                responses = []
-                set_event_completion(span, responses)
+                if hasattr(result, "content") and result.content[0] is not None:
+                    content = result.content[0]
+                    typ = content.type
+                    role = result.role if result.role else "assistant"
+                    if typ == "tool_result" or typ == "tool_use":
+                        content = content.json()  # type: ignore
+                        set_span_attribute(
+                            span, SpanAttributes.LLM_TOOL_RESULTS, json.dumps(content)
+                        )
+                    if typ == "text":
+                        content = result.content[0].text
+                        set_event_completion(
+                            span, [{"type": typ, role: role, content: content}]
+                        )
 
             if (
                 hasattr(result, "system_fingerprint")
@@ -167,13 +126,13 @@ def messages_create(original_method, version, tracer):
             # Get the usage
             if hasattr(result, "usage") and result.usage is not None:
                 usage = result.usage
-                set_usage_attributes(span, dict(usage))
+                set_usage_attributes(span, vars(usage))
 
             span.set_status(StatusCode.OK)
             span.end()
             return result
         else:
-            return handle_streaming_response(result, span)
+            return StreamWrapper(result, span)
 
     # return the wrapped method
     return traced_method

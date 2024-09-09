@@ -66,9 +66,14 @@ def patch_module_classes(
         if name.startswith("_") or name in exclude_classes:
             continue
         # loop through all public methods of the class
-        for method_name, _ in inspect.getmembers(obj, predicate=inspect.isfunction):
-            # Skip private methods
-            if method_name.startswith("_") or method_name in exclude_methods:
+        for method_name, method in inspect.getmembers(
+            obj, predicate=inspect.isfunction
+        ):
+            if (
+                method_name in exclude_methods
+                or method.__qualname__.split(".")[0] != name
+                or method_name.startswith("_")
+            ):
                 continue
             try:
                 method_path = f"{name}.{method_name}"
@@ -109,6 +114,11 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
             "format",
             "format_messages",
             "format_prompt",
+            "transform",
+            "stream",
+            "__or__",
+            "__init__",
+            "__repr__",
         ]
         exclude_classes = [
             "BaseChatPromptTemplate",
@@ -126,6 +136,13 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
         modules_to_patch = [
             ("langchain_core.retrievers", "retriever", generic_patch, True, True),
             ("langchain_core.prompts.chat", "prompt", generic_patch, True, True),
+            (
+                "langchain_core.language_models.llms",
+                "generate",
+                generic_patch,
+                True,
+                True,
+            ),
             ("langchain_core.runnables.base", "runnable", runnable_patch, True, True),
             (
                 "langchain_core.runnables.passthrough",

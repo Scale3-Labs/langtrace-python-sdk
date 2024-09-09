@@ -194,7 +194,7 @@ def main():
 from langtrace_python_sdk import with_langtrace_root_span, with_additional_attributes
 
 
-@with_additional_attributes({"user.id": "1234", "user.feedback.rating": 1})
+@with_additional_attributes({"user.id": "1234"})
 def api_call1():
     response = client.chat.completions.create(
         model="gpt-4",
@@ -204,7 +204,7 @@ def api_call1():
     return response
 
 
-@with_additional_attributes({"user.id": "5678", "user.feedback.rating": -1})
+@with_additional_attributes({"user.id": "5678"})
 def api_call2():
     response = client.chat.completions.create(
         model="gpt-4",
@@ -228,6 +228,11 @@ from langtrace_python_sdk import get_prompt_from_registry
 prompt = get_prompt_from_registry(<Registry ID>, options={"prompt_version": 1, "variables": {"foo": "bar"} })
 ```
 
+### Opt out of tracing prompt and completion data
+By default, prompt and completion data are captured. If you would like to opt out of it, set the following env var,
+
+`TRACE_PROMPT_COMPLETION_DATA=false`
+
 ## Supported integrations
 
 Langtrace automatically captures traces from the following vendors:
@@ -241,6 +246,7 @@ Langtrace automatically captures traces from the following vendors:
 | Groq         | LLM             | :x:                | :white_check_mark:              |
 | Perplexity   | LLM             | :white_check_mark: | :white_check_mark:              |
 | Gemini       | LLM             | :x:                | :white_check_mark:              |
+| Mistral      | LLM             | :x:                | :white_check_mark:              |
 | Langchain    | Framework       | :x:                | :white_check_mark:              |
 | LlamaIndex   | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph    | Framework       | :x:                | :white_check_mark:              |
@@ -248,6 +254,8 @@ Langtrace automatically captures traces from the following vendors:
 | CrewAI       | Framework       | :x:                | :white_check_mark:              |
 | Ollama       | Framework       | :x:                | :white_check_mark:              |
 | VertexAI     | Framework       | :x:                | :white_check_mark:              |
+| Vercel AI SDK| Framework       | :white_check_mark: | :x:                             |
+| EmbedChain   | Framework       | :x:                | :white_check_mark:              |
 | Pinecone     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | ChromaDB     | Vector Database | :white_check_mark: | :white_check_mark:              |
 | QDrant       | Vector Database | :white_check_mark: | :white_check_mark:              |

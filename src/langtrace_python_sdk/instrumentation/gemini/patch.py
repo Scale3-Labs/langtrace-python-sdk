@@ -10,9 +10,9 @@ from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
     get_llm_url,
+    get_span_name,
     is_streaming,
     set_event_completion,
-    set_event_completion_chunk,
     set_span_attributes,
     set_usage_attributes,
 )
@@ -35,7 +35,7 @@ def patch_gemini(name, version, tracer: Tracer):
         }
         attributes = LLMSpanAttributes(**span_attributes)
         span = tracer.start_span(
-            name=name,
+            name=get_span_name(name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -76,7 +76,7 @@ def apatch_gemini(name, version, tracer: Tracer):
         }
         attributes = LLMSpanAttributes(**span_attributes)
         span = tracer.start_span(
-            name=name,
+            name=get_span_name(name),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         )
@@ -100,17 +100,17 @@ def apatch_gemini(name, version, tracer: Tracer):
 
 
 def get_llm_model(instance):
-    llm_model = "unknown"
-    if hasattr(instance, "_model_id"):
-        llm_model = instance._model_id
     if hasattr(instance, "_model_name"):
-        llm_model = instance._model_name.replace("models/", "")
-    return llm_model
+        return instance._model_name.replace("models/", "")
+    return getattr(instance, "_model_id", "unknown")
 
 
 def serialize_prompts(args, kwargs, instance):
     prompts = []
-    if hasattr(instance, "_system_instruction") and instance._system_instruction is not None:
+    if (
+        hasattr(instance, "_system_instruction")
+        and instance._system_instruction is not None
+    ):
         system_prompt = {
             "role": "system",
             "content": instance._system_instruction.__dict__["_pb"].parts[0].text,
@@ -152,7 +152,6 @@ def build_streaming_response(span, response):
         item_to_yield = item
         complete_response += str(item.text)
         yield item_to_yield
-        set_event_completion_chunk(span, item.text)
         if hasattr(item, "usage_metadata"):
             usage = item.usage_metadata
             input_tokens = usage.prompt_token_count
@@ -172,7 +171,6 @@ async def abuild_streaming_response(span, response):
         item_to_yield = item
         complete_response += str(item.text)
         yield item_to_yield
-        set_event_completion_chunk(span, item.text)
         if hasattr(item, "usage_metadata"):
             usage = item.usage_metadata
             input_tokens = usage.prompt_token_count
