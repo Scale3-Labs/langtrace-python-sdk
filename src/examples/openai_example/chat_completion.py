@@ -7,22 +7,24 @@ _ = load_dotenv(find_dotenv())
 client = OpenAI()
 
 
-def api():
+def chat_completion(stream=False):
     response = client.chat.completions.create(
         model="gpt-4",
         messages=[
             {"role": "system", "content": "Talk like a pirate"},
             {"role": "user", "content": "Tell me a story in 3 sentences or less."},
         ],
-        # stream=True,
-        # stream_options={"include_usage": True},
-        stream=False,
+        stream=stream,
+        stream_options={"include_usage": True} if stream else None,
+        n=2,
+        top_p=0.1,
     )
-    return response
 
-
-def chat_completion():
-    response = api()
+    if stream:
+        for chunk in response:
+            pass
+    else:
+        return response
     # print(response)
     # Uncomment this for streaming
     # result = []
@@ -35,4 +37,3 @@ def chat_completion():
     #         result.append(content[0] if len(content) > 0 else "")
 
     # # print("".join(result))
-    return response

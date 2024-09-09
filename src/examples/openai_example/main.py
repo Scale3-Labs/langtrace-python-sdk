@@ -27,7 +27,9 @@ langtrace.init(write_spans_to_console=False, batch=False)
 def run_main():
     # asyncio.run(arun_conversation_streaming())
     # asyncio.run(arun_conversation_nonstreaming())
-    chat_completion()
+    chat_completion(stream=True)
+    chat_completion(stream=False)
+
     # embeddings_create()
     # function_calling()
     # image_edit()
