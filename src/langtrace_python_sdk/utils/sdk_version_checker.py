@@ -44,6 +44,9 @@ class SDKVersionChecker:
             return self._current_version < latest_version
         return False
 
+    def get_sdk_version(self):
+        return self._current_version
+
     def check(self):
         if self.is_outdated():
             print(

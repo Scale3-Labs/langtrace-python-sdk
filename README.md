@@ -148,6 +148,10 @@ langtrace.init(custom_remote_exporter=<your_exporter>, batch=<True or False>)
 | `api_host`                 | `Optional[str]`                     | `https://langtrace.ai/`       | The API host for the remote exporter.                                                                                             |
 | `disable_instrumentations` | `Optional[DisableInstrumentations]` | `None`                        | You can pass an object to disable instrumentation for specific vendors ex: `{'only': ['openai']}` or `{'all_except': ['openai']}` |
 
+### Error Reporting to Langtrace
+
+By default all sdk errors are reported to langtrace via Sentry. This can be disabled by setting the following enviroment variable to `False` like so `LANGTRACE_ERROR_REPORTING=False`
+
 ### Additional Customization
 
 - `@with_langtrace_root_span` - this decorator is designed to organize and relate different spans, in a hierarchical manner. When you're performing multiple operations that you want to monitor together as a unit, this function helps by establishing a "parent" (`LangtraceRootSpan` or whatever is passed to `name`) span. Then, any calls to the LLM APIs made within the given function (fn) will be considered "children" of this parent span. This setup is especially useful for tracking the performance or behavior of a group of operations collectively, rather than individually.
@@ -229,6 +233,7 @@ prompt = get_prompt_from_registry(<Registry ID>, options={"prompt_version": 1, "
 ```
 
 ### Opt out of tracing prompt and completion data
+
 By default, prompt and completion data are captured. If you would like to opt out of it, set the following env var,
 
 `TRACE_PROMPT_COMPLETION_DATA=false`
