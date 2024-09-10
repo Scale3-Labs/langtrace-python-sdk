@@ -17,7 +17,7 @@ limitations under the License.
 import os
 import sys
 from typing import Optional
-
+import importlib.util
 from colorama import Fore
 from opentelemetry import trace
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
@@ -121,26 +121,25 @@ def init(
     all_instrumentations = {
         "openai": OpenAIInstrumentation(),
         "groq": GroqInstrumentation(),
-        "pinecone": PineconeInstrumentation(),
-        "llamaindex": LlamaindexInstrumentation(),
-        "chroma": ChromaInstrumentation(),
+        "pinecone-client": PineconeInstrumentation(),
+        "llama-index": LlamaindexInstrumentation(),
+        "chromadb": ChromaInstrumentation(),
         "embedchain": EmbedchainInstrumentation(),
-        "qdrant": QdrantInstrumentation(),
+        "qdrant-client": QdrantInstrumentation(),
         "langchain": LangchainInstrumentation(),
-        "langchain_core": LangchainCoreInstrumentation(),
-        "langchain_community": LangchainCommunityInstrumentation(),
+        "langchain-core": LangchainCoreInstrumentation(),
+        "langchain-community": LangchainCommunityInstrumentation(),
         "langgraph": LanggraphInstrumentation(),
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
-        "weaviate": WeaviateInstrumentation(),
+        "weaviate-client": WeaviateInstrumentation(),
         "sqlalchemy": SQLAlchemyInstrumentor(),
         "ollama": OllamaInstrumentor(),
-        "dspy": DspyInstrumentation(),
+        "dspy-ai": DspyInstrumentation(),
         "crewai": CrewAIInstrumentation(),
-        "autogen": AutogenInstrumentation(),
-        "vertexai": VertexAIInstrumentation(),
-        "gemini": GeminiInstrumentation(),
-        "mistral": MistralInstrumentation(),
+        "google-cloud-aiplatform": VertexAIInstrumentation(),
+        "google-generativeai": GeminiInstrumentation(),
+        "mistralai": MistralInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
@@ -173,7 +172,9 @@ def init_instrumentations(
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):
-            v.instrument()
+            if is_package_installed(name):
+                v.instrument()
+
     else:
 
         validate_instrumentations(disable_instrumentations)
@@ -230,3 +231,7 @@ def validate_instrumentations(disable_instrumentations):
             raise ValueError(
                 "Cannot specify both only and all_except in disable_instrumentations"
             )
+
+
+def is_package_installed(package_name):
+    return importlib.util.find_spec(package_name) is not None

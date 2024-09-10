@@ -51,7 +51,6 @@ def patch_memory(operation_name, version, tracer: Tracer):
                     )
                 if result:
                     span.set_status(Status(StatusCode.OK))
-                span.end()
                 return result
 
             except Exception as err:
@@ -102,7 +101,6 @@ def patch_crew(operation_name, version, tracer: Tracer):
                                 span.set_attribute(
                                     f"crewai.crew.{attr}", str(getattr(result, attr))
                                 )
-                span.end()
                 return result
 
             except Exception as err:
@@ -139,21 +137,27 @@ class CrewAISpanAttributes:
             for key, value in self.crew.items():
                 key = f"crewai.crew.{key}"
                 if value is not None:
-                    set_span_attribute(self.span, key, value)
+                    set_span_attribute(
+                        self.span, key, str(value) if isinstance(value, list) else value
+                    )
 
         elif instance_name == "Agent":
             agent = self.set_agent_attributes()
             for key, value in agent.items():
                 key = f"crewai.agent.{key}"
                 if value is not None:
-                    set_span_attribute(self.span, key, value)
+                    set_span_attribute(
+                        self.span, key, str(value) if isinstance(value, list) else value
+                    )
 
         elif instance_name == "Task":
             task = self.set_task_attributes()
             for key, value in task.items():
                 key = f"crewai.task.{key}"
                 if value is not None:
-                    set_span_attribute(self.span, key, value)
+                    set_span_attribute(
+                        self.span, key, str(value) if isinstance(value, list) else value
+                    )
 
     def set_crew_attributes(self):
         for key, value in self.instance.__dict__.items():
