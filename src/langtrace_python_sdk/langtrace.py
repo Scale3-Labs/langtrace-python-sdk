@@ -166,10 +166,7 @@ def init(
         provider.add_span_processor(batch_processor_remote)
 
     sys.stdout = sys.__stdout__
-    if (
-        os.environ.get("LANGTRACE_ERROR_REPORTING", "True") == "True"
-        or os.environ.get("LANGTRACE_ERROR_REPORTING", "True") == "true"
-    ):
+    if os.environ.get("LANGTRACE_ERROR_REPORTING", "True") == "True":
         sentry_sdk.init(
             dsn=SENTRY_DSN,
             traces_sample_rate=1.0,
