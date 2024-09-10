@@ -52,9 +52,6 @@ from langtrace_python_sdk.instrumentation import (
     OpenAIInstrumentation,
     PineconeInstrumentation,
     QdrantInstrumentation,
-    WeaviateInstrumentation,
-    OllamaInstrumentor,
-    DspyInstrumentation,
     AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
@@ -176,7 +173,6 @@ def init_instrumentations(
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):
-
             v.instrument()
     else:
 
