@@ -233,4 +233,7 @@ def validate_instrumentations(disable_instrumentations):
 
 
 def is_package_installed(package_name):
-    return importlib.util.find_spec(package_name) is not None
+    import pkg_resources
+
+    installed_packages = {p.key for p in pkg_resources.working_set}
+    return package_name in installed_packages
