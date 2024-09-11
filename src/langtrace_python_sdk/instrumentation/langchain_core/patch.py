@@ -57,7 +57,24 @@ def generic_patch(
             "langtrace.service.version": version,
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "langchain.task.name": task,
-            **(extra_attributes if extra_attributes is not None else {}),
+            "gen_ai.request.model": (
+                instance.model if hasattr(instance, "model") else None
+            ),
+            SpanAttributes.LLM_REQUEST_MAX_TOKENS: (
+                instance.max_output_tokens
+                if hasattr(instance, "max_output_tokens")
+                else None
+            ),
+            SpanAttributes.LLM_TOP_K: (
+                instance.top_k if hasattr(instance, "top_k") else None
+            ),
+            SpanAttributes.LLM_REQUEST_TOP_P: (
+                instance.top_p if hasattr(instance, "top_p") else None
+            ),
+            SpanAttributes.LLM_REQUEST_TEMPERATURE: (
+                instance.temperature if hasattr(instance, "temperature") else None
+            ),
+            **(extra_attributes if extra_attributes is not None else {}),  # type: ignore
         }
 
         if trace_input and len(args) > 0:
@@ -79,21 +96,17 @@ def generic_patch(
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
-
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
-                    if hasattr(result, 'usage'):
-                        prompt_tokens = result.usage.prompt_tokens
-                        completion_tokens = result.usage.completion_tokens
-                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, prompt_tokens)
-                        span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, completion_tokens)
-                    elif hasattr(result, 'generations') and len(result.generations) > 0 and len(result.generations[0]) > 0 and hasattr(result.generations[0][0], 'text') and isinstance(result.generations[0][0].text, str):
-                        span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, instance.get_num_tokens(result.generations[0][0].text))
-                    elif len(args) > 0 and len(args[0]) > 0 and not hasattr(args[0][0], 'text') and hasattr(instance, 'get_num_tokens'):
-                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0]))
-                    elif len(args) > 0 and len(args[0]) > 0 and hasattr(args[0][0], 'text') and isinstance(args[0][0].text, str) and hasattr(instance, 'get_num_tokens'):
-                        span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, instance.get_num_tokens(args[0][0].text))
-
+                    if hasattr(result, "usage_metadata"):
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                            result.usage_metadata["input_tokens"],
+                        )
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                            result.usage_metadata["output_tokens"],
+                        )
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
@@ -208,9 +221,17 @@ def clean_empty(d):
     if not isinstance(d, (dict, list, tuple)):
         return d
     if isinstance(d, tuple):
-        return tuple(val for val in (clean_empty(val) for val in d) if val != () and val is not None)
+        return tuple(
+            val
+            for val in (clean_empty(val) for val in d)
+            if val != () and val is not None
+        )
     if isinstance(d, list):
-        return [val for val in (clean_empty(val) for val in d) if val != [] and val is not None]
+        return [
+            val
+            for val in (clean_empty(val) for val in d)
+            if val != [] and val is not None
+        ]
     result = {}
     for k, val in d.items():
         if isinstance(val, dict):
@@ -226,7 +247,7 @@ def clean_empty(d):
                 result[k] = val.strip()
         elif isinstance(val, object):
             # some langchain objects have a text attribute
-            val = getattr(val, 'text', None)
+            val = getattr(val, "text", None)
             if val is not None and val.strip() != "":
                 result[k] = val.strip()
     return result

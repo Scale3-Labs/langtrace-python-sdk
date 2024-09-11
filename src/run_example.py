@@ -2,7 +2,7 @@ from colorama import Fore
 
 ENABLED_EXAMPLES = {
     "anthropic": False,
-    "azureopenai": True,
+    "azureopenai": False,
     "chroma": False,
     "cohere": False,
     "fastapi": False,
