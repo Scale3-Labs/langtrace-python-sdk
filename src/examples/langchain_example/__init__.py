@@ -1,3 +1,4 @@
+from examples.langchain_example.langchain_google_genai import basic_google_genai
 from .basic import basic_app, rag, load_and_split
 from langtrace_python_sdk import with_langtrace_root_span
 
@@ -12,6 +13,7 @@ class LangChainRunner:
         rag()
         load_and_split()
         basic_graph_tools()
+        basic_google_genai()
 
 
 class GroqRunner:
