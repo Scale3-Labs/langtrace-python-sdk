@@ -129,8 +129,8 @@ def init(
         "embedchain": EmbedchainInstrumentation(),
         "qdrant-client": QdrantInstrumentation(),
         "langchain": LangchainInstrumentation(),
-        "langchain-core": LangchainCoreInstrumentation(),
-        "langchain-community": LangchainCommunityInstrumentation(),
+        "langchain_core": LangchainCoreInstrumentation(),
+        "langchain_community": LangchainCommunityInstrumentation(),
         "langgraph": LanggraphInstrumentation(),
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
@@ -192,7 +192,8 @@ def init(
 
 
 def init_instrumentations(
-    disable_instrumentations: DisableInstrumentations, all_instrumentations: dict
+    disable_instrumentations: Optional[DisableInstrumentations],
+    all_instrumentations: dict
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):
