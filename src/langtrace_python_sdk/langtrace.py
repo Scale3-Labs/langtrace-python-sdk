@@ -53,6 +53,7 @@ from langtrace_python_sdk.instrumentation import (
     OpenAIInstrumentation,
     PineconeInstrumentation,
     QdrantInstrumentation,
+    AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
 )
@@ -141,6 +142,7 @@ def init(
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
         "mistralai": MistralInstrumentation(),
+        "autogen": AutogenInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
