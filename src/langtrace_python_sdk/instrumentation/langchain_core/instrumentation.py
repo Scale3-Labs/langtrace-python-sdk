@@ -134,6 +134,20 @@ class LangchainCoreInstrumentation(BaseInstrumentor):
         ]
 
         modules_to_patch = [
+            (
+                "langchain_core.language_models.chat_models",
+                "chatmodel",
+                generic_patch,
+                True,
+                True,
+            ),
+            (
+                "langchain_core.language_models.base",
+                "language_model",
+                generic_patch,
+                True,
+                True,
+            ),
             ("langchain_core.retrievers", "retriever", generic_patch, True, True),
             ("langchain_core.prompts.chat", "prompt", generic_patch, True, True),
             (

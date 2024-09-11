@@ -31,6 +31,7 @@ SERVICE_PROVIDERS = {
     "GEMINI": "Gemini",
     "MISTRAL": "Mistral",
     "EMBEDCHAIN": "Embedchain",
+    "AUTOGEN": "Autogen",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"
