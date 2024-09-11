@@ -1,13 +1,22 @@
 from langtrace_python_sdk import langtrace
-import os
-from autogen import AssistantAgent, UserProxyAgent, ConversableAgent
+from autogen import ConversableAgent
 from dotenv import load_dotenv
-import agentops
+from autogen.coding import LocalCommandLineCodeExecutor
+import tempfile
 
 
 load_dotenv()
 langtrace.init(write_spans_to_console=False)
-agentops.init(api_key=os.getenv("AGENTOPS_API_KEY"))
+# agentops.init(api_key=os.getenv("AGENTOPS_API_KEY"))
+# Create a temporary directory to store the code files.
+temp_dir = tempfile.TemporaryDirectory()
+
+
+# Create a local command line code executor.
+executor = LocalCommandLineCodeExecutor(
+    timeout=10,  # Timeout for each code execution in seconds.
+    work_dir=temp_dir.name,  # Use the temporary directory to store the code files.
+)
 
 
 def main():
@@ -28,16 +37,25 @@ def main():
 
 def comedy_show():
     cathy = ConversableAgent(
-        "cathy",
+        name="cathy",
         system_message="Your name is Cathy and you are a part of a duo of comedians.",
-        llm_config={"config_list": [{"model": "gpt-4", "temperature": 0.9}]},
+        llm_config={"config_list": [{"model": "gpt-4o-mini", "temperature": 0.9}]},
+        description="Cathy is a comedian",
+        max_consecutive_auto_reply=10,
+        code_execution_config={
+            "executor": executor
+        },  # Use the local command line code executor.
+        function_map=None,
+        chat_messages=None,
+        silent=True,
+        default_auto_reply="Sorry, I don't know what to say.",
         human_input_mode="NEVER",  # Never ask for human input.
     )
 
     joe = ConversableAgent(
         "joe",
         system_message="Your name is Joe and you are a part of a duo of comedians.",
-        llm_config={"config_list": [{"model": "gpt-4", "temperature": 0.7}]},
+        llm_config={"config_list": [{"model": "gpt-4o-mini", "temperature": 0.7}]},
         human_input_mode="NEVER",  # Never ask for human input.
     )
 
