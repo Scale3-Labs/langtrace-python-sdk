@@ -190,7 +190,8 @@ def init(
 
 
 def init_instrumentations(
-    disable_instrumentations: DisableInstrumentations | None, all_instrumentations: dict
+    disable_instrumentations: Optional[DisableInstrumentations],
+    all_instrumentations: dict
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):
