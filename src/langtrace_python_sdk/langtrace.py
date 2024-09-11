@@ -19,6 +19,7 @@ import sys
 from typing import Optional
 import importlib.util
 from colorama import Fore
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME, SENTRY_DSN
 from opentelemetry import trace
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
@@ -52,6 +53,7 @@ from langtrace_python_sdk.instrumentation import (
     OpenAIInstrumentation,
     PineconeInstrumentation,
     QdrantInstrumentation,
+    AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
 )
@@ -60,8 +62,9 @@ from langtrace_python_sdk.types import (
     InstrumentationMethods,
     InstrumentationType,
 )
-from langtrace_python_sdk.utils import check_if_sdk_is_outdated
+from langtrace_python_sdk.utils import check_if_sdk_is_outdated, get_sdk_version
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
+import sentry_sdk
 
 
 def init(
@@ -126,8 +129,8 @@ def init(
         "embedchain": EmbedchainInstrumentation(),
         "qdrant-client": QdrantInstrumentation(),
         "langchain": LangchainInstrumentation(),
-        "langchain-core": LangchainCoreInstrumentation(),
-        "langchain-community": LangchainCommunityInstrumentation(),
+        "langchain_core": LangchainCoreInstrumentation(),
+        "langchain_community": LangchainCommunityInstrumentation(),
         "langgraph": LanggraphInstrumentation(),
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
@@ -139,6 +142,7 @@ def init(
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
         "mistralai": MistralInstrumentation(),
+        "autogen": AutogenInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
@@ -164,10 +168,32 @@ def init(
         provider.add_span_processor(batch_processor_remote)
 
     sys.stdout = sys.__stdout__
+    if os.environ.get("LANGTRACE_ERROR_REPORTING", "True") == "True":
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=1.0,
+        )
+        sdk_options = {
+            "service_name": os.environ.get("OTEL_SERVICE_NAME")
+            or service_name
+            or sys.argv[0],
+            "disable_logging": disable_logging,
+            "disable_instrumentations": disable_instrumentations,
+            "disable_tracing_for_functions": disable_tracing_for_functions,
+            "batch": batch,
+            "write_spans_to_console": write_spans_to_console,
+            "custom_remote_exporter": custom_remote_exporter,
+            "sdk_name": LANGTRACE_SDK_NAME,
+            "sdk_version": get_sdk_version(),
+            "api_host": host,
+        }
+        sentry_sdk.set_context("sdk_init_options", sdk_options)
 
 
 def init_instrumentations(
-    disable_instrumentations: DisableInstrumentations, all_instrumentations: dict
+    disable_instrumentations: Optional[DisableInstrumentations],
+    all_instrumentations: dict
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):

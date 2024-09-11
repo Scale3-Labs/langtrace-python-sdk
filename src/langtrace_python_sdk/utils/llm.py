@@ -126,7 +126,9 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
     tools = kwargs.get("tools", None)
     return {
         SpanAttributes.LLM_OPERATION_NAME: operation_name,
-        SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model") or "gpt-3.5-turbo",
+        SpanAttributes.LLM_REQUEST_MODEL: model
+        or kwargs.get("model")
+        or "gpt-3.5-turbo",
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
         SpanAttributes.LLM_TOP_K: top_k,
@@ -230,7 +232,15 @@ def set_event_completion(span: Span, result_content):
 
 
 def set_span_attributes(span: Span, attributes: Any) -> None:
-    for field, value in attributes.model_dump(by_alias=True).items():
+    from pydantic import BaseModel
+
+    attrs = (
+        attributes.model_dump(by_alias=True)
+        if isinstance(attributes, BaseModel)
+        else attributes
+    )
+
+    for field, value in attrs.items():
         set_span_attribute(span, field, value)
 
 

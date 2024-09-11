@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import json
+from datetime import datetime
 
 from importlib_metadata import version as v
 from langtrace.trace_attributes import DatabaseSpanAttributes
@@ -48,9 +49,11 @@ METADATA_ATTRIBUTES = [
 def extract_inputs(args, kwargs):
     extracted_params = {}
     kwargs_without_properties = {
-        k: v for k, v in kwargs.items() if k not in ["properties", "fusion_type"]
+        k: v for k, v in kwargs.items() if k not in ["properties", "fusion_type", "filters"]
     }
     extracted_params.update(extract_input_params(args, kwargs_without_properties))
+    if kwargs.get("filters", None):
+        extracted_params["filters"] = str(kwargs["filters"])
     if kwargs.get("fusion_type", None):
         extracted_params["fusion_type"] = kwargs["fusion_type"].value
     if kwargs.get("properties", None):
@@ -95,9 +98,13 @@ def aggregate_responses(result):
 
 
 def get_response_object_attributes(response_object):
+    def convert_value(value):
+        if isinstance(value, datetime):
+            return value.isoformat()
+        return value
 
     response_attributes = {
-        **response_object.properties,
+        **{k: convert_value(v) for k, v in response_object.properties.items()},
         "uuid": str(response_object.uuid) if hasattr(response_object, "uuid") else None,
         "collection": getattr(response_object, "collection", None),
         "vector": getattr(response_object, "vector", None),
