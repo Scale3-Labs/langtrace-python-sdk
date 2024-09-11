@@ -31,3 +31,7 @@ def set_event_prompt(span: Span, prompt):
 def check_if_sdk_is_outdated():
     SDKVersionChecker().check()
     return
+
+
+def get_sdk_version():
+    return SDKVersionChecker().get_sdk_version()

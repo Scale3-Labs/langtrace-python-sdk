@@ -17,8 +17,9 @@ limitations under the License.
 import os
 import sys
 from typing import Optional
-
+import importlib.util
 from colorama import Fore
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME, SENTRY_DSN
 from opentelemetry import trace
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
@@ -60,8 +61,9 @@ from langtrace_python_sdk.types import (
     InstrumentationMethods,
     InstrumentationType,
 )
-from langtrace_python_sdk.utils import check_if_sdk_is_outdated
+from langtrace_python_sdk.utils import check_if_sdk_is_outdated, get_sdk_version
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
+import sentry_sdk
 
 
 def init(
@@ -120,25 +122,25 @@ def init(
     all_instrumentations = {
         "openai": OpenAIInstrumentation(),
         "groq": GroqInstrumentation(),
-        "pinecone": PineconeInstrumentation(),
-        "llamaindex": LlamaindexInstrumentation(),
-        "chroma": ChromaInstrumentation(),
+        "pinecone-client": PineconeInstrumentation(),
+        "llama-index": LlamaindexInstrumentation(),
+        "chromadb": ChromaInstrumentation(),
         "embedchain": EmbedchainInstrumentation(),
-        "qdrant": QdrantInstrumentation(),
+        "qdrant-client": QdrantInstrumentation(),
         "langchain": LangchainInstrumentation(),
-        "langchain_core": LangchainCoreInstrumentation(),
-        "langchain_community": LangchainCommunityInstrumentation(),
+        "langchain-core": LangchainCoreInstrumentation(),
+        "langchain-community": LangchainCommunityInstrumentation(),
         "langgraph": LanggraphInstrumentation(),
         "anthropic": AnthropicInstrumentation(),
         "cohere": CohereInstrumentation(),
-        "weaviate": WeaviateInstrumentation(),
+        "weaviate-client": WeaviateInstrumentation(),
         "sqlalchemy": SQLAlchemyInstrumentor(),
         "ollama": OllamaInstrumentor(),
-        "dspy": DspyInstrumentation(),
+        "dspy-ai": DspyInstrumentation(),
         "crewai": CrewAIInstrumentation(),
-        "vertexai": VertexAIInstrumentation(),
-        "gemini": GeminiInstrumentation(),
-        "mistral": MistralInstrumentation(),
+        "google-cloud-aiplatform": VertexAIInstrumentation(),
+        "google-generativeai": GeminiInstrumentation(),
+        "mistralai": MistralInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
@@ -164,6 +166,27 @@ def init(
         provider.add_span_processor(batch_processor_remote)
 
     sys.stdout = sys.__stdout__
+    if os.environ.get("LANGTRACE_ERROR_REPORTING", "True") == "True":
+        sentry_sdk.init(
+            dsn=SENTRY_DSN,
+            traces_sample_rate=1.0,
+            profiles_sample_rate=1.0,
+        )
+        sdk_options = {
+            "service_name": os.environ.get("OTEL_SERVICE_NAME")
+            or service_name
+            or sys.argv[0],
+            "disable_logging": disable_logging,
+            "disable_instrumentations": disable_instrumentations,
+            "disable_tracing_for_functions": disable_tracing_for_functions,
+            "batch": batch,
+            "write_spans_to_console": write_spans_to_console,
+            "custom_remote_exporter": custom_remote_exporter,
+            "sdk_name": LANGTRACE_SDK_NAME,
+            "sdk_version": get_sdk_version(),
+            "api_host": host,
+        }
+        sentry_sdk.set_context("sdk_init_options", sdk_options)
 
 
 def init_instrumentations(
@@ -171,8 +194,9 @@ def init_instrumentations(
 ):
     if disable_instrumentations is None:
         for idx, (name, v) in enumerate(all_instrumentations.items()):
+            if is_package_installed(name):
+                v.instrument()
 
-            v.instrument()
     else:
 
         validate_instrumentations(disable_instrumentations)
@@ -229,3 +253,10 @@ def validate_instrumentations(disable_instrumentations):
             raise ValueError(
                 "Cannot specify both only and all_except in disable_instrumentations"
             )
+
+
+def is_package_installed(package_name):
+    import pkg_resources
+
+    installed_packages = {p.key for p in pkg_resources.working_set}
+    return package_name in installed_packages
