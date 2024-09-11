@@ -23,7 +23,7 @@ def main():
 
     agent = ConversableAgent(
         "chatbot",
-        llm_config={"config_list": [{"model": "gpt-4"}]},
+        llm_config={"config_list": [{"model": "gpt-4"}], "cache_seed": None},
         code_execution_config=False,  # Turn off code execution, by default it is off.
         function_map=None,  # No registered functions, by default it is None.
         human_input_mode="NEVER",  # Never ask for human input.
@@ -39,7 +39,10 @@ def comedy_show():
     cathy = ConversableAgent(
         name="cathy",
         system_message="Your name is Cathy and you are a part of a duo of comedians.",
-        llm_config={"config_list": [{"model": "gpt-4o-mini", "temperature": 0.9}]},
+        llm_config={
+            "config_list": [{"model": "gpt-4o-mini", "temperature": 0.9}],
+            "cache_seed": None,
+        },
         description="Cathy is a comedian",
         max_consecutive_auto_reply=10,
         code_execution_config={
@@ -55,7 +58,10 @@ def comedy_show():
     joe = ConversableAgent(
         "joe",
         system_message="Your name is Joe and you are a part of a duo of comedians.",
-        llm_config={"config_list": [{"model": "gpt-4o-mini", "temperature": 0.7}]},
+        llm_config={
+            "config_list": [{"model": "gpt-4o-mini", "temperature": 0.7}],
+            "cache_seed": None,
+        },
         human_input_mode="NEVER",  # Never ask for human input.
     )
 

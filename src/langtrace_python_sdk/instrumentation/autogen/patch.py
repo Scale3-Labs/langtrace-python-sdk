@@ -82,9 +82,14 @@ def patch_generate_reply(name, version, tracer: Tracer):
             name=get_span_name(name), kind=SpanKind.CLIENT
         ) as span:
             try:
-                set_span_attributes(span, attributes)
-                result = wrapped(*args, **kwargs)
 
+                result = wrapped(*args, **kwargs)
+                
+                # if caching is disabled, return result as langtrace will instrument the rest.
+                if "cache_seed" in llm_config and llm_config.get("cache_seed") is None:
+                    return result
+
+                set_span_attributes(span, attributes)
                 set_event_completion(span, [{"role": "assistant", "content": result}])
                 total_cost, response_model = list(instance.get_total_usage().keys())
                 set_span_attribute(
