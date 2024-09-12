@@ -1,4 +1,5 @@
 import json
+import openai
 from typing import Any, Dict, List, Optional, Callable, Awaitable, Union
 from langtrace.trace_attributes import (
     LLMSpanAttributes,
@@ -40,6 +41,15 @@ from langtrace_python_sdk.instrumentation.openai.types import (
 )
 
 
+def filter_valid_attributes(attributes):
+    """Filter attributes where value is not None, not an empty string, and not openai.NOT_GIVEN."""
+    return {
+        key: value
+        for key, value in attributes.items()
+        if value is not None and value != openai.NOT_GIVEN and value != ""
+    }
+
+
 def images_generate(version: str, tracer: Tracer) -> Callable:
     """
     Wrap the `generate` method of the `Images` class to trace it.
@@ -57,7 +67,7 @@ def images_generate(version: str, tracer: Tracer) -> Callable:
             **get_extra_attributes(),  # type: ignore
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         with tracer.start_as_current_span(
             name=get_span_name(APIS["IMAGES_GENERATION"]["METHOD"]),
@@ -118,7 +128,7 @@ def async_images_generate(version: str, tracer: Tracer) -> Callable:
             **get_extra_attributes(),  # type: ignore
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         with tracer.start_as_current_span(
             name=get_span_name(APIS["IMAGES_GENERATION"]["METHOD"]),
@@ -181,7 +191,7 @@ def images_edit(version: str, tracer: Tracer) -> Callable:
             **get_extra_attributes(),  # type: ignore
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         with tracer.start_as_current_span(
             name=APIS["IMAGES_EDIT"]["METHOD"],
@@ -268,7 +278,7 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
             **get_extra_attributes(),  # type: ignore
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         span = tracer.start_span(
             name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
@@ -356,7 +366,7 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
             **get_extra_attributes(),  # type: ignore
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         span = tracer.start_span(
             name=get_span_name(APIS["CHAT_COMPLETION"]["METHOD"]),
@@ -438,7 +448,7 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
                 [kwargs.get("input", "")]
             )
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         with tracer.start_as_current_span(
             name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
@@ -487,7 +497,7 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
             **get_extra_attributes(),  # type: ignore
         }
 
-        attributes = LLMSpanAttributes(**span_attributes)
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         encoding_format = kwargs.get("encoding_format")
         if encoding_format is not None:
