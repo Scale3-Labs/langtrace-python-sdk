@@ -40,12 +40,15 @@ from langtrace_python_sdk.instrumentation.openai.types import (
     ContentItem,
 )
 
+
 def filter_valid_attributes(attributes):
     """Filter attributes where value is not None, not an empty string, and not openai.NOT_GIVEN."""
     return {
-        key: value for key, value in attributes.items()
+        key: value
+        for key, value in attributes.items()
         if value is not None and value != openai.NOT_GIVEN and value != ""
     }
+
 
 def images_generate(version: str, tracer: Tracer) -> Callable:
     """
