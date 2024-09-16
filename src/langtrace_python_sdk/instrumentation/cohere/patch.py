@@ -27,6 +27,7 @@ from langtrace_python_sdk.utils.llm import (
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.misc import datetime_encoder
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 
@@ -50,7 +51,9 @@ def rerank(original_method, version, tracer):
             SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
             SpanAttributes.LLM_URL: APIS["RERANK"]["URL"],
             SpanAttributes.LLM_PATH: APIS["RERANK"]["ENDPOINT"],
-            SpanAttributes.LLM_REQUEST_DOCUMENTS: json.dumps(kwargs.get("documents")),
+            SpanAttributes.LLM_REQUEST_DOCUMENTS: json.dumps(
+                kwargs.get("documents"), cls=datetime_encoder
+            ),
             SpanAttributes.LLM_COHERE_RERANK_QUERY: kwargs.get("query"),
             **get_extra_attributes(),
         }
