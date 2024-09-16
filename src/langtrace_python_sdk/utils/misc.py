@@ -60,3 +60,11 @@ def serialize_args(*args):
 
     # Convert to string representation
     return json.dumps(serializable_args)
+
+
+class datetime_encoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, datetime):
+            return o.isoformat()
+
+        return json.JSONEncoder.default(self, o)
