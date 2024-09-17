@@ -81,21 +81,16 @@ class LangchainInstrumentation(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("langchain")
-
         wrap_function_wrapper(
             "langchain.agents.agent",
             "RunnableAgent.plan",
-            generic_patch(
-                "RunnableAgent.plan", "plan", tracer, version, True, True
-            ),
+            generic_patch("RunnableAgent.plan", "plan", tracer, version, True, True),
         )
 
         wrap_function_wrapper(
             "langchain.agents.agent",
             "RunnableAgent.aplan",
-            generic_patch(
-                "RunnableAgent.aplan", "plan", tracer, version, True, True
-            ),
+            generic_patch("RunnableAgent.aplan", "plan", tracer, version, True, True),
         )
 
         # modules_to_patch = []

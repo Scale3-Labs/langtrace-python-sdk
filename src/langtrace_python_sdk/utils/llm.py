@@ -124,9 +124,12 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
 
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
     tools = kwargs.get("tools", None)
+    tool_choice = kwargs.get("tool_choice", None)
     return {
         SpanAttributes.LLM_OPERATION_NAME: operation_name,
-        SpanAttributes.LLM_REQUEST_MODEL: model or kwargs.get("model") or "gpt-3.5-turbo",
+        SpanAttributes.LLM_REQUEST_MODEL: model
+        or kwargs.get("model")
+        or "gpt-3.5-turbo",
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
         SpanAttributes.LLM_TOP_K: top_k,
@@ -139,7 +142,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
         SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
         SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
         SpanAttributes.LLM_TOOLS: json.dumps(tools) if tools else None,
-        SpanAttributes.LLM_TOOL_CHOICE: kwargs.get("tool_choice"),
+        SpanAttributes.LLM_TOOL_CHOICE: json.dumps(tool_choice) if tool_choice else None,
         SpanAttributes.LLM_REQUEST_LOGPROPS: kwargs.get("logprobs"),
         SpanAttributes.LLM_REQUEST_LOGITBIAS: kwargs.get("logit_bias"),
         SpanAttributes.LLM_REQUEST_TOP_LOGPROPS: kwargs.get("top_logprobs"),
@@ -230,7 +233,15 @@ def set_event_completion(span: Span, result_content):
 
 
 def set_span_attributes(span: Span, attributes: Any) -> None:
-    for field, value in attributes.model_dump(by_alias=True).items():
+    from pydantic import BaseModel
+
+    attrs = (
+        attributes.model_dump(by_alias=True)
+        if isinstance(attributes, BaseModel)
+        else attributes
+    )
+
+    for field, value in attrs.items():
         set_span_attribute(span, field, value)
 
 

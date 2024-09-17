@@ -16,8 +16,7 @@ limitations under the License.
 
 import os
 import sys
-from typing import Optional
-import importlib.util
+from typing import Any, Optional
 from colorama import Fore
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME, SENTRY_DSN
 from opentelemetry import trace
@@ -53,6 +52,7 @@ from langtrace_python_sdk.instrumentation import (
     OpenAIInstrumentation,
     PineconeInstrumentation,
     QdrantInstrumentation,
+    AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
 )
@@ -61,7 +61,12 @@ from langtrace_python_sdk.types import (
     InstrumentationMethods,
     InstrumentationType,
 )
-from langtrace_python_sdk.utils import check_if_sdk_is_outdated, get_sdk_version
+from langtrace_python_sdk.utils import (
+    check_if_sdk_is_outdated,
+    get_sdk_version,
+    is_package_installed,
+    validate_instrumentations,
+)
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 import sentry_sdk
 
@@ -141,6 +146,7 @@ def init(
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
         "mistralai": MistralInstrumentation(),
+        "autogen": AutogenInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
@@ -190,10 +196,11 @@ def init(
 
 
 def init_instrumentations(
-    disable_instrumentations: DisableInstrumentations, all_instrumentations: dict
+    disable_instrumentations: Optional[DisableInstrumentations],
+    all_instrumentations: dict,
 ):
     if disable_instrumentations is None:
-        for idx, (name, v) in enumerate(all_instrumentations.items()):
+        for name, v in all_instrumentations.items():
             if is_package_installed(name):
                 v.instrument()
 
@@ -202,61 +209,19 @@ def init_instrumentations(
         validate_instrumentations(disable_instrumentations)
 
         for key in disable_instrumentations:
-            for vendor in disable_instrumentations[key]:
-                if key == "only":
-                    filtered_dict = {
-                        k: v
-                        for k, v in all_instrumentations.items()
-                        if k != vendor.value
-                    }
-                    for _, v in filtered_dict.items():
-                        v.instrument()
-                else:
-                    filtered_dict = {
-                        k: v
-                        for k, v in all_instrumentations.items()
-                        if k == vendor.value
-                    }
+            vendors = [k.value for k in disable_instrumentations[key]]
 
-                    for _, v in filtered_dict.items():
-                        v.instrument()
+        key = next(iter(disable_instrumentations))
+        filtered_dict = {}
+        if key == "all_except":
+            filtered_dict = {
+                k: v for k, v in all_instrumentations.items() if k in vendors
+            }
+        elif key == "only":
+            filtered_dict = {
+                k: v for k, v in all_instrumentations.items() if k not in vendors
+            }
 
-
-def validate_instrumentations(disable_instrumentations):
-    if disable_instrumentations is not None:
-        for key, value in disable_instrumentations.items():
-            if isinstance(value, str):
-                # Convert single string to list of enum values
-                disable_instrumentations[key] = [InstrumentationType.from_string(value)]
-            elif isinstance(value, list):
-                # Convert list of strings to list of enum values
-                disable_instrumentations[key] = [
-                    (
-                        InstrumentationType.from_string(item)
-                        if isinstance(item, str)
-                        else item
-                    )
-                    for item in value
-                ]
-            # Validate all items are of enum type
-            if not all(
-                isinstance(item, InstrumentationType)
-                for item in disable_instrumentations[key]
-            ):
-                raise TypeError(
-                    f"All items in {key} must be of type InstrumentationType"
-                )
-        if (
-            disable_instrumentations.get("all_except") is not None
-            and disable_instrumentations.get("only") is not None
-        ):
-            raise ValueError(
-                "Cannot specify both only and all_except in disable_instrumentations"
-            )
-
-
-def is_package_installed(package_name):
-    import pkg_resources
-
-    installed_packages = {p.key for p in pkg_resources.working_set}
-    return package_name in installed_packages
+        for name, v in filtered_dict.items():
+            if is_package_installed(name):
+                v.instrument()
