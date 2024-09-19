@@ -69,6 +69,7 @@ from langtrace_python_sdk.utils import (
 )
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 import sentry_sdk
+from sentry_sdk.types import Event, Hint
 
 
 def init(
@@ -177,6 +178,7 @@ def init(
             dsn=SENTRY_DSN,
             traces_sample_rate=1.0,
             profiles_sample_rate=1.0,
+            before_send=before_send,
         )
         sdk_options = {
             "service_name": os.environ.get("OTEL_SERVICE_NAME")
@@ -193,6 +195,22 @@ def init(
             "api_host": host,
         }
         sentry_sdk.set_context("sdk_init_options", sdk_options)
+
+
+def before_send(event: Event, hint: Hint):
+    # Check if there's an exception and stacktrace in the event
+    if "exception" in event:
+        exception = event["exception"]["values"][0]
+        stacktrace = exception.get("stacktrace", {})
+        frames = stacktrace.get("frames", [])
+        if frames:
+            last_frame = frames[-1]
+            absolute_path = last_frame.get("abs_path")  # Absolute path
+            # Check if the error is from the SDK
+            if "langtrace-python-sdk" in absolute_path:
+                return event
+
+    return None
 
 
 def init_instrumentations(
