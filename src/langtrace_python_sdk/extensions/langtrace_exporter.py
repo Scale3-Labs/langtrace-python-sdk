@@ -124,7 +124,7 @@ class LangTraceExporter(SpanExporter):
                 url=f"{self.api_host}",
                 data=json.dumps(data),
                 headers=headers,
-                timeout=20,
+                timeout=40,
             )
 
             if not response.ok:
