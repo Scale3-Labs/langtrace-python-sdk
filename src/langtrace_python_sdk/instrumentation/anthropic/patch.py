@@ -14,10 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Iterator, TypedDict, Union
-from langtrace.trace_attributes import Event, SpanAttributes, LLMSpanAttributes
-from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.silently_fail import silently_fail
+from typing import Any, Callable, List, Iterator, Union
+from langtrace.trace_attributes import SpanAttributes, LLMSpanAttributes
 import json
 
 from langtrace_python_sdk.utils.llm import (
@@ -28,6 +26,7 @@ from langtrace_python_sdk.utils.llm import (
     get_llm_url,
     get_span_name,
     set_event_completion,
+    set_span_attributes,
     set_usage_attributes,
     set_span_attribute,
 )
@@ -39,8 +38,6 @@ from langtrace_python_sdk.instrumentation.anthropic.types import (
     StreamingResult,
     ResultType,
     MessagesCreateKwargs,
-    ContentItem,
-    Usage,
 )
 
 
@@ -62,13 +59,12 @@ def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
             prompts = [{"role": "system", "content": system}] + kwargs.get(
                 "messages", []
             )
-        extraAttributes = get_extra_attributes()
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, prompts=prompts),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["MESSAGES_CREATE"]["ENDPOINT"],
-            **extraAttributes,  # type: ignore
+            **get_extra_attributes(),
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
@@ -76,8 +72,7 @@ def messages_create(version: str, tracer: Tracer) -> Callable[..., Any]:
         span = tracer.start_span(
             name=get_span_name(APIS["MESSAGES_CREATE"]["METHOD"]), kind=SpanKind.CLIENT
         )
-        for field, value in attributes.model_dump(by_alias=True).items():
-            set_span_attribute(span, field, value)
+        set_span_attributes(span, attributes)
         try:
             # Attempt to call the original method
             result = wrapped(*args, **kwargs)
