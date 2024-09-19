@@ -18,7 +18,6 @@ from typing import Any, Dict, Union
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.types import NOT_GIVEN
-from tiktoken import get_encoding
 from tiktoken import get_encoding, list_encoding_names
 
 from langtrace_python_sdk.constants.instrumentation.common import (
@@ -26,7 +25,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
     TIKTOKEN_MODEL_MAPPING,
 )
 from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
-from langtrace.trace_attributes import SpanAttributes, Event
+from langtrace.trace_attributes import SpanAttributes
 from importlib_metadata import version as v
 import json
 from opentelemetry import baggage
@@ -142,7 +141,9 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
         SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
         SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
         SpanAttributes.LLM_TOOLS: json.dumps(tools) if tools else None,
-        SpanAttributes.LLM_TOOL_CHOICE: json.dumps(tool_choice) if tool_choice else None,
+        SpanAttributes.LLM_TOOL_CHOICE: (
+            json.dumps(tool_choice) if tool_choice else None
+        ),
         SpanAttributes.LLM_REQUEST_LOGPROPS: kwargs.get("logprobs"),
         SpanAttributes.LLM_REQUEST_LOGITBIAS: kwargs.get("logit_bias"),
         SpanAttributes.LLM_REQUEST_TOP_LOGPROPS: kwargs.get("top_logprobs"),

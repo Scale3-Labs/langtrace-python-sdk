@@ -10,15 +10,9 @@ class AutogenInstrumentation(BaseInstrumentor):
         return ["autogen >= 0.1.0"]
 
     def _instrument(self, **kwargs):
-        print("Instrumneting autogen")
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = v("autogen")
-        # conversable_agent.intiate_chat
-        # conversable_agent.register_function
-        # agent.Agent
-        # AgentCreation
-        # Tools --> Register_for_llm, register_for_execution, register_for_function
         try:
             _W(
                 module="autogen.agentchat.conversable_agent",
