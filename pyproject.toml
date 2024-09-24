@@ -48,6 +48,7 @@ dev = [
   "langchain-community",
   "langchain-openai",
   "langchain-openai",
+  "litellm",
   "chromadb",
   "cohere",
   "qdrant_client",

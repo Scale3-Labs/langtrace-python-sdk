@@ -9,7 +9,7 @@ _ = load_dotenv(find_dotenv())
 
 langtrace.init()
 
-turbo = dspy.OpenAI(model='gpt-4o-mini')
+turbo = dspy.LM('openai/gpt-4o-mini')
 colbertv2_wiki17_abstracts = dspy.ColBERTv2(url='http://20.102.90.50:2017/wiki17_abstracts')
 
 dspy.settings.configure(lm=turbo, rm=colbertv2_wiki17_abstracts)
