@@ -1,6 +1,19 @@
 import json
+import os
+
+import ujson
+from colorama import Fore
 from importlib_metadata import version as v
+from langtrace.trace_attributes import FrameworkSpanAttributes
+from opentelemetry import baggage
+from opentelemetry.trace import SpanKind
+from opentelemetry.trace.status import Status, StatusCode
+
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
+    SERVICE_PROVIDERS,
+)
 from langtrace_python_sdk.utils import set_span_attribute
 from langtrace_python_sdk.utils.llm import (
     get_extra_attributes,
@@ -9,14 +22,6 @@ from langtrace_python_sdk.utils.llm import (
     set_span_attributes,
 )
 from langtrace_python_sdk.utils.silently_fail import silently_fail
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
-from opentelemetry import baggage
-from langtrace.trace_attributes import FrameworkSpanAttributes
-from opentelemetry.trace import SpanKind
-from opentelemetry.trace.status import Status, StatusCode
 
 
 def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
@@ -115,6 +120,8 @@ def patch_signature(operation_name, version, tracer):
             **get_extra_attributes(),
         }
 
+        trace_checkpoint = os.environ.get("TRACE_DSPY_CHECKPOINT", "true").lower()
+
         if instance.__class__.__name__:
             span_attributes["dspy.signature.name"] = instance.__class__.__name__
             span_attributes["dspy.signature"] = str(instance.signature)
@@ -136,6 +143,9 @@ def patch_signature(operation_name, version, tracer):
                         "dspy.signature.result",
                         json.dumps(result.toDict()),
                     )
+                    if trace_checkpoint == "true":
+                        print(Fore.RED + "Note: DSPy checkpoint tracing is enabled in Langtrace. To disable it, set the env var, TRACE_DSPY_CHECKPOINT to false" + Fore.RESET)
+                        set_span_attribute(span, "dspy.checkpoint", ujson.dumps(instance.dump_state(False), indent=2))
                     span.set_status(Status(StatusCode.OK))
 
                 span.end()
