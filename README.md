@@ -261,8 +261,9 @@ Langtrace automatically captures traces from the following vendors:
 | Gemini        | LLM             | :x:                | :white_check_mark:              |
 | Mistral       | LLM             | :x:                | :white_check_mark:              |
 | Langchain     | Framework       | :x:                | :white_check_mark:              |
-| LlamaIndex    | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph     | Framework       | :x:                | :white_check_mark:              |
+| LlamaIndex    | Framework       | :white_check_mark: | :white_check_mark:              |
+| LiteLLM       | Framework       | :x:                | :white_check_mark:              |
 | DSPy          | Framework       | :x:                | :white_check_mark:              |
 | CrewAI        | Framework       | :x:                | :white_check_mark:              |
 | Ollama        | Framework       | :x:                | :white_check_mark:              |
