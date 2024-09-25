@@ -61,7 +61,7 @@ from langtrace_python_sdk.types import (
     InstrumentationType,
 )
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
-from opentelemetry.instrumentation.openai import OpenAIInstrumentor
+from opentelemetry.instrumentation.openai_v2 import OpenAIInstrumentor
 from colorama import Fore
 from langtrace_python_sdk.utils import check_if_sdk_is_outdated
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
