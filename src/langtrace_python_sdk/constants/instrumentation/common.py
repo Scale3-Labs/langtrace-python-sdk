@@ -19,6 +19,7 @@ SERVICE_PROVIDERS = {
     "LANGCHAIN_COMMUNITY": "Langchain Community",
     "LANGCHAIN_CORE": "Langchain Core",
     "LANGGRAPH": "Langgraph",
+    "LITELLM": "Litellm",
     "LLAMAINDEX": "LlamaIndex",
     "OPENAI": "OpenAI",
     "PINECONE": "Pinecone",
