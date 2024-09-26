@@ -57,6 +57,8 @@ dev = [
   "google-cloud-aiplatform",
   "mistralai",
   "embedchain",
+  "psycopg",
+  "pgvector"
 ]
 
 test = ["pytest", "pytest-vcr", "pytest-asyncio"]

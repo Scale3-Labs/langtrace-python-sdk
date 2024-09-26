@@ -32,6 +32,7 @@ SERVICE_PROVIDERS = {
     "MISTRAL": "Mistral",
     "EMBEDCHAIN": "Embedchain",
     "AUTOGEN": "Autogen",
+    "PGVECTOR": "PgVector",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

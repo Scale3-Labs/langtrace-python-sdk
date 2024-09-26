@@ -19,6 +19,7 @@ from .vertexai import VertexAIInstrumentation
 from .gemini import GeminiInstrumentation
 from .mistral import MistralInstrumentation
 from .embedchain import EmbedchainInstrumentation
+from .pgvector import PgVectorInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -42,4 +43,5 @@ __all__ = [
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
     "MistralInstrumentation",
+    "PgVectorInstrumentation",
 ]

@@ -50,6 +50,7 @@ from langtrace_python_sdk.instrumentation import (
     MistralInstrumentation,
     OllamaInstrumentor,
     OpenAIInstrumentation,
+    PgVectorInstrumentation,
     PineconeInstrumentation,
     QdrantInstrumentation,
     AutogenInstrumentation,
@@ -148,6 +149,7 @@ def init(
         "google-generativeai": GeminiInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "autogen": AutogenInstrumentation(),
+        "pgvector": PgVectorInstrumentation(),
     }
 
     init_instrumentations(disable_instrumentations, all_instrumentations)
