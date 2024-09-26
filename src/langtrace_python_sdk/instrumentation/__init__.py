@@ -19,6 +19,7 @@ from .vertexai import VertexAIInstrumentation
 from .gemini import GeminiInstrumentation
 from .mistral import MistralInstrumentation
 from .embedchain import EmbedchainInstrumentation
+from .litellm import LiteLLMInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -31,6 +32,7 @@ __all__ = [
     "LangchainCommunityInstrumentation",
     "LangchainCoreInstrumentation",
     "LanggraphInstrumentation",
+    "LiteLLMInstrumentation",
     "LlamaindexInstrumentation",
     "OpenAIInstrumentation",
     "PineconeInstrumentation",
