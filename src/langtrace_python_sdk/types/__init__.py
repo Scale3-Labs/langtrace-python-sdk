@@ -8,16 +8,22 @@ class InstrumentationType(Enum):
     ANTHROPIC = "anthropic"
     GROQ = "groq"
     MISTRAL = "mistral"
-    PINECONE = "pinecone"
-    LLAMAINDEX = "llamaindex"
+    PINECONE = "pinecone-client"
+    LLAMAINDEX = "llama-index"
     CHROMADB = "chromadb"
     QDRANT = "qdrant"
     LANGCHAIN = "langchain"
-    LANGCHAIN_CORE = "langchain_core"
-    LANGCHAIN_COMMUNITY = "langchain_community"
+    LANGCHAIN_CORE = "langchain-core"
+    LANGCHAIN_COMMUNITY = "langchain-community"
     LANGGRAPH = "langgraph"
     WEAVIATE = "weaviate"
     OLLAMA = "ollama"
+    AUTOGEN = "autogen"
+    DSPY = "dspy-ai"
+    CREWAI = "crewai"
+    GEMINI = "google-generativeai"
+    VERTEXAI = "google-cloud-aiplatform"
+    MISTRALAI = "mistralai"
 
     @staticmethod
     def from_string(value: str):
@@ -112,7 +118,10 @@ class InstrumentationMethods(TypedDict):
     cohere: List[VendorMethods.CohereMethods]
     weaviate: List[str]
 
+
 _T = TypeVar("_T")
+
+
 class NotGiven:
     """
     A sentinel singleton class used to distinguish omitted keyword arguments
