@@ -59,11 +59,11 @@ optimizer = BootstrapFewShot(metric=validate_context_and_answer)
 compiled_rag = optimizer.compile(RAG(), trainset=trainset)
 
 # Ask any question you like to this simple RAG program.
-my_question = "Who was the hero of the movie Titanic?"
+my_question = "Who was the hero of the movie peraanmai?"
 
 # Get the prediction. This contains `pred.context` and `pred.answer`.
 # pred = compiled_rag(my_question)
-pred = inject_additional_attributes(lambda: compiled_rag(my_question), {'experiment': 'experiment 6', 'description': 'trying additional stuff'})
+pred = inject_additional_attributes(lambda: compiled_rag(my_question), {'experiment': 'experiment 6', 'description': 'trying additional stuff', 'run_id': 'run_1'})
 # compiled_rag.save('compiled_rag_v1.json')
 
 # Print the contexts and the answer.
@@ -73,3 +73,17 @@ print(f"Retrieved Contexts (truncated): {[c[:200] + '...' for c in pred.context]
 
 # print("Inspecting the history of the optimizer:")
 # turbo.inspect_history(n=1)
+
+from dspy.evaluate import Evaluate
+
+
+def validate_answer(example, pred, trace=None):
+    return True
+
+
+# Set up the evaluator, which can be used multiple times.
+evaluate = Evaluate(devset=devset, metric=validate_answer, num_threads=4, display_progress=True, display_table=0)
+
+
+# Evaluate our `optimized_cot` program.
+evaluate(compiled_rag)
