@@ -47,7 +47,6 @@ dev = [
   "langchain",
   "langchain-community",
   "langchain-openai",
-  "langchain-openai",
   "litellm==1.48.7",
   "chromadb",
   "cohere",
@@ -59,6 +58,7 @@ dev = [
   "google-cloud-aiplatform",
   "mistralai",
   "embedchain",
+  "typing-extensions",
 ]
 
 test = ["pytest", "pytest-vcr", "pytest-asyncio"]
