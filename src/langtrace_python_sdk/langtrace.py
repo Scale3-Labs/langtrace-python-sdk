@@ -222,7 +222,10 @@ def init_instrumentations(
     if disable_instrumentations is None:
         for name, v in all_instrumentations.items():
             if is_package_installed(name):
-                v.instrument()
+                try:
+                    v.instrument()
+                except Exception as e:
+                    print(f"Skipping {name} due to error while instrumenting: {e}")
 
     else:
 
@@ -244,4 +247,7 @@ def init_instrumentations(
 
         for name, v in filtered_dict.items():
             if is_package_installed(name):
-                v.instrument()
+                try:
+                    v.instrument()
+                except Exception as e:
+                    print(f"Skipping {name} due to error while instrumenting: {e}")
