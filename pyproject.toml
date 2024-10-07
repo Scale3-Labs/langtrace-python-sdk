@@ -57,8 +57,7 @@ dev = [
   "google-generativeai",
   "google-cloud-aiplatform",
   "mistralai",
-  "embedchain",
-  "typing-extensions",
+  "embedchain"
 ]
 
 test = ["pytest", "pytest-vcr", "pytest-asyncio"]
