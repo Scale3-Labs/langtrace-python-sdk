@@ -103,27 +103,24 @@ def is_streaming_response(response):
 
 def get_llm_model(instance):
     if hasattr(instance, "_model_name"):
-        return instance._model_name.replace("models/", "")
+        return instance._model_name.replace("publishers/google/models/", "")
     return getattr(instance, "_model_id", "unknown")
 
 
 def serialize_prompts(args, kwargs):
-    prompt = ""
-    if args is not None and len(args) > 0:
+    if args and len(args) > 0:
+        prompt_parts = []
         for arg in args:
             if isinstance(arg, str):
-                prompt = f"{prompt}{arg}\n"
+                prompt_parts.append(arg)
             elif isinstance(arg, list):
                 for subarg in arg:
                     if type(subarg).__name__ == "Part":
-                        prompt = f"{prompt}{json.dumps(subarg.to_dict())}\n"
+                        prompt_parts.append(json.dumps(subarg.to_dict()))
                     else:
-                        prompt = f"{prompt}{subarg}\n"
+                        prompt_parts.append(str(subarg))
+
+        return [{"role": "user", "content": "\n".join(prompt_parts)}]
     else:
-        prompt = [
-            {
-                "role": "user",
-                "content": kwargs.get("prompt") or kwargs.get("message"),
-            }
-        ]
-    return prompt
+        content = kwargs.get("prompt") or kwargs.get("message")
+        return [{"role": "user", "content": content}] if content else []

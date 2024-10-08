@@ -38,7 +38,7 @@ requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-  "openai==1.30.1",
+  "openai==1.45.0",
   "anthropic",
   "chromadb",
   "qdrant-client",
@@ -47,8 +47,7 @@ dev = [
   "langchain",
   "langchain-community",
   "langchain-openai",
-  "langchain-openai",
-  "litellm",
+  "litellm==1.48.7",
   "chromadb",
   "cohere",
   "qdrant_client",
@@ -58,7 +57,7 @@ dev = [
   "google-generativeai",
   "google-cloud-aiplatform",
   "mistralai",
-  "embedchain",
+  "embedchain"
 ]
 
 test = ["pytest", "pytest-vcr", "pytest-asyncio"]

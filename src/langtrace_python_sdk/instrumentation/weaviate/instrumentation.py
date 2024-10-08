@@ -52,10 +52,6 @@ class WeaviateInstrumentation(BaseInstrumentor):
                         generic_query_patch(api_name, version, tracer),
                     )
                 elif api_config.get("OPERATION") == "create":
-                    print(
-                        api_config["MODULE"],
-                        api_config["METHOD"],
-                    )
                     wrap_function_wrapper(
                         api_config["MODULE"],
                         api_config["METHOD"],
