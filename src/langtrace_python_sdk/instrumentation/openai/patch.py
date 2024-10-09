@@ -1,5 +1,4 @@
 import json
-import openai
 from typing import Any, Dict, List, Optional, Callable, Awaitable, Union
 from langtrace.trace_attributes import (
     LLMSpanAttributes,
@@ -46,7 +45,7 @@ def filter_valid_attributes(attributes):
     return {
         key: value
         for key, value in attributes.items()
-        if value is not None and value != openai.NOT_GIVEN and value != ""
+        if value is not None and value != NOT_GIVEN and value != ""
     }
 
 
