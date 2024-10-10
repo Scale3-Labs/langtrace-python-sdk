@@ -28,7 +28,6 @@ class InstrumentationType(Enum):
     PINECONE = "pinecone-client"
     QDRANT = "qdrant"
     SQLALCHEMY = "sqlalchemy"
-    VERTEXAI = "google-cloud-aiplatform"
     VERTEXAI = "vertexai"
     WEAVIATE = "weaviate"
 
