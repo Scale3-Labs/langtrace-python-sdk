@@ -32,14 +32,7 @@ class PyMongoInstrumentation(BaseInstrumentor):
         return ["pymongo >= 4.0.0"]
 
     def _instrument(self, **kwargs):
-        tracer_provider = kwargs.get("tracer_provider")
-        tracer = get_tracer(__name__, "", tracer_provider)
-        version = v("pymongo")
-        _W(
-            module="pymongo.collection",
-            name="Collection.find",
-            wrapper=generic_patch(version, tracer),
-        )
+        pass
 
     def _uninstrument(self, **kwargs):
         pass
