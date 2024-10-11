@@ -58,6 +58,7 @@ from langtrace_python_sdk.instrumentation import (
     AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
+    PyMongoInstrumentation,
 )
 from langtrace_python_sdk.types import DisableInstrumentations, InstrumentationMethods
 from langtrace_python_sdk.utils import (
@@ -230,6 +231,7 @@ def init(
         "google-generativeai": GeminiInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "autogen": AutogenInstrumentation(),
+        "pymongo": PyMongoInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)

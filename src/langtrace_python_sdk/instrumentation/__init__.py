@@ -20,6 +20,7 @@ from .gemini import GeminiInstrumentation
 from .mistral import MistralInstrumentation
 from .embedchain import EmbedchainInstrumentation
 from .litellm import LiteLLMInstrumentation
+from .pymongo import PyMongoInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -44,4 +45,5 @@ __all__ = [
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
     "MistralInstrumentation",
+    "PyMongoInstrumentation",
 ]
