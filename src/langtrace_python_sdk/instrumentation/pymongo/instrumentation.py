@@ -21,6 +21,7 @@ from typing import Collection
 from importlib_metadata import version as v
 from wrapt import wrap_function_wrapper as _W
 from .patch import generic_patch
+from langtrace_python_sdk.constants.instrumentation.pymongo import APIS
 
 
 class PyMongoInstrumentation(BaseInstrumentor):
@@ -32,7 +33,15 @@ class PyMongoInstrumentation(BaseInstrumentor):
         return ["pymongo >= 4.0.0"]
 
     def _instrument(self, **kwargs):
-        pass
+        tracer_provider = kwargs.get("tracer_provider")
+        tracer = get_tracer(__name__, "", tracer_provider)
+        version = v("pymongo")
+        for api in APIS.values():
+            _W(
+                module="pymongo.collection",
+                name=f"Collection.{api['METHOD']}",
+                wrapper=generic_patch(version, tracer),
+            )
 
     def _uninstrument(self, **kwargs):
         pass
