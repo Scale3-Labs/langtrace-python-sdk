@@ -31,6 +31,12 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GRPCExporter,
+)
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter as HTTPExporter,
+)
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
@@ -112,8 +118,14 @@ def get_exporter(config: LangtraceConfig, host: str):
     if config.custom_remote_exporter:
         return config.custom_remote_exporter
 
-    return LangTraceExporter(host, config.api_key, config.disable_logging)
-
+    headers = {
+        "x-api-key": config.api_key or os.environ.get("LANGTRACE_API_KEY"),
+    }
+    if "http" in host.lower() or "https" in host.lower():
+        return HTTPExporter(endpoint=host, headers=headers)
+    else:
+        return GRPCExporter(endpoint=host, headers=headers)
+    
 
 def add_span_processor(provider: TracerProvider, config: LangtraceConfig, exporter):
     if config.write_spans_to_console:
