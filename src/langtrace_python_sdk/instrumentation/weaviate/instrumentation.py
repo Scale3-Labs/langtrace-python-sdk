@@ -43,20 +43,22 @@ class WeaviateInstrumentation(BaseInstrumentor):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("weaviate-client")
-
-        for api_name, api_config in APIS.items():
-            if api_config.get("OPERATION") in ["query", "generate"]:
-                wrap_function_wrapper(
-                    api_config["MODULE"],
-                    api_config["METHOD"],
-                    generic_query_patch(api_name, version, tracer),
-                )
-            elif api_config.get("OPERATION") == "create":
-                wrap_function_wrapper(
-                    api_config["MODULE"],
-                    api_config["METHOD"],
-                    generic_collection_patch(api_name, version, tracer),
-                )
+        try:
+            for api_name, api_config in APIS.items():
+                if api_config.get("OPERATION") in ["query", "generate"]:
+                    wrap_function_wrapper(
+                        api_config["MODULE"],
+                        api_config["METHOD"],
+                        generic_query_patch(api_name, version, tracer),
+                    )
+                elif api_config.get("OPERATION") == "create":
+                    wrap_function_wrapper(
+                        api_config["MODULE"],
+                        api_config["METHOD"],
+                        generic_collection_patch(api_name, version, tracer),
+                    )
+        except ModuleNotFoundError as e:
+            pass
 
     def _instrument_module(self, module_name):
         pass

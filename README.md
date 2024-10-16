@@ -238,6 +238,14 @@ By default, prompt and completion data are captured. If you would like to opt ou
 
 `TRACE_PROMPT_COMPLETION_DATA=false`
 
+### Enable/Disable checkpoint tracing for DSPy
+
+By default, checkpoints are traced for DSPy pipelines. If you would like to disable it, set the following env var,
+
+`TRACE_DSPY_CHECKPOINT=false`
+
+Note: Checkpoint tracing will increase the latency of executions as the state is serialized. Please disable it in production.
+
 ## Supported integrations
 
 Langtrace automatically captures traces from the following vendors:
@@ -253,8 +261,9 @@ Langtrace automatically captures traces from the following vendors:
 | Gemini        | LLM             | :x:                | :white_check_mark:              |
 | Mistral       | LLM             | :x:                | :white_check_mark:              |
 | Langchain     | Framework       | :x:                | :white_check_mark:              |
-| LlamaIndex    | Framework       | :white_check_mark: | :white_check_mark:              |
 | Langgraph     | Framework       | :x:                | :white_check_mark:              |
+| LlamaIndex    | Framework       | :white_check_mark: | :white_check_mark:              |
+| LiteLLM       | Framework       | :x:                | :white_check_mark:              |
 | DSPy          | Framework       | :x:                | :white_check_mark:              |
 | CrewAI        | Framework       | :x:                | :white_check_mark:              |
 | Ollama        | Framework       | :x:                | :white_check_mark:              |

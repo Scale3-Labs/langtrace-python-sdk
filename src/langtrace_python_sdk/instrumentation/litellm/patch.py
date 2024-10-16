@@ -13,14 +13,13 @@ from opentelemetry.trace.propagation import set_span_in_context
 from langtrace_python_sdk.constants.instrumentation.common import (
     SERVICE_PROVIDERS,
 )
-from langtrace_python_sdk.constants.instrumentation.openai import APIS
+from langtrace_python_sdk.constants.instrumentation.litellm import APIS
 from langtrace_python_sdk.utils.llm import (
     calculate_prompt_tokens,
     get_base_url,
     get_extra_attributes,
     get_langtrace_attributes,
     get_llm_request_attributes,
-    get_llm_url,
     get_span_name,
     get_tool_calls,
     is_streaming,
@@ -41,11 +40,11 @@ from langtrace_python_sdk.instrumentation.openai.types import (
 
 
 def filter_valid_attributes(attributes):
-    """Filter attributes where value is not None, not an empty string, and not openai.NOT_GIVEN."""
+    """Filter attributes where value is not None, not an empty string."""
     return {
         key: value
         for key, value in attributes.items()
-        if value is not None and value != NOT_GIVEN and value != ""
+        if value is not None and value != ""
     }
 
 
@@ -57,11 +56,11 @@ def images_generate(version: str, tracer: Tracer) -> Callable:
     def traced_method(
         wrapped: Callable, instance: Any, args: List[Any], kwargs: ImagesGenerateKwargs
     ) -> Any:
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="images_generate"),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: "not available",
             SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
             **get_extra_attributes(),  # type: ignore
         }
@@ -117,12 +116,12 @@ def async_images_generate(version: str, tracer: Tracer) -> Callable:
     async def traced_method(
         wrapped: Callable, instance: Any, args: List[Any], kwargs: ImagesGenerateKwargs
     ) -> Awaitable[Any]:
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="images_generate"),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: "not available",
             SpanAttributes.LLM_PATH: APIS["IMAGES_GENERATION"]["ENDPOINT"],
             **get_extra_attributes(),  # type: ignore
         }
@@ -178,12 +177,12 @@ def images_edit(version: str, tracer: Tracer) -> Callable:
     def traced_method(
         wrapped: Callable, instance: Any, args: List[Any], kwargs: ImagesEditKwargs
     ) -> Any:
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="images_edit"),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: "not available",
             SpanAttributes.LLM_PATH: APIS["IMAGES_EDIT"]["ENDPOINT"],
             SpanAttributes.LLM_RESPONSE_FORMAT: kwargs.get("response_format"),
             SpanAttributes.LLM_IMAGE_SIZE: kwargs.get("size"),
@@ -242,7 +241,7 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
         args: List[Any],
         kwargs: ChatCompletionsCreateKwargs,
     ) -> Any:
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
         if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
@@ -272,7 +271,7 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, prompts=llm_prompts),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: "not available",
             SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
             **get_extra_attributes(),  # type: ignore
         }
@@ -332,7 +331,7 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
         args: List[Any],
         kwargs: ChatCompletionsCreateKwargs,
     ) -> Awaitable[Any]:
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
         if "perplexity" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
@@ -360,7 +359,7 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, prompts=llm_prompts),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: "not available",
             SpanAttributes.LLM_PATH: APIS["CHAT_COMPLETION"]["ENDPOINT"],
             **get_extra_attributes(),  # type: ignore
         }
@@ -423,12 +422,12 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
         args: List[Any],
         kwargs: EmbeddingsCreateKwargs,
     ) -> Any:
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: "not available",
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),  # type: ignore
@@ -486,7 +485,7 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
         kwargs: EmbeddingsCreateKwargs,
     ) -> Awaitable[Any]:
 
-        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        service_provider = SERVICE_PROVIDERS["LITELLM"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),

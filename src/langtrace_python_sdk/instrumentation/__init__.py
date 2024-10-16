@@ -20,6 +20,7 @@ from .gemini import GeminiInstrumentation
 from .mistral import MistralInstrumentation
 from .embedchain import EmbedchainInstrumentation
 from .pgvector import PgVectorInstrumentation
+from .litellm import LiteLLMInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -32,6 +33,7 @@ __all__ = [
     "LangchainCommunityInstrumentation",
     "LangchainCoreInstrumentation",
     "LanggraphInstrumentation",
+    "LiteLLMInstrumentation",
     "LlamaindexInstrumentation",
     "OpenAIInstrumentation",
     "PineconeInstrumentation",
