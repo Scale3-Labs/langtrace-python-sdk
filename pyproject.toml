@@ -59,7 +59,7 @@ dev = [
   "mistralai",
   "embedchain",
   "psycopg",
-  "pgvector"
+  "pgvector",
   "embedchain"
 ]
 
