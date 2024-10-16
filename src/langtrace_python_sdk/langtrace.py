@@ -31,10 +31,15 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GRPCExporter,
+)
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter as HTTPExporter,
+)
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
 )
-from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation import (
     AnthropicInstrumentation,
     ChromaInstrumentation,
@@ -59,6 +64,8 @@ from langtrace_python_sdk.instrumentation import (
     VertexAIInstrumentation,
     WeaviateInstrumentation,
 )
+from opentelemetry.util.re import parse_env_headers
+
 from langtrace_python_sdk.types import DisableInstrumentations, InstrumentationMethods
 from langtrace_python_sdk.utils import (
     check_if_sdk_is_outdated,
@@ -74,7 +81,7 @@ logging.disable(level=logging.INFO)
 
 class LangtraceConfig:
     def __init__(self, **kwargs):
-        self.api_key = kwargs.get("api_key")
+        self.api_key = kwargs.get("api_key") or os.environ.get("LANGTRACE_API_KEY")
         self.batch = kwargs.get("batch", True)
         self.write_spans_to_console = kwargs.get("write_spans_to_console", False)
         self.custom_remote_exporter = kwargs.get("custom_remote_exporter")
@@ -83,7 +90,11 @@ class LangtraceConfig:
         self.disable_tracing_for_functions = kwargs.get("disable_tracing_for_functions")
         self.service_name = kwargs.get("service_name")
         self.disable_logging = kwargs.get("disable_logging", False)
-        self.headers = kwargs.get("headers", {})
+        self.headers = (
+            kwargs.get("headers")
+            or os.environ.get("LANGTRACE_HEADERS")
+            or os.environ.get("OTEL_EXPORTER_OTLP_HEADERS")
+        )
 
 
 def get_host(config: LangtraceConfig) -> str:
@@ -96,23 +107,50 @@ def get_host(config: LangtraceConfig) -> str:
     )
 
 
+def get_service_name(config: LangtraceConfig):
+    service_name = os.environ.get("OTEL_SERVICE_NAME")
+    if service_name:
+        return service_name
+
+    resource_attributes = os.environ.get("OTEL_RESOURCE_ATTRIBUTES")
+    if resource_attributes:
+        attrs = dict(attr.split("=") for attr in resource_attributes.split(","))
+        if "service.name" in attrs:
+            return attrs["service.name"]
+
+    if config.service_name:
+        return config.service_name
+
+    return sys.argv[0]
+
+
 def setup_tracer_provider(config: LangtraceConfig, host: str) -> TracerProvider:
     sampler = LangtraceSampler(disabled_methods=config.disable_tracing_for_functions)
-    resource = Resource.create(
-        attributes={
-            SERVICE_NAME: os.environ.get("OTEL_SERVICE_NAME")
-            or config.service_name
-            or sys.argv[0]
-        }
-    )
+    resource = Resource.create(attributes={SERVICE_NAME: get_service_name(config)})
     return TracerProvider(resource=resource, sampler=sampler)
+
+
+def get_headers(config: LangtraceConfig):
+    if not config.headers:
+        return {
+            "x-api-key": config.api_key,
+        }
+
+    if isinstance(config.headers, str):
+        return parse_env_headers(config.headers, liberal=True)
+
+    return config.headers
 
 
 def get_exporter(config: LangtraceConfig, host: str):
     if config.custom_remote_exporter:
         return config.custom_remote_exporter
 
-    return LangTraceExporter(host, config.api_key, config.disable_logging)
+    headers = get_headers(config)
+    if "http" in host.lower() or "https" in host.lower():
+        return HTTPExporter(endpoint=host, headers=headers)
+    else:
+        return GRPCExporter(endpoint=host, headers=headers)
 
 
 def add_span_processor(provider: TracerProvider, config: LangtraceConfig, exporter):
@@ -199,6 +237,15 @@ def init(
         + "⭐ Leave our github a star to stay on top of our updates - https://github.com/Scale3-Labs/langtrace"
         + Fore.RESET
     )
+
+    if host == LANGTRACE_REMOTE_URL and not config.api_key:
+        print(Fore.RED)
+        print(
+            "Missing Langtrace API key, proceed to https://langtrace.ai to create one"
+        )
+        print("Set the API key as an environment variable LANGTRACE_API_KEY")
+        print(Fore.RESET)
+        return
 
     provider = setup_tracer_provider(config, host)
     exporter = get_exporter(config, host)
