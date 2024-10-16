@@ -57,7 +57,6 @@ dev = [
   "google-generativeai",
   "google-cloud-aiplatform",
   "mistralai",
-  "embedchain",
   "psycopg",
   "pgvector",
   "embedchain"
