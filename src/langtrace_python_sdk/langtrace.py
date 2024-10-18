@@ -74,6 +74,7 @@ from langtrace_python_sdk.utils import (
     validate_instrumentations,
 )
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
+from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from sentry_sdk.types import Event, Hint
 
 logging.disable(level=logging.INFO)
@@ -149,7 +150,7 @@ def get_exporter(config: LangtraceConfig, host: str):
     headers = get_headers(config)
     host = f"{host}/api/trace" if host == LANGTRACE_REMOTE_URL else host
     if "http" in host.lower() or "https" in host.lower():
-        return HTTPExporter(endpoint=host, headers=headers)
+        return LangTraceExporter(host, config.api_key, config.disable_logging)
     else:
         return GRPCExporter(endpoint=host, headers=headers)
 
