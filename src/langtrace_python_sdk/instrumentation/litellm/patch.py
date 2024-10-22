@@ -248,6 +248,8 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["AZURE"]
         elif "groq" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["GROQ"]
+        elif "x.ai" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["XAI"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -336,6 +338,8 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "x.ai" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["XAI"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
