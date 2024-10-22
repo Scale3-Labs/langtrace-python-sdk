@@ -55,6 +55,8 @@ def chat_completions_create(original_method, version, tracer):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "x.ai" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["XAI"]
 
         # handle tool calls in the kwargs
         llm_prompts = []
@@ -274,6 +276,8 @@ def async_chat_completions_create(original_method, version, tracer):
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "x.ai" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["XAI"]
 
         # handle tool calls in the kwargs
         llm_prompts = []
