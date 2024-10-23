@@ -30,6 +30,7 @@ class InstrumentationType(Enum):
     SQLALCHEMY = "sqlalchemy"
     VERTEXAI = "vertexai"
     WEAVIATE = "weaviate"
+    AWS_BEDROCK = "boto3"
 
     @staticmethod
     def from_string(value: str):
@@ -60,6 +61,11 @@ class VendorMethods(TypedDict):
         "mistral.chat.complete",
         "mistral.chat.stream",
         "mistral.embeddings.create",
+    ]
+
+    AwsBedrockMethods = Literal[
+        "aws_bedrock.converse",
+        "aws_bedrock.converse_stream",
     ]
 
     ChromadbMethods = Literal[
@@ -112,6 +118,7 @@ class InstrumentationMethods(TypedDict):
     open_ai: List[VendorMethods.OpenaiMethods]
     groq: List[VendorMethods.GroqMethods]
     mistral: List[VendorMethods.MistralMethods]
+    aws_bedrock: List[VendorMethods.AwsBedrockMethods]
     pinecone: List[VendorMethods.PineconeMethods]
     llamaindex: List[VendorMethods.LlamaIndexMethods]
     chromadb: List[VendorMethods.ChromadbMethods]
