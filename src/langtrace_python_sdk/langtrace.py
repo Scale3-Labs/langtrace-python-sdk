@@ -56,6 +56,7 @@ from langtrace_python_sdk.instrumentation import (
     LiteLLMInstrumentation,
     LlamaindexInstrumentation,
     MistralInstrumentation,
+    AWSBedrockInstrumentation,
     OllamaInstrumentor,
     OpenAIInstrumentation,
     PineconeInstrumentation,
@@ -279,6 +280,7 @@ def init(
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
         "mistralai": MistralInstrumentation(),
+        "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
         "pymongo": PyMongoInstrumentation(),
     }
