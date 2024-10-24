@@ -27,6 +27,7 @@ from langtrace_python_sdk.utils.llm import (
     set_event_completion,
     StreamWrapper,
     set_span_attributes,
+    set_usage_attributes,
 )
 from langtrace_python_sdk.types import NOT_GIVEN
 
@@ -450,6 +451,14 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
             span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
                 [kwargs.get("input", "")]
             )
+            span_attributes[SpanAttributes.LLM_PROMPTS] = json.dumps(
+                [
+                    {
+                        "role": "user",
+                        "content": kwargs.get("input"),
+                    }
+                ]
+            )
 
         attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
@@ -463,6 +472,11 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
+                usage = getattr(result, "usage", None)
+                if usage:
+                    set_usage_attributes(
+                        span, {"prompt_tokens": getattr(usage, "prompt_tokens", 0)}
+                    )
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
