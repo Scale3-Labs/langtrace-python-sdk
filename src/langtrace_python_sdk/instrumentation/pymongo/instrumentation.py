@@ -38,9 +38,9 @@ class PyMongoInstrumentation(BaseInstrumentor):
         version = v("pymongo")
         for api in APIS.values():
             _W(
-                module="pymongo.collection",
-                name=f"Collection.{api['METHOD']}",
-                wrapper=generic_patch(version, tracer),
+                module=api["MODULE"],
+                name=api["METHOD"],
+                wrapper=generic_patch(api["SPAN_NAME"], version, tracer),
             )
 
     def _uninstrument(self, **kwargs):

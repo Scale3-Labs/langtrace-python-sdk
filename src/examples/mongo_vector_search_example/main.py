@@ -1,11 +1,11 @@
+from langtrace_python_sdk import langtrace, with_langtrace_root_span
 import pymongo
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from langtrace_python_sdk import langtrace
 
 load_dotenv()
-langtrace.init()
+langtrace.init(write_spans_to_console=False, batch=False)
 MODEL = "text-embedding-ada-002"
 openai_client = OpenAI()
 client = pymongo.MongoClient(os.environ["MONGO_URI"])
@@ -20,22 +20,19 @@ def get_embedding(text):
     return embedding
 
 
+@with_langtrace_root_span("mongo-vector-search")
 def vector_query():
     db = client["sample_mflix"]
 
     embedded_movies_collection = db["embedded_movies"]
-
     # define pipeline
     pipeline = [
         {
             "$vectorSearch": {
                 "index": "vector_index",
                 "path": "plot_embedding",
-                "queryVector": get_embedding(
-                    "A movie about a hacker that had a really rough childhood and been trying to convince his father otherwise."
-                ),
-                # "numCandidates": 150,
-                "exact": True,
+                "queryVector": get_embedding("time travel"),
+                "numCandidates": 150,
                 "limit": 10,
             }
         },
@@ -51,13 +48,14 @@ def vector_query():
 
     result = embedded_movies_collection.aggregate(pipeline)
     for doc in result:
-        print(doc)
+        # print(doc)
+        pass
 
 
 if __name__ == "__main__":
     try:
         vector_query()
     except Exception as e:
-        print(e)
+        print("error", e)
     finally:
         client.close()

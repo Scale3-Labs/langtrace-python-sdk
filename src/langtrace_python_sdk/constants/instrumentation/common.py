@@ -34,6 +34,7 @@ SERVICE_PROVIDERS = {
     "EMBEDCHAIN": "Embedchain",
     "AUTOGEN": "Autogen",
     "XAI": "XAI",
+    "MONGODB": "MongoDB",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"
