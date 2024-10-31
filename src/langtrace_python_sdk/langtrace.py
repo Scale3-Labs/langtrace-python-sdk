@@ -151,7 +151,7 @@ def get_exporter(config: LangtraceConfig, host: str):
     headers = get_headers(config)
     host = f"{host}/api/trace" if host == LANGTRACE_REMOTE_URL else host
     if "http" in host.lower() or "https" in host.lower():
-        return LangTraceExporter(host, config.api_key, config.disable_logging)
+        return HTTPExporter(endpoint=host, headers=headers)
     else:
         return GRPCExporter(endpoint=host, headers=headers)
 
