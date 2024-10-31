@@ -75,6 +75,7 @@ from langtrace_python_sdk.utils import (
     validate_instrumentations,
 )
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
+from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from sentry_sdk.types import Event, Hint
 
 logging.disable(level=logging.INFO)
