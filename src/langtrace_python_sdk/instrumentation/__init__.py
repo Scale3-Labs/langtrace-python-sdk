@@ -18,6 +18,7 @@ from .autogen import AutogenInstrumentation
 from .vertexai import VertexAIInstrumentation
 from .gemini import GeminiInstrumentation
 from .mistral import MistralInstrumentation
+from .aws_bedrock import AWSBedrockInstrumentation
 from .embedchain import EmbedchainInstrumentation
 from .litellm import LiteLLMInstrumentation
 
@@ -44,4 +45,5 @@ __all__ = [
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
     "MistralInstrumentation",
+    "AWSBedrockInstrumentation",
 ]

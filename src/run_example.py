@@ -16,10 +16,11 @@ ENABLED_EXAMPLES = {
     "weaviate": False,
     "ollama": False,
     "groq": False,
-    "autogen": True,
+    "autogen": False,
     "vertexai": False,
     "gemini": False,
     "mistral": False,
+    "awsbedrock": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -123,3 +124,9 @@ if ENABLED_EXAMPLES["azureopenai"]:
 
     print(Fore.BLUE + "Running Azure OpenAI example" + Fore.RESET)
     AzureOpenAIRunner().run()
+
+if ENABLED_EXAMPLES["awsbedrock"]:
+    from examples.awsbedrock_examples import AWSBedrockRunner
+
+    print(Fore.BLUE + "Running AWS Bedrock example" + Fore.RESET)
+    AWSBedrockRunner().run()
