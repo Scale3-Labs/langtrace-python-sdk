@@ -21,6 +21,7 @@ from .mistral import MistralInstrumentation
 from .aws_bedrock import AWSBedrockInstrumentation
 from .embedchain import EmbedchainInstrumentation
 from .litellm import LiteLLMInstrumentation
+from .cerebras import CerebrasInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -46,4 +47,5 @@ __all__ = [
     "GeminiInstrumentation",
     "MistralInstrumentation",
     "AWSBedrockInstrumentation",
+    "CerebrasInstrumentation",
 ]

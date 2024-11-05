@@ -20,7 +20,8 @@ ENABLED_EXAMPLES = {
     "vertexai": False,
     "gemini": False,
     "mistral": False,
-    "awsbedrock": True,
+    "awsbedrock": False,
+    "cerebras": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -130,3 +131,9 @@ if ENABLED_EXAMPLES["awsbedrock"]:
 
     print(Fore.BLUE + "Running AWS Bedrock example" + Fore.RESET)
     AWSBedrockRunner().run()
+
+if ENABLED_EXAMPLES["cerebras"]:
+    from examples.cerebras_example import CerebrasRunner
+
+    print(Fore.BLUE + "Running Cerebras example" + Fore.RESET)
+    CerebrasRunner().run()
