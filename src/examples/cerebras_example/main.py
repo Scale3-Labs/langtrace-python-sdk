@@ -3,12 +3,36 @@ from cerebras.cloud.sdk import Cerebras
 from dotenv import load_dotenv
 import re
 import json
+from openai import OpenAI
+import os
 
 load_dotenv()
 
 langtrace.init()
-
+openai_client = OpenAI(
+    base_url="https://api.cerebras.ai/v1",
+    api_key=os.getenv("CEREBRAS_API_KEY"),
+)
 client = Cerebras()
+
+
+def openai_cerebras_example(stream=False):
+    completion = openai_client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "Why is fast inference important?",
+            }
+        ],
+        model="llama3.1-8b",
+        stream=stream,
+    )
+
+    if stream:
+        for chunk in completion:
+            print(chunk)
+    else:
+        return completion
 
 
 def completion_example(stream=False):
