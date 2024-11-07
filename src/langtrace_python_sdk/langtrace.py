@@ -214,7 +214,9 @@ def init(
     disable_logging: bool = False,
     headers: Dict[str, str] = {},
 ):
-    logging.disable(level=logging.INFO)
+    if disable_logging:
+        logging.disable(level=logging.INFO)
+
     check_if_sdk_is_outdated()
     config = LangtraceConfig(
         api_key=api_key,
