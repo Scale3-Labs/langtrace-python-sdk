@@ -64,6 +64,7 @@ from langtrace_python_sdk.instrumentation import (
     AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
+    PyMongoInstrumentation,
     CerebrasInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
@@ -281,6 +282,7 @@ def init(
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
+        "pymongo": PyMongoInstrumentation(),
         "cerebras-cloud-sdk": CerebrasInstrumentation(),
     }
 

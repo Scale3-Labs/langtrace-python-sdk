@@ -34,6 +34,7 @@ SERVICE_PROVIDERS = {
     "EMBEDCHAIN": "Embedchain",
     "AUTOGEN": "Autogen",
     "XAI": "XAI",
+    "MONGODB": "MongoDB",
     "AWS_BEDROCK": "AWS Bedrock",
     "CEREBRAS": "Cerebras",
 }
