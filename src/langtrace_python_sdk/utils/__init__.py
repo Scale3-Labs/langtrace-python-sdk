@@ -1,6 +1,11 @@
 from langtrace_python_sdk.types import NOT_GIVEN, InstrumentationType
 from .sdk_version_checker import SDKVersionChecker
 from opentelemetry.trace import Span
+from opentelemetry.semconv.attributes import (
+    error_attributes as ErrorAttributes,
+)
+from opentelemetry.trace.status import Status, StatusCode
+
 from langtrace.trace_attributes import SpanAttributes
 import inspect
 import os
@@ -90,3 +95,10 @@ def is_package_installed(package_name):
 
     installed_packages = {p.key for p in pkg_resources.working_set}
     return package_name in installed_packages
+
+
+def handle_span_error(span: Span, error):
+    span.set_status(Status(StatusCode.ERROR, str(error)))
+    if span.is_recording():
+        span.set_attribute(ErrorAttributes.ERROR_TYPE, type(error).__qualname__)
+    span.end()
