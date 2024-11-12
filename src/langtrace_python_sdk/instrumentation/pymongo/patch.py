@@ -4,8 +4,7 @@ from langtrace_python_sdk.utils.llm import (
     set_span_attributes,
     set_span_attribute,
 )
-from langtrace_python_sdk.utils import deduce_args_and_kwargs
-from opentelemetry.trace.status import Status, StatusCode
+from langtrace_python_sdk.utils import deduce_args_and_kwargs, handle_span_error
 from opentelemetry.trace import SpanKind
 from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace.trace_attributes import DatabaseSpanAttributes
@@ -48,13 +47,7 @@ def generic_patch(name, version, tracer):
                         )
                 return result
             except Exception as err:
-                # Record the exception in the span
-                span.record_exception(err)
-
-                # Set the span status to indicate an error
-                span.set_status(Status(StatusCode.ERROR, str(err)))
-
-                # Reraise the exception to ensure it's not swallowed
+                handle_span_error(span, err)
                 raise
 
     return traced_method
