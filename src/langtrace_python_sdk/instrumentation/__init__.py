@@ -21,6 +21,7 @@ from .mistral import MistralInstrumentation
 from .aws_bedrock import AWSBedrockInstrumentation
 from .embedchain import EmbedchainInstrumentation
 from .litellm import LiteLLMInstrumentation
+from .pymongo import PyMongoInstrumentation
 from .cerebras import CerebrasInstrumentation
 
 __all__ = [
@@ -46,6 +47,7 @@ __all__ = [
     "VertexAIInstrumentation",
     "GeminiInstrumentation",
     "MistralInstrumentation",
+    "PyMongoInstrumentation",
     "AWSBedrockInstrumentation",
     "CerebrasInstrumentation",
 ]
