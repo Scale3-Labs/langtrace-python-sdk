@@ -22,6 +22,7 @@ from .aws_bedrock import AWSBedrockInstrumentation
 from .embedchain import EmbedchainInstrumentation
 from .litellm import LiteLLMInstrumentation
 from .pymongo import PyMongoInstrumentation
+from .cerebras import CerebrasInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -48,4 +49,5 @@ __all__ = [
     "MistralInstrumentation",
     "PyMongoInstrumentation",
     "AWSBedrockInstrumentation",
+    "CerebrasInstrumentation",
 ]

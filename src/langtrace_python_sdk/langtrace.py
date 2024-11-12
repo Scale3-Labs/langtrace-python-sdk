@@ -65,6 +65,7 @@ from langtrace_python_sdk.instrumentation import (
     VertexAIInstrumentation,
     WeaviateInstrumentation,
     PyMongoInstrumentation,
+    CerebrasInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 
@@ -78,8 +79,6 @@ from langtrace_python_sdk.utils import (
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from sentry_sdk.types import Event, Hint
-
-logging.disable(level=logging.INFO)
 
 
 class LangtraceConfig:
@@ -152,7 +151,7 @@ def get_exporter(config: LangtraceConfig, host: str):
     headers = get_headers(config)
     host = f"{host}/api/trace" if host == LANGTRACE_REMOTE_URL else host
     if "http" in host.lower() or "https" in host.lower():
-        return LangTraceExporter(host, config.api_key, config.disable_logging)
+        return HTTPExporter(endpoint=host, headers=headers)
     else:
         return GRPCExporter(endpoint=host, headers=headers)
 
@@ -216,7 +215,7 @@ def init(
     disable_logging: bool = False,
     headers: Dict[str, str] = {},
 ):
-    logging.disable(level=logging.INFO)
+
     check_if_sdk_is_outdated()
     config = LangtraceConfig(
         api_key=api_key,
@@ -232,6 +231,7 @@ def init(
     )
 
     if config.disable_logging:
+        logging.disable(level=logging.INFO)
         sys.stdout = open(os.devnull, "w")
 
     host = get_host(config)
@@ -283,6 +283,7 @@ def init(
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
         "pymongo": PyMongoInstrumentation(),
+        "cerebras-cloud-sdk": CerebrasInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
