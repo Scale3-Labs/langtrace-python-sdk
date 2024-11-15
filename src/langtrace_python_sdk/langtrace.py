@@ -64,6 +64,8 @@ from langtrace_python_sdk.instrumentation import (
     AutogenInstrumentation,
     VertexAIInstrumentation,
     WeaviateInstrumentation,
+    PyMongoInstrumentation,
+    CerebrasInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 
@@ -77,8 +79,6 @@ from langtrace_python_sdk.utils import (
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from sentry_sdk.types import Event, Hint
-
-logging.disable(level=logging.INFO)
 
 
 class LangtraceConfig:
@@ -215,7 +215,7 @@ def init(
     disable_logging: bool = False,
     headers: Dict[str, str] = {},
 ):
-    logging.disable(level=logging.INFO)
+
     check_if_sdk_is_outdated()
     config = LangtraceConfig(
         api_key=api_key,
@@ -231,6 +231,7 @@ def init(
     )
 
     if config.disable_logging:
+        logging.disable(level=logging.INFO)
         sys.stdout = open(os.devnull, "w")
 
     host = get_host(config)
@@ -281,6 +282,8 @@ def init(
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
+        "pymongo": PyMongoInstrumentation(),
+        "cerebras-cloud-sdk": CerebrasInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
