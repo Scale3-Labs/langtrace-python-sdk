@@ -71,16 +71,26 @@ def generic_patch(
                 result = wrapped(*args, **kwargs)
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
-
-                    prompt_tokens = instance.get_num_tokens(args[0])
-                    completion_tokens = instance.get_num_tokens(result)
-                    if hasattr(result, 'usage'):
+                    prompt_tokens = (
+                        instance.get_num_tokens(args[0])
+                        if hasattr(instance, "get_num_tokens")
+                        else None
+                    )
+                    completion_tokens = (
+                        instance.get_num_tokens(result)
+                        if hasattr(instance, "get_num_tokens")
+                        else None
+                    )
+                    if hasattr(result, "usage"):
                         prompt_tokens = result.usage.prompt_tokens
                         completion_tokens = result.usage.completion_tokens
 
-                    span.set_attribute(SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, prompt_tokens)
-                    span.set_attribute(SpanAttributes.LLM_USAGE_PROMPT_TOKENS, completion_tokens)
-
+                    span.set_attribute(
+                        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS, prompt_tokens
+                    )
+                    span.set_attribute(
+                        SpanAttributes.LLM_USAGE_PROMPT_TOKENS, completion_tokens
+                    )
 
                 span.set_status(StatusCode.OK)
                 return result
@@ -102,9 +112,17 @@ def clean_empty(d):
     if not isinstance(d, (dict, list, tuple)):
         return d
     if isinstance(d, tuple):
-        return tuple(val for val in (clean_empty(val) for val in d) if val != () and val is not None)
+        return tuple(
+            val
+            for val in (clean_empty(val) for val in d)
+            if val != () and val is not None
+        )
     if isinstance(d, list):
-        return [val for val in (clean_empty(val) for val in d) if val != [] and val is not None]
+        return [
+            val
+            for val in (clean_empty(val) for val in d)
+            if val != [] and val is not None
+        ]
     result = {}
     for k, val in d.items():
         if isinstance(val, dict):
@@ -120,7 +138,7 @@ def clean_empty(d):
                 result[k] = val.strip()
         elif isinstance(val, object):
             # some langchain objects have a text attribute
-            val = getattr(val, 'text', None)
+            val = getattr(val, "text", None)
             if val is not None and val.strip() != "":
                 result[k] = val.strip()
     return result
