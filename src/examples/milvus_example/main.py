@@ -56,6 +56,10 @@ def vector_search(collection_name: str = COLLECTION_NAME, queries: List[str] = [
         data=query_vectors,  # query vectors
         limit=2,  # number of returned entities
         output_fields=["text", "subject"],  # specifies fields to be returned
+        timeout=10,
+        partition_names=["history"],
+        anns_field="vector",
+        search_params={"nprobe": 10},
     )
 
 
