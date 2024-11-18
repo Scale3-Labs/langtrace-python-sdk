@@ -4,7 +4,7 @@ from langtrace_python_sdk import langtrace, with_langtrace_root_span
 from dotenv import load_dotenv
 
 load_dotenv()
-langtrace.init(write_spans_to_console=False)
+langtrace.init()
 
 client = MilvusClient("milvus_demo.db")
 
