@@ -37,6 +37,7 @@ SERVICE_PROVIDERS = {
     "MONGODB": "MongoDB",
     "AWS_BEDROCK": "AWS Bedrock",
     "CEREBRAS": "Cerebras",
+    "MILVUS": "Milvus",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

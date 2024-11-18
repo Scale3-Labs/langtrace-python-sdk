@@ -66,6 +66,7 @@ from langtrace_python_sdk.instrumentation import (
     WeaviateInstrumentation,
     PyMongoInstrumentation,
     CerebrasInstrumentation,
+    MilvusInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 
@@ -284,6 +285,7 @@ def init(
         "autogen": AutogenInstrumentation(),
         "pymongo": PyMongoInstrumentation(),
         "cerebras-cloud-sdk": CerebrasInstrumentation(),
+        "pymilvus": MilvusInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
