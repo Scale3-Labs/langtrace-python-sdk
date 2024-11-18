@@ -23,6 +23,7 @@ from .embedchain import EmbedchainInstrumentation
 from .litellm import LiteLLMInstrumentation
 from .pymongo import PyMongoInstrumentation
 from .cerebras import CerebrasInstrumentation
+from .milvus import MilvusInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -50,4 +51,5 @@ __all__ = [
     "PyMongoInstrumentation",
     "AWSBedrockInstrumentation",
     "CerebrasInstrumentation",
+    "MilvusInstrumentation",
 ]

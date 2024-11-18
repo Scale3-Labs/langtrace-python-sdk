@@ -38,7 +38,6 @@ def generic_patch(name, version, tracer):
 
             try:
                 result = wrapped(*args, **kwargs)
-                print(result)
                 for doc in result:
                     if span.is_recording():
                         span.add_event(
