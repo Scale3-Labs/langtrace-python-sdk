@@ -6,6 +6,7 @@ from autogen.agentchat.conversable_agent import ConversableAgent
 from opentelemetry import trace
 from opentelemetry.trace import Span, SpanKind, StatusCode
 from wrapt import wrap_function_wrapper
+from functools import wraps
 
 # Initialize langtrace
 langtrace.init(
@@ -15,6 +16,29 @@ langtrace.init(
 )
 
 tracer = trace.get_tracer(__name__)
+
+def with_langtrace_root_span(name):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            with tracer.start_as_current_span(
+                name,
+                kind=SpanKind.CLIENT,
+                attributes={
+                    "langtrace.conversation.type": "autogen",
+                    "langtrace.conversation.name": name
+                }
+            ) as span:
+                try:
+                    result = func(*args, **kwargs)
+                    span.set_status(StatusCode.OK)
+                    return result
+                except Exception as err:
+                    span.record_exception(err)
+                    span.set_status(StatusCode.ERROR)
+                    raise
+        return wrapper
+    return decorator
 
 def wrap_generate_reply(wrapped, instance, args, kwargs):
     with tracer.start_as_current_span(
@@ -101,8 +125,13 @@ assistant = MockAgent(
     is_termination_msg=False
 )
 
-# Start the conversation
-user.initiate_chat(
-    assistant,
-    message="Write a Python function to calculate the Fibonacci sequence."
-)
+# Start the conversation with root span
+@with_langtrace_root_span("autogen_fibonacci_conversation")
+def run_conversation():
+    user.initiate_chat(
+        assistant,
+        message="Write a Python function to calculate the Fibonacci sequence."
+    )
+
+if __name__ == "__main__":
+    run_conversation()
