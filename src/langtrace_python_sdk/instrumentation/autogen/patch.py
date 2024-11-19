@@ -84,7 +84,7 @@ def patch_generate_reply(name, version, tracer: Tracer):
             try:
 
                 result = wrapped(*args, **kwargs)
-                
+
                 # if caching is disabled, return result as langtrace will instrument the rest.
                 if "cache_seed" in llm_config and llm_config.get("cache_seed") is None:
                     return result
@@ -109,6 +109,69 @@ def patch_generate_reply(name, version, tracer: Tracer):
                 span.set_status(Status(StatusCode.ERROR, str(err)))
 
                 # Reraise the exception to ensure it's not swallowed
+                raise
+
+    return traced_method
+
+
+def patch_group_chat_init(name, version, tracer: Tracer):
+    def traced_method(wrapped, instance, args, kwargs):
+        all_params = deduce_args_and_kwargs(wrapped, *args, **kwargs)
+        agents = [parse_agent(agent) for agent in all_params.get("agents", [])]
+
+        span_attributes = {
+            **get_langtrace_attributes(
+                service_provider=SERVICE_PROVIDERS["AUTOGEN"],
+                version=version,
+                vendor_type="framework",
+            ),
+            "agents": json.dumps(agents),
+            "max_round": all_params.get("max_round"),
+            "speaker_selection_method": all_params.get("speaker_selection_method"),
+        }
+        attributes = FrameworkSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(
+            name=get_span_name(name), kind=SpanKind.CLIENT
+        ) as span:
+            try:
+                set_span_attributes(span, attributes)
+                result = wrapped(*args, **kwargs)
+                return result
+            except Exception as err:
+                span.record_exception(err)
+                span.set_status(Status(StatusCode.ERROR, str(err)))
+                raise
+
+    return traced_method
+
+
+def patch_function_call(name, version, tracer: Tracer):
+    def traced_method(wrapped, instance, args, kwargs):
+        all_params = deduce_args_and_kwargs(wrapped, *args, **kwargs)
+
+        span_attributes = {
+            **get_langtrace_attributes(
+                service_provider=SERVICE_PROVIDERS["AUTOGEN"],
+                version=version,
+                vendor_type="framework",
+            ),
+            "function_name": all_params.get("function_name"),
+            "arguments": json.dumps(all_params.get("arguments", {})),
+        }
+        attributes = FrameworkSpanAttributes(**span_attributes)
+
+        with tracer.start_as_current_span(
+            name=get_span_name(name), kind=SpanKind.CLIENT
+        ) as span:
+            try:
+                set_span_attributes(span, attributes)
+                result = wrapped(*args, **kwargs)
+                set_span_attribute(span, "function_result", str(result))
+                return result
+            except Exception as err:
+                span.record_exception(err)
+                span.set_status(Status(StatusCode.ERROR, str(err)))
                 raise
 
     return traced_method
