@@ -12,7 +12,10 @@ from functools import wraps
 langtrace.init(
     api_key='967b06c4d1858a7e64e58de44708d89e84f8c96a69b20f7276bcb34a7ce495af',
     write_spans_to_console=True,
-    api_host="http://localhost:3000/api/trace"
+    api_host="http://localhost:3000/api/trace",
+    headers={
+        "Authorization": "Bearer 967b06c4d1858a7e64e58de44708d89e84f8c96a69b20f7276bcb34a7ce495af"
+    }
 )
 
 tracer = trace.get_tracer(__name__)
