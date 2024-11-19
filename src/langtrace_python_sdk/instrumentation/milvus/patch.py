@@ -1,8 +1,10 @@
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 from opentelemetry.trace import Tracer
 from opentelemetry.trace import SpanKind
 from langtrace_python_sdk.utils import handle_span_error, set_span_attribute
 from langtrace_python_sdk.utils.llm import (
+    get_langtrace_attributes,
     get_extra_attributes,
     set_span_attributes,
 )
@@ -16,6 +18,11 @@ def generic_patch(api, version: str, tracer: Tracer):
         with tracer.start_as_current_span(span_name, kind=SpanKind.CLIENT) as span:
             try:
                 span_attributes = {
+                    **get_langtrace_attributes(
+                        service_provider=SERVICE_PROVIDERS["MILVUS"],
+                        version=version,
+                        vendor_type="Vector Database",
+                    ),
                     "db.system": "milvus",
                     "db.operation": operation,
                     "db.name": kwargs.get("collection_name", None),
