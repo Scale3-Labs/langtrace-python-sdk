@@ -1,61 +1,51 @@
 import os
 import autogen
 from langtrace_python_sdk import langtrace
+from typing import Dict, Optional, Union
+from autogen.agentchat.agent import Agent
 
 # Initialize langtrace
 langtrace.init(
+    api_key='967b06c4d1858a7e64e58de44708d89e84f8c96a69b20f7276bcb34a7ce495af',
     write_spans_to_console=True,
 )
 
-# Mock LLM config that always returns a fixed response
-class MockLLM:
-    def create(self, messages, *args, **kwargs):
-        return {
-            "choices": [{
-                "message": {
-                    "content": "Here's a Python function to calculate Fibonacci sequence:\n\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [0]\n    elif n == 2:\n        return [0, 1]\n    \n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib",
-                    "role": "assistant"
-                }
-            }],
-            "model": "mock-model",
-            "usage": {
-                "prompt_tokens": 50,
-                "completion_tokens": 100,
-                "total_tokens": 150
-            }
-        }
+class MockAgent(Agent):
+    def __init__(
+        self,
+        name: str,
+        system_message: Optional[str] = "Mock agent for testing",
+    ):
+        super().__init__(name)
+        self._system_message = system_message
 
-# Configure agents with mock LLM
-config_list = [{"model": "mock-model"}]
-llm_config = {
-    "config_list": config_list,
-    "seed": 42,
-    "temperature": 0.7,
-    "cache_seed": 42,
-    "config_list": config_list,
-    "timeout": 120,
-}
+    def generate_reply(
+        self,
+        messages: Optional[Dict] = None,
+        sender: Optional[Agent] = None,
+        **kwargs,
+    ) -> Union[str, Dict, None]:
+        """Mock reply generation"""
+        if "Write a Python function" in messages[-1].get("content", ""):
+            return {
+                "content": "Here's a Python function to calculate Fibonacci sequence:\n\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [0]\n    elif n == 2:\n        return [0, 1]\n    \n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib",
+                "role": "assistant"
+            }
+        return {"content": "I understand your request.", "role": "assistant"}
 
 # Create agents
-user_proxy = autogen.UserProxyAgent(
-    name="User_Proxy",
-    system_message="A human user who needs help with coding tasks.",
-    llm_config=llm_config,
-    code_execution_config=False,  # Disable code execution for testing
+user = MockAgent(
+    name="User",
+    system_message="A human user who needs help with coding tasks."
 )
 
-coder = autogen.AssistantAgent(
-    name="Coder",
-    llm_config=llm_config,
-    system_message="Python developer who writes clean code."
+assistant = MockAgent(
+    name="Assistant",
+    system_message="A helpful coding assistant."
 )
-
-# Override the create method in the client
-coder.client.create = MockLLM().create
-user_proxy.client.create = MockLLM().create
 
 # Start the conversation
-user_proxy.initiate_chat(
-    coder,
+user.initiate_chat(
+    assistant,
     message="Write a Python function to calculate the Fibonacci sequence."
 )
