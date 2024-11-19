@@ -8,6 +8,7 @@ from autogen.agentchat.conversable_agent import ConversableAgent
 langtrace.init(
     api_key='967b06c4d1858a7e64e58de44708d89e84f8c96a69b20f7276bcb34a7ce495af',
     write_spans_to_console=True,
+    endpoint="http://localhost:3000"
 )
 
 class MockAgent(ConversableAgent):
