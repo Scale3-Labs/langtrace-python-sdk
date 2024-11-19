@@ -2,7 +2,7 @@ import os
 import autogen
 from langtrace_python_sdk import langtrace
 from typing import Dict, Optional, Union
-from autogen.agentchat.agent import Agent
+from autogen.agentchat.conversable_agent import ConversableAgent
 
 # Initialize langtrace
 langtrace.init(
@@ -10,23 +10,27 @@ langtrace.init(
     write_spans_to_console=True,
 )
 
-class MockAgent(Agent):
+class MockAgent(ConversableAgent):
     def __init__(
         self,
         name: str,
         system_message: Optional[str] = "Mock agent for testing",
     ):
-        super().__init__(name)
-        self._system_message = system_message
+        super().__init__(name=name, system_message=system_message)
+        self.register_reply(
+            [autogen.Agent, None],
+            self.generate_mock_reply,
+            position=0
+        )
 
-    def generate_reply(
+    def generate_mock_reply(
         self,
         messages: Optional[Dict] = None,
-        sender: Optional[Agent] = None,
-        **kwargs,
+        sender: Optional[autogen.Agent] = None,
+        config: Optional[Dict] = None,
     ) -> Union[str, Dict, None]:
         """Mock reply generation"""
-        if "Write a Python function" in messages[-1].get("content", ""):
+        if messages and isinstance(messages, list) and "Write a Python function" in messages[-1].get("content", ""):
             return {
                 "content": "Here's a Python function to calculate Fibonacci sequence:\n\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [0]\n    elif n == 2:\n        return [0, 1]\n    \n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib",
                 "role": "assistant"
