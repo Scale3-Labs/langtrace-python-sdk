@@ -58,10 +58,16 @@ def patch_generate_reply(name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
 
         llm_config = instance.llm_config
+        # Convert numeric values to strings in config
+        config_list = llm_config.get("config_list", [{}])[0].copy()
+        if "seed" in llm_config:
+            config_list["seed"] = str(llm_config["seed"])
+
         kwargs = {
             **kwargs,
-            **llm_config.get("config_list")[0],
+            **config_list,
         }
+
         service_provider = SERVICE_PROVIDERS["AUTOGEN"]
 
         span_attributes = {

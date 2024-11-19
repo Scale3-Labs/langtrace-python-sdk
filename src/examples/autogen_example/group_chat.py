@@ -8,6 +8,7 @@ load_dotenv()
 
 # Initialize langtrace
 langtrace.init(
+    api_key="2489f432edfcf4d7e90cbd20cdd1f35ba0654d7b106852c8bedebcecb8f23e05",
     write_spans_to_console=True,
 )
 
