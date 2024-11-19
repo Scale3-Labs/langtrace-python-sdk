@@ -1,7 +1,7 @@
 import os
 import autogen
 from langtrace_python_sdk import langtrace
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, List
 from autogen.agentchat.conversable_agent import ConversableAgent
 
 # Initialize langtrace
@@ -15,27 +15,38 @@ class MockAgent(ConversableAgent):
         self,
         name: str,
         system_message: Optional[str] = "Mock agent for testing",
+        is_termination_msg: Optional[bool] = False,
     ):
-        super().__init__(name=name, system_message=system_message)
-        self.register_reply(
-            [autogen.Agent, None],
-            self.generate_mock_reply,
-            position=0
+        super().__init__(
+            name=name,
+            system_message=system_message,
+            max_consecutive_auto_reply=1,
+            human_input_mode="NEVER",
         )
+        self.is_termination_msg = is_termination_msg
+        self.conversation_id = 0
 
-    def generate_mock_reply(
+    def generate_reply(
         self,
-        messages: Optional[Dict] = None,
+        messages: Optional[List[Dict]] = None,
         sender: Optional[autogen.Agent] = None,
-        config: Optional[Dict] = None,
+        **kwargs,
     ) -> Union[str, Dict, None]:
-        """Mock reply generation"""
-        if messages and isinstance(messages, list) and "Write a Python function" in messages[-1].get("content", ""):
+        """Override generate_reply for mock responses"""
+        if not messages:
+            return None
+
+        if self.is_termination_msg:
+            return None
+
+        if "Write a Python function" in messages[-1].get("content", ""):
+            self.conversation_id += 1
             return {
                 "content": "Here's a Python function to calculate Fibonacci sequence:\n\ndef fibonacci(n):\n    if n <= 0:\n        return []\n    elif n == 1:\n        return [0]\n    elif n == 2:\n        return [0, 1]\n    \n    fib = [0, 1]\n    for i in range(2, n):\n        fib.append(fib[i-1] + fib[i-2])\n    return fib",
-                "role": "assistant"
+                "role": "assistant",
+                "conversation_id": self.conversation_id
             }
-        return {"content": "I understand your request.", "role": "assistant"}
+        return None
 
 # Create agents
 user = MockAgent(
@@ -45,7 +56,8 @@ user = MockAgent(
 
 assistant = MockAgent(
     name="Assistant",
-    system_message="A helpful coding assistant."
+    system_message="A helpful coding assistant.",
+    is_termination_msg=True
 )
 
 # Start the conversation
