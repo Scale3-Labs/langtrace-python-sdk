@@ -46,7 +46,7 @@ from langtrace_python_sdk.instrumentation.openai.patch import extract_content
 
 
 def chat_complete(original_method, version, tracer, is_async=False, is_streaming=False):
-        
+
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["MISTRAL"]
         llm_prompts = []
@@ -64,7 +64,6 @@ def chat_complete(original_method, version, tracer, is_async=False, is_streaming
         }
 
         attributes = LLMSpanAttributes(**span_attributes)
-
 
         span = tracer.start_span(
             name=get_span_name(APIS[api]["METHOD"]),
@@ -87,7 +86,6 @@ def chat_complete(original_method, version, tracer, is_async=False, is_streaming
                 span.set_status(StatusCode.OK)
                 span.end()
                 return result
-                
 
         except Exception as error:
             span.record_exception(error)
@@ -186,7 +184,6 @@ def _set_response_attributes(span, kwargs, result):
             for choice in result.choices
         ]
         set_event_completion(span, responses)
-
     # Get the usage
     if hasattr(result, "usage") and result.usage is not None:
-        set_usage_attributes(span, result.usage)
+        set_usage_attributes(span, dict(result.usage))
