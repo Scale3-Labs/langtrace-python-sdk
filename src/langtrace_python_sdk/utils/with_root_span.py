@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import base64
 import asyncio
 import os
 from deprecated import deprecated
@@ -145,7 +146,9 @@ class SendUserFeedback:
     _langtrace_api_key: str
 
     def __init__(self):
-        self._langtrace_host = os.environ.get("LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL)
+        self._langtrace_host = os.environ.get(
+            "LANGTRACE_API_HOST", LANGTRACE_REMOTE_URL
+        )
         # When the host is set to /api/trace, remove the /api/trace
         if self._langtrace_host.endswith("/api/trace"):
             self._langtrace_host = self._langtrace_host.replace("/api/trace", "")
@@ -162,14 +165,13 @@ class SendUserFeedback:
                 print(Fore.RESET)
                 return
 
-            # convert spanId and traceId to hexadecimals
-            span_hex_number = hex(int(data["spanId"], 10))[2:]  # Convert to hex and remove the '0x' prefix
-            formatted_span_hex_number = span_hex_number.zfill(16)  # Pad with zeros to 16 characters
-            data["spanId"] = f"0x{formatted_span_hex_number}"
+            # convert spanId and traceId to Base64
+            span_bytes = int(data["spanId"], 10).to_bytes(8, "big")
+            data["spanId"] = base64.b64encode(span_bytes).decode("ascii")
 
-            trace_hex_number = hex(int(data["traceId"], 10))[2:]  # Convert to hex and remove the '0x' prefix
-            formatted_trace_hex_number = trace_hex_number.zfill(32)  # Pad with zeros to 32 characters
-            data["traceId"] = f"0x{formatted_trace_hex_number}"
+            # Convert traceId to base64
+            trace_bytes = int(data["traceId"], 10).to_bytes(16, "big")
+            data["traceId"] = base64.b64encode(trace_bytes).decode("ascii")
 
             evaluation = self.get_evaluation(data["spanId"])
             headers = {"x-api-key": self._langtrace_api_key}
