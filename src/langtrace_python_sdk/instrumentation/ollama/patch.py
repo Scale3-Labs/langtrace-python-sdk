@@ -84,7 +84,7 @@ def ageneric_patch(operation_name, version, tracer):
         try:
             result = await wrapped(*args, **kwargs)
             if kwargs.get("stream"):
-                return StreamWrapper(span, result)
+                return StreamWrapper(result, span)
             else:
                 _set_response_attributes(span, result)
             span.end()
