@@ -13,6 +13,7 @@ SERVICE_PROVIDERS = {
     "AZURE": "Azure",
     "CHROMA": "Chroma",
     "CREWAI": "CrewAI",
+    "DEEPSEEK": "DeepSeek",
     "DSPY": "DSPy",
     "GROQ": "Groq",
     "LANGCHAIN": "Langchain",

@@ -252,6 +252,8 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["GROQ"]
         elif "x.ai" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
