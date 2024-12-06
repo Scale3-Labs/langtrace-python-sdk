@@ -41,7 +41,8 @@ class LanggraphInstrumentation(BaseInstrumentor):
         # List of modules to patch, with their corresponding patch names
         modules_to_patch = [
             (
-                "langgraph.graph.graph",
+                "langgraph.graph.state",  # Updated module path
+                "StateGraph",  # Updated class name
                 [
                     "add_node",
                     "add_edge",
@@ -49,26 +50,20 @@ class LanggraphInstrumentation(BaseInstrumentor):
                     "set_finish_point",
                     "add_conditional_edges",
                 ],
-            ),
+            )
         ]
 
-        for module_name, methods in modules_to_patch:
-            module = importlib.import_module(module_name)
-            for name, obj in inspect.getmembers(
-                module,
-                lambda member: inspect.isclass(member)
-                and member.__module__ == module.__name__,
-            ):
-                for method_name, _ in inspect.getmembers(
-                    obj, predicate=inspect.isfunction
-                ):
-                    if method_name in methods:
-                        module = f"{name}.{method_name}"
-                        wrap_function_wrapper(
-                            module_name,
-                            module,
-                            patch_graph_methods(module, tracer, version),
-                        )
+        for module_name, class_name, methods in modules_to_patch:
+            for method_name in methods:
+                # Construct the correct path for the method
+                method_path = f"{class_name}.{method_name}"
+                wrap_function_wrapper(
+                    module_name,
+                    method_path,
+                    patch_graph_methods(
+                        f"{module_name}.{method_path}", tracer, version
+                    ),
+                )
 
     def _uninstrument(self, **kwargs):
         pass

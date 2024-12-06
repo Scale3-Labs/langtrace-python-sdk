@@ -275,7 +275,7 @@ def init(
         "weaviate-client": WeaviateInstrumentation(),
         "sqlalchemy": SQLAlchemyInstrumentor(),
         "ollama": OllamaInstrumentor(),
-        "dspy-ai": DspyInstrumentation(),
+        "dspy": DspyInstrumentation(),
         "crewai": CrewAIInstrumentation(),
         "vertexai": VertexAIInstrumentation(),
         "google-cloud-aiplatform": VertexAIInstrumentation(),

@@ -30,6 +30,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from importlib_metadata import version as v
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.utils.llm import set_span_attributes
 
 
 def patch_graph_methods(method_name, tracer, version):
@@ -57,9 +58,7 @@ def patch_graph_methods(method_name, tracer, version):
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            for field, value in attributes.model_dump(by_alias=True).items():
-                if value is not None:
-                    span.set_attribute(field, value)
+            set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = wrapped(*args, **kwargs)
