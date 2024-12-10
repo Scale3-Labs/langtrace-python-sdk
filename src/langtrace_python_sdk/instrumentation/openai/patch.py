@@ -436,10 +436,13 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
     ) -> Any:
         service_provider = SERVICE_PROVIDERS["OPENAI"]
         base_url = get_base_url(instance)
+        print(f"Debug - Base URL: {base_url}")  # Debug logging
+        print(f"Debug - Initial Provider: {service_provider}")  # Debug logging
         if "perplexity" in base_url:
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in base_url:
             service_provider = SERVICE_PROVIDERS["AZURE"]
+            print(f"Debug - Azure detected, new provider: {service_provider}")  # Debug logging
         elif "groq" in base_url:
             service_provider = SERVICE_PROVIDERS["GROQ"]
         elif "x.ai" in base_url:
