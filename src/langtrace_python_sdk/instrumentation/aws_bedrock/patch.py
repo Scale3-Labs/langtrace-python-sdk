@@ -40,23 +40,26 @@ from langtrace_python_sdk.utils.llm import (
     set_event_completion,
     set_span_attributes,
 )
+from langtrace_python_sdk.instrumentation.aws_bedrock.config import BedrockConfig
 
 
 def traced_aws_bedrock_call(api_name: str, operation_name: str):
-    def decorator(method_name: str, version: str, tracer):
+    def decorator(method_name: str, version: str, tracer, config: BedrockConfig):
         def wrapper(original_method):
             @wraps(original_method)
             def wrapped_method(*args, **kwargs):
                 service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
 
-                input_content = [
-                    {
-                        'role': message.get('role', 'user'),
-                        'content': message.get('content', [])[0].get('text', "")
-                    }
-                    for message in kwargs.get('messages', [])
-                ]
-                
+                input_content = []
+                if config.trace_content:
+                    input_content = [
+                        {
+                            'role': message.get('role', 'user'),
+                            'content': message.get('content', [])[0].get('text', "")
+                        }
+                        for message in kwargs.get('messages', [])
+                    ]
+
                 span_attributes = {
                     **get_langtrace_attributes(version, service_provider, vendor_type="framework"),
                     **get_llm_request_attributes(kwargs, operation_name=operation_name, prompts=input_content),
@@ -65,7 +68,7 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
                     **get_extra_attributes(),
                 }
 
-                if api_name == "CONVERSE":
+                if api_name == "CONVERSE" and config.vendor_specific_attributes:
                     span_attributes.update({
                         SpanAttributes.LLM_REQUEST_MODEL: kwargs.get('modelId'),
                         SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get('inferenceConfig', {}).get('maxTokens'),
@@ -83,7 +86,8 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
                     set_span_attributes(span, attributes)
                     try:
                         result = original_method(*args, **kwargs)
-                        _set_response_attributes(span, kwargs, result)
+                        if config.trace_content:
+                            _set_response_attributes(span, kwargs, result)
                         span.set_status(StatusCode.OK)
                         return result
                     except Exception as err:
@@ -99,13 +103,12 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
 converse = traced_aws_bedrock_call("CONVERSE", "converse")
 
 
-def converse_stream(original_method, version, tracer):
+def converse_stream(original_method, version, tracer, config: BedrockConfig):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
-        
+
         span_attributes = {
-            **get_langtrace_attributes
-            (version, service_provider, vendor_type="llm"),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["CONVERSE_STREAM"]["ENDPOINT"],
@@ -122,14 +125,15 @@ def converse_stream(original_method, version, tracer):
             set_span_attributes(span, attributes)
             try:
                 result = wrapped(*args, **kwargs)
-                _set_response_attributes(span, kwargs, result)
+                if config.trace_content:
+                    _set_response_attributes(span, kwargs, result)
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
                 span.record_exception(err)
                 span.set_status(Status(StatusCode.ERROR, str(err)))
                 raise err
-            
+
     return traced_method
 
 
