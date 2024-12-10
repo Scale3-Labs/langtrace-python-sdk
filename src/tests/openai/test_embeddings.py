@@ -60,6 +60,11 @@ def test_embeddings_azure_provider(exporter, monkeypatch):
         base_url="https://your-resource.azure.openai.com/v1",
     )
 
+    # Debug prints
+    print(f"Debug - Azure client type: {type(azure_client)}")
+    print(f"Debug - Azure client base_url: {azure_client.base_url}")
+    print(f"Debug - Azure client _client._base_url: {azure_client._client._base_url if hasattr(azure_client, '_client') else 'No _client'}")
+
     # Patch the HTTP client's send method
     monkeypatch.setattr(httpx.Client, "send", mock_send)
 
