@@ -421,7 +421,7 @@ class StreamWrapper:
                 self.completion_tokens = chunk.usage.completion_tokens
 
         # VertexAI
-        if hasattr(chunk, "usage_metadata"):
+        if hasattr(chunk, "usage_metadata") and chunk.usage_metadata is not None:
             self.completion_tokens = chunk.usage_metadata.candidates_token_count
             self.prompt_tokens = chunk.usage_metadata.prompt_token_count
 
