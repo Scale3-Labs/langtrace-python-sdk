@@ -27,10 +27,12 @@ from opentelemetry import trace
 from opentelemetry.trace import SpanKind
 from opentelemetry.trace.status import Status, StatusCode
 from opentelemetry.trace.propagation import set_span_in_context
-from langtrace_python_sdk.constants.instrumentation.common import (
-    SERVICE_PROVIDERS,
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.aws_bedrock import (
+    APIS,
+    AWSBedrockAttributes,
+    MODEL_PROVIDERS,
 )
-from langtrace_python_sdk.constants.instrumentation.aws_bedrock import APIS
 from langtrace_python_sdk.utils.llm import (
     get_extra_attributes,
     get_langtrace_attributes,
@@ -40,23 +42,27 @@ from langtrace_python_sdk.utils.llm import (
     set_event_completion,
     set_span_attributes,
 )
+from langtrace_python_sdk.instrumentation.aws_bedrock.config import BedrockConfig
+from langtrace_python_sdk.instrumentation.aws_bedrock.streaming import StreamWrapper
 
 
 def traced_aws_bedrock_call(api_name: str, operation_name: str):
-    def decorator(method_name: str, version: str, tracer):
+    def decorator(method_name: str, version: str, tracer, config: BedrockConfig):
         def wrapper(original_method):
             @wraps(original_method)
             def wrapped_method(*args, **kwargs):
                 service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
 
-                input_content = [
-                    {
-                        'role': message.get('role', 'user'),
-                        'content': message.get('content', [])[0].get('text', "")
-                    }
-                    for message in kwargs.get('messages', [])
-                ]
-                
+                input_content = []
+                if config.trace_content:
+                    input_content = [
+                        {
+                            'role': message.get('role', 'user'),
+                            'content': message.get('content', [])[0].get('text', "")
+                        }
+                        for message in kwargs.get('messages', [])
+                    ]
+
                 span_attributes = {
                     **get_langtrace_attributes(version, service_provider, vendor_type="framework"),
                     **get_llm_request_attributes(kwargs, operation_name=operation_name, prompts=input_content),
@@ -65,13 +71,29 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
                     **get_extra_attributes(),
                 }
 
-                if api_name == "CONVERSE":
-                    span_attributes.update({
-                        SpanAttributes.LLM_REQUEST_MODEL: kwargs.get('modelId'),
-                        SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get('inferenceConfig', {}).get('maxTokens'),
-                        SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get('inferenceConfig', {}).get('temperature'),
-                        SpanAttributes.LLM_REQUEST_TOP_P: kwargs.get('inferenceConfig', {}).get('top_p'),
-                    })
+                if api_name == "CONVERSE" and config.vendor_specific_attributes:
+                    model_id = kwargs.get('modelId', '')
+                    inference_config = kwargs.get('inferenceConfig', {})
+                    additional_fields = kwargs.get('additionalModelRequestFields', {})
+
+                    vendor_attributes = {
+                        AWSBedrockAttributes.MODEL_ID: model_id,
+                        AWSBedrockAttributes.TEMPERATURE: inference_config.get('temperature'),
+                        AWSBedrockAttributes.TOP_P: inference_config.get('top_p'),
+                        AWSBedrockAttributes.MAX_TOKENS: inference_config.get('maxTokens'),
+                        AWSBedrockAttributes.STOP_SEQUENCES: inference_config.get('stopSequences'),
+                    }
+
+                    provider = next((v for k, v in MODEL_PROVIDERS.items() if k in model_id), None)
+                    if provider:
+                        if provider == "anthropic":
+                            vendor_attributes[AWSBedrockAttributes.ANTHROPIC_VERSION] = additional_fields.get('anthropic_version')
+                        elif provider == "cohere":
+                            vendor_attributes[AWSBedrockAttributes.COHERE_TRUNCATE] = additional_fields.get('truncate')
+                        elif provider == "ai21":
+                            vendor_attributes[AWSBedrockAttributes.AI21_PENALTY] = additional_fields.get('presencePenalty')
+
+                    span_attributes.update(vendor_attributes)
 
                 attributes = LLMSpanAttributes(**span_attributes)
 
@@ -83,7 +105,8 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
                     set_span_attributes(span, attributes)
                     try:
                         result = original_method(*args, **kwargs)
-                        _set_response_attributes(span, kwargs, result)
+                        if config.trace_content:
+                            _set_response_attributes(span, kwargs, result)
                         span.set_status(StatusCode.OK)
                         return result
                     except Exception as err:
@@ -99,13 +122,12 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
 converse = traced_aws_bedrock_call("CONVERSE", "converse")
 
 
-def converse_stream(original_method, version, tracer):
+def converse_stream(original_method, version, tracer, config: BedrockConfig):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
-        
+
         span_attributes = {
-            **get_langtrace_attributes
-            (version, service_provider, vendor_type="llm"),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["CONVERSE_STREAM"]["ENDPOINT"],
@@ -122,23 +144,43 @@ def converse_stream(original_method, version, tracer):
             set_span_attributes(span, attributes)
             try:
                 result = wrapped(*args, **kwargs)
-                _set_response_attributes(span, kwargs, result)
-                span.set_status(StatusCode.OK)
+
+                if config.stream_buffer_enabled:
+                    def on_stream_complete(buffer):
+                        if config.trace_content:
+                            _set_response_attributes(span, kwargs, buffer[-1] if buffer else None)
+
+                    return StreamWrapper(result, callback=on_stream_complete)
+
                 return result
             except Exception as err:
                 span.record_exception(err)
                 span.set_status(Status(StatusCode.ERROR, str(err)))
                 raise err
-            
+
     return traced_method
 
 
 @silently_fail
 def _set_response_attributes(span, kwargs, result):
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, kwargs.get('modelId'))
-    set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get('additionalModelRequestFields', {}).get('top_k'))
+    model_id = kwargs.get('modelId', '')
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model_id)
+
+    if hasattr(span, "_context") and getattr(span._context, "vendor_specific_attributes", True):
+        additional_fields = kwargs.get('additionalModelRequestFields', {})
+        set_span_attribute(span, AWSBedrockAttributes.TOP_K, additional_fields.get('top_k'))
+
+        provider = next((v for k, v in MODEL_PROVIDERS.items() if k in model_id), None)
+        if provider:
+            if provider == "anthropic":
+                set_span_attribute(
+                    span,
+                    AWSBedrockAttributes.ANTHROPIC_VERSION,
+                    additional_fields.get('anthropic_version')
+                )
+
     content = result.get('output', {}).get('message', {}).get('content', [])
-    if len(content) > 0:
+    if content:
         role = result.get('output', {}).get('message', {}).get('role', "assistant")
         responses = [
             {"role": role, "content": c.get('text', "")}
@@ -147,11 +189,9 @@ def _set_response_attributes(span, kwargs, result):
         set_event_completion(span, responses)
 
     if 'usage' in result:
-        set_span_attributes(
-            span,
-            {
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS: result['usage'].get('outputTokens'),
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS: result['usage'].get('inputTokens'),
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS: result['usage'].get('totalTokens'),
-            }
-        )
+        usage_attributes = {
+            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS: result['usage'].get('outputTokens'),
+            SpanAttributes.LLM_USAGE_PROMPT_TOKENS: result['usage'].get('inputTokens'),
+            SpanAttributes.LLM_USAGE_TOTAL_TOKENS: result['usage'].get('totalTokens'),
+        }
+        set_span_attributes(span, usage_attributes)

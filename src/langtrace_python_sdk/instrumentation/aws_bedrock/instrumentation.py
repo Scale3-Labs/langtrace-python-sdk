@@ -16,7 +16,7 @@ limitations under the License.
 
 import importlib.metadata
 import logging
-from typing import Collection
+from typing import Collection, Optional
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
@@ -25,19 +25,28 @@ from wrapt import wrap_function_wrapper as _W
 from langtrace_python_sdk.instrumentation.aws_bedrock.patch import (
     converse, converse_stream
 )
+from langtrace_python_sdk.instrumentation.aws_bedrock.config import BedrockConfig
 
 logging.basicConfig(level=logging.FATAL)
 
-def _patch_client(client, version: str, tracer) -> None:
-
+def _patch_client(client, version: str, tracer, config: BedrockConfig) -> None:
     # Store original methods
     original_converse = client.converse
+    original_converse_stream = client.converse_stream
 
     # Replace with wrapped versions
-    client.converse = converse("aws_bedrock.converse", version, tracer)(original_converse)
+    client.converse = converse("aws_bedrock.converse", version, tracer, config)(original_converse)
+    client.converse_stream = converse_stream(original_converse_stream, version, tracer, config)
 
 class AWSBedrockInstrumentation(BaseInstrumentor):
-    
+    def __init__(self):
+        super().__init__()
+        self._config = BedrockConfig()
+
+    @property
+    def config(self) -> BedrockConfig:
+        return self._config
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["boto3 >= 1.35.31"]
 
@@ -49,7 +58,7 @@ class AWSBedrockInstrumentation(BaseInstrumentor):
         def wrap_create_client(wrapped, instance, args, kwargs):
             result = wrapped(*args, **kwargs)
             if args and args[0] == 'bedrock-runtime':
-                _patch_client(result, version, tracer)
+                _patch_client(result, version, tracer, self._config)
             return result
 
         _W("boto3", "client", wrap_create_client)
