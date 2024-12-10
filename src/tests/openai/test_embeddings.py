@@ -1,11 +1,16 @@
 import pytest
+import httpx
+from openai import OpenAI
+from opentelemetry.trace import SpanKind, StatusCode
+from langtrace_python_sdk.constants.instrumentation.common import SpanAttributes
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
+from langtrace_python_sdk.instrumentation.openai import OpenAIInstrumentation
 from tests.utils import assert_token_count
 from importlib_metadata import version as v
-from langtrace.trace_attributes import SpanAttributes
-from openai import OpenAI
-import httpx
 
+# Initialize OpenAI instrumentation
+instrumentor = OpenAIInstrumentation()
+instrumentor.instrument()
 
 @pytest.mark.vcr()
 def test_embeddings_base_url(exporter, openai_client):
