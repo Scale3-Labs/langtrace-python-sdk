@@ -74,5 +74,5 @@ def test_embeddings_azure_provider(exporter, monkeypatch):
     embedding_span = spans[-1]
 
     attributes = embedding_span.attributes
-    assert attributes.get(SpanAttributes.LLM_URL) == "https://your-resource.azure.openai.com/v1"
+    assert attributes.get(SpanAttributes.LLM_URL) == "https://your-resource.azure.openai.com/v1/"
     assert attributes.get(SpanAttributes.LANGTRACE_SERVICE_NAME) == "Azure"
