@@ -20,8 +20,8 @@ ENABLED_EXAMPLES = {
     "vertexai": False,
     "gemini": False,
     "mistral": False,
-    "awsbedrock": False,
-    "cerebras": True,
+    "awsbedrock": True,
+    "cerebras": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
