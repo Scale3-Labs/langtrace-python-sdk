@@ -223,7 +223,7 @@ class CrewAISpanAttributes:
         for task in tasks:
             self.crew["tasks"].append(
                 {
-                    "agent": task.agent.role,
+                    "agent": task.agent.role if task.agent else None,
                     "description": task.description,
                     "async_execution": task.async_execution,
                     "expected_output": task.expected_output,
