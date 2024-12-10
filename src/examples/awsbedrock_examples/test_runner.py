@@ -1,11 +1,32 @@
 import os
 import json
-import boto3
-from unittest.mock import patch
+import pytest
+from typing import Dict, Iterator
+from unittest.mock import patch, MagicMock
+
 from langtrace_python_sdk import langtrace
 from examples.awsbedrock_examples.converse import use_converse, use_converse_stream
 
-def mock_invoke_model(*args, **kwargs):
+@pytest.fixture
+def mock_env():
+    """Provide mock environment variables for testing."""
+    with patch.dict(os.environ, {
+        "LANGTRACE_API_KEY": "test_key",
+        "AWS_ACCESS_KEY_ID": "test_aws_key",
+        "AWS_SECRET_ACCESS_KEY": "test_aws_secret"
+    }):
+        yield
+
+@pytest.fixture
+def mock_bedrock_client():
+    """Provide a mocked AWS Bedrock client."""
+    with patch("boto3.client") as mock_client:
+        mock_instance = mock_client.return_value
+        mock_instance.invoke_model.side_effect = mock_invoke_model
+        mock_instance.invoke_model_with_response_stream.side_effect = mock_invoke_model_with_response_stream
+        yield mock_instance
+
+def mock_invoke_model(*args, **kwargs) -> Dict:
     """Mock for standard completion with vendor attribute verification."""
     # Verify the request body contains all expected attributes
     body = json.loads(kwargs.get('body', '{}'))
@@ -19,19 +40,17 @@ def mock_invoke_model(*args, **kwargs):
     assert kwargs.get('modelId') == "anthropic.claude-3-haiku-20240307-v1:0", f"Incorrect modelId: {kwargs.get('modelId')}"
 
     mock_response = {
-        "completion": "Mocked response for testing with vendor attributes",
-        "stop_reason": "stop_sequence",
-        "usage": {
-            "input_tokens": 10,
-            "output_tokens": 20,
-            "total_tokens": 30
+        "output": {
+            "message": {
+                "content": [{"text": "Mocked response for testing with vendor attributes"}]
+            }
         }
     }
     return {
         'body': json.dumps(mock_response).encode()
     }
 
-def mock_invoke_model_with_response_stream(*args, **kwargs):
+def mock_invoke_model_with_response_stream(*args, **kwargs) -> Dict:
     """Mock for streaming completion with vendor attribute verification."""
     # Verify the request body contains all expected attributes
     body = json.loads(kwargs.get('body', '{}'))
@@ -48,55 +67,46 @@ def mock_invoke_model_with_response_stream(*args, **kwargs):
         {
             'chunk': {
                 'bytes': json.dumps({
-                    "completion": "Streaming chunk 1",
-                    "stop_reason": None
+                    "output": {
+                        "message": {
+                            "content": [{"text": "Streaming chunk 1"}]
+                        }
+                    }
                 }).encode()
             }
         },
         {
             'chunk': {
                 'bytes': json.dumps({
-                    "completion": "Streaming chunk 2",
-                    "stop_reason": "stop_sequence"
+                    "output": {
+                        "message": {
+                            "content": [{"text": "Streaming chunk 2"}]
+                        }
+                    }
                 }).encode()
             }
         }
     ]
     return {'body': chunks}
 
-def run_test():
-    """Run tests for both standard and streaming completion."""
-    # Initialize Langtrace with API key from environment
-    langtrace.init(api_key=os.environ["LANGTRACE_API_KEY"])
+@pytest.mark.usefixtures("mock_env")
+class TestAWSBedrock:
+    """Test suite for AWS Bedrock instrumentation."""
 
-    with patch("boto3.client") as mock_client:
-        mock_instance = mock_client.return_value
-        mock_instance.invoke_model = mock_invoke_model
-        mock_instance.invoke_model_with_response_stream = mock_invoke_model_with_response_stream
+    def test_standard_completion(self, mock_bedrock_client):
+        """Test standard completion with mocked AWS client."""
+        response = use_converse("Tell me about OpenTelemetry")
+        assert response is not None
+        content = response.get('output', {}).get('message', {}).get('content', [])
+        assert content, "Response content should not be empty"
+        assert isinstance(content[0].get('text'), str), "Response text should be a string"
 
-        print("\nTesting AWS Bedrock instrumentation...")
+    def test_streaming_completion(self, mock_bedrock_client):
+        """Test streaming completion with mocked AWS client."""
+        chunks = list(use_converse_stream("What is distributed tracing?"))
+        assert len(chunks) == 2, f"Expected 2 chunks, got {len(chunks)}"
 
-        try:
-            # Test standard completion
-            print("\nTesting standard completion...")
-            response = use_converse("Tell me about OpenTelemetry")
-            print(f"Standard completion response: {response}")
-            print("✓ Standard completion test passed with vendor attributes")
-
-            # Test streaming completion
-            print("\nTesting streaming completion...")
-            chunks = []
-            for chunk in use_converse_stream("What is distributed tracing?"):
-                chunks.append(chunk)
-                print(f"Streaming chunk: {chunk}")
-            assert len(chunks) == 2, f"Expected 2 chunks, got {len(chunks)}"
-            print(f"✓ Streaming completion test passed with {len(chunks)} chunks")
-
-            print("\n✓ All tests completed successfully!")
-        except AssertionError as e:
-            print(f"\n❌ Test failed: {str(e)}")
-            raise
-
-
-if __name__ == "__main__":
-    run_test()
+        for chunk in chunks:
+            content = chunk.get('output', {}).get('message', {}).get('content', [])
+            assert content, "Chunk content should not be empty"
+            assert isinstance(content[0].get('text'), str), "Chunk text should be a string"
