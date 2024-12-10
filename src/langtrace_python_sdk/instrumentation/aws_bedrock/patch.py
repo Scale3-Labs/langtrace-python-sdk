@@ -41,6 +41,7 @@ from langtrace_python_sdk.utils.llm import (
     set_span_attributes,
 )
 from langtrace_python_sdk.instrumentation.aws_bedrock.config import BedrockConfig
+from langtrace_python_sdk.instrumentation.aws_bedrock.streaming import StreamWrapper
 
 
 def traced_aws_bedrock_call(api_name: str, operation_name: str):
@@ -125,9 +126,14 @@ def converse_stream(original_method, version, tracer, config: BedrockConfig):
             set_span_attributes(span, attributes)
             try:
                 result = wrapped(*args, **kwargs)
-                if config.trace_content:
-                    _set_response_attributes(span, kwargs, result)
-                span.set_status(StatusCode.OK)
+
+                if config.stream_buffer_enabled:
+                    def on_stream_complete(buffer):
+                        if config.trace_content:
+                            _set_response_attributes(span, kwargs, buffer[-1] if buffer else None)
+
+                    return StreamWrapper(result, callback=on_stream_complete)
+
                 return result
             except Exception as err:
                 span.record_exception(err)
