@@ -162,11 +162,14 @@ def get_llm_url(instance):
 
 
 def get_base_url(instance):
-    return (
+    base_url = (
         str(instance._client._base_url)
         if hasattr(instance, "_client") and hasattr(instance._client, "_base_url")
         else ""
     )
+    print(f"Debug - get_base_url called with instance type: {type(instance)}")
+    print(f"Debug - get_base_url returning: {base_url}")
+    return base_url
 
 
 def is_streaming(kwargs):
