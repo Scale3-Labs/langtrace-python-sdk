@@ -342,8 +342,12 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["GROQ"]
         elif "x.ai" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -431,11 +435,22 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
         kwargs: EmbeddingsCreateKwargs,
     ) -> Any:
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        base_url = get_base_url(instance)
+        if "perplexity" in base_url:
+            service_provider = SERVICE_PROVIDERS["PPLX"]
+        elif "azure" in base_url:
+            service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in base_url:
+            service_provider = SERVICE_PROVIDERS["GROQ"]
+        elif "x.ai" in base_url:
+            service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in base_url:
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
-            **get_llm_url(instance),
+            SpanAttributes.LLM_URL: base_url,
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),  # type: ignore
@@ -507,10 +522,22 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
     ) -> Awaitable[Any]:
 
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        base_url = get_base_url(instance)
+        if "perplexity" in base_url:
+            service_provider = SERVICE_PROVIDERS["PPLX"]
+        elif "azure" in base_url:
+            service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in base_url:
+            service_provider = SERVICE_PROVIDERS["GROQ"]
+        elif "x.ai" in base_url:
+            service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in base_url:
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
+            SpanAttributes.LLM_URL: base_url,
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),  # type: ignore
