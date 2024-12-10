@@ -98,7 +98,7 @@ def generic_patch(
                 result = wrapped(*args, **kwargs)
                 if trace_output:
                     span.set_attribute("langchain.outputs", to_json_string(result))
-                    if hasattr(result, "usage_metadata"):
+                    if hasattr(result, "usage_metadata") and result.usage_metadata is not None:
                         span.set_attribute(
                             SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
                             result.usage_metadata["input_tokens"],
