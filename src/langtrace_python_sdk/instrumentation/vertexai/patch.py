@@ -77,7 +77,7 @@ def set_response_attributes(span: Span, result):
     if hasattr(result, "text"):
         set_event_completion(span, [{"role": "assistant", "content": result.text}])
 
-    if hasattr(result, "usage_metadata"):
+    if hasattr(result, "usage_metadata") and result.usage_metadata is not None:
         usage = result.usage_metadata
         input_tokens = usage.prompt_token_count
         output_tokens = usage.candidates_token_count
