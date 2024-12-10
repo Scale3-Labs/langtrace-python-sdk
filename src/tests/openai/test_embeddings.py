@@ -4,8 +4,7 @@ from tests.utils import assert_token_count
 from importlib_metadata import version as v
 from langtrace.trace_attributes import SpanAttributes
 from openai import OpenAI
-from openai.types.create_embedding_response import CreateEmbeddingResponse
-from typing import List, Dict, Any
+import httpx
 
 
 @pytest.mark.vcr()
@@ -27,16 +26,33 @@ def test_embeddings_base_url(exporter, openai_client):
 
 def test_embeddings_azure_provider(exporter, monkeypatch):
     # Mock response data
-    mock_response = CreateEmbeddingResponse(
-        data=[{"embedding": [0.1] * 1536, "index": 0, "object": "embedding"}],
-        model="text-embedding-ada-002",
-        object="list",
-        usage={"prompt_tokens": 5, "total_tokens": 5}
-    )
+    mock_response = {
+        "data": [{"embedding": [0.1] * 1536, "index": 0, "object": "embedding"}],
+        "model": "text-embedding-ada-002",
+        "object": "list",
+        "usage": {"prompt_tokens": 5, "total_tokens": 5}
+    }
 
-    # Create a mock create method
-    def mock_create(**kwargs) -> CreateEmbeddingResponse:
-        return mock_response
+    # Create a mock send method for the HTTP client
+    def mock_send(self, request, **kwargs):
+        # Create a proper request with headers
+        headers = {
+            "authorization": "Bearer test_api_key",
+            "content-type": "application/json",
+        }
+        request = httpx.Request(
+            method="POST",
+            url="https://your-resource.azure.openai.com/v1/embeddings",
+            headers=headers,
+        )
+
+        # Create response with proper context
+        return httpx.Response(
+            status_code=200,
+            content=b'{"data": [{"embedding": [0.1, 0.1], "index": 0, "object": "embedding"}], "model": "text-embedding-ada-002", "object": "list", "usage": {"prompt_tokens": 5, "total_tokens": 5}}',
+            request=request,
+            headers={"content-type": "application/json"}
+        )
 
     # Create Azure client
     azure_client = OpenAI(
@@ -44,8 +60,8 @@ def test_embeddings_azure_provider(exporter, monkeypatch):
         base_url="https://your-resource.azure.openai.com/v1",
     )
 
-    # Patch the create method
-    monkeypatch.setattr(azure_client.embeddings, "create", mock_create)
+    # Patch the HTTP client's send method
+    monkeypatch.setattr(httpx.Client, "send", mock_send)
 
     input_value = "Test input"
     kwargs = {
