@@ -16,7 +16,7 @@ limitations under the License.
 
 import importlib.metadata
 import logging
-from typing import Collection
+from typing import Collection, Optional
 
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
@@ -30,17 +30,22 @@ from langtrace_python_sdk.instrumentation.aws_bedrock.config import BedrockConfi
 logging.basicConfig(level=logging.FATAL)
 
 def _patch_client(client, version: str, tracer, config: BedrockConfig) -> None:
-
     # Store original methods
     original_converse = client.converse
+    original_converse_stream = client.converse_stream
 
     # Replace with wrapped versions
     client.converse = converse("aws_bedrock.converse", version, tracer, config)(original_converse)
+    client.converse_stream = converse_stream(original_converse_stream, version, tracer, config)
 
 class AWSBedrockInstrumentation(BaseInstrumentor):
     def __init__(self):
         super().__init__()
         self._config = BedrockConfig()
+
+    @property
+    def config(self) -> BedrockConfig:
+        return self._config
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["boto3 >= 1.35.31"]
