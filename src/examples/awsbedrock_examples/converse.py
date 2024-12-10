@@ -1,18 +1,31 @@
 import os
 import json
 import boto3
-from typing import Dict, Iterator
+from typing import Dict, Iterator, Optional
 
 from opentelemetry import trace
 from langtrace_python_sdk import langtrace
 from langtrace_python_sdk.instrumentation.aws_bedrock import AWSBedrockInstrumentation
 
-# Initialize instrumentation
-AWSBedrockInstrumentation().instrument()
-langtrace.init(api_key=os.environ["LANGTRACE_API_KEY"])
+def initialize_sdk() -> None:
+    """Initialize the SDK if API key is available."""
+    try:
+        api_key = os.environ.get("LANGTRACE_API_KEY")
+        if not api_key:
+            print("Warning: LANGTRACE_API_KEY not found in environment")
+            return
+        langtrace.init(api_key=api_key)
+        # Initialize instrumentation
+        AWSBedrockInstrumentation().instrument()
+    except Exception as e:
+        print(f"Warning: Failed to initialize SDK: {e}")
 
 def get_bedrock_client():
     """Create an instrumented AWS Bedrock client."""
+    # Check for required AWS credentials
+    if not os.environ.get("AWS_ACCESS_KEY_ID") or not os.environ.get("AWS_SECRET_ACCESS_KEY"):
+        raise ValueError("AWS credentials not found in environment")
+
     return boto3.client(
         "bedrock-runtime",
         region_name="us-east-1",
@@ -21,12 +34,13 @@ def get_bedrock_client():
     )
 
 @trace.get_tracer(__name__).start_as_current_span("bedrock_converse")
-def use_converse(input_text: str) -> Dict:
+def use_converse(input_text: str) -> Optional[Dict]:
     """Example of standard completion request with vendor attributes."""
-    client = get_bedrock_client()
-    model_id = "anthropic.claude-3-haiku-20240307-v1:0"
-
+    initialize_sdk()
     try:
+        client = get_bedrock_client()
+        model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+
         response = client.invoke_model(
             modelId=model_id,
             body=json.dumps({
@@ -51,15 +65,16 @@ def use_converse(input_text: str) -> Dict:
         return json.loads(content)
     except Exception as e:
         print(f"ERROR: Can't invoke '{model_id}'. Reason: {e}")
-        raise
+        return None
 
 @trace.get_tracer(__name__).start_as_current_span("bedrock_converse_stream")
 def use_converse_stream(input_text: str) -> Iterator[Dict]:
     """Example of streaming completion with vendor attributes."""
-    client = get_bedrock_client()
-    model_id = "anthropic.claude-3-haiku-20240307-v1:0"
-
+    initialize_sdk()
     try:
+        client = get_bedrock_client()
+        model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+
         response = client.invoke_model_with_response_stream(
             modelId=model_id,
             body=json.dumps({
