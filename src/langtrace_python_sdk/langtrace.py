@@ -98,6 +98,7 @@ class LangtraceConfig:
             or os.environ.get("LANGTRACE_HEADERS")
             or os.environ.get("OTEL_EXPORTER_OTLP_HEADERS")
         )
+        self.session_id = kwargs.get("session_id") or os.environ.get("LANGTRACE_SESSION_ID")
 
 
 def get_host(config: LangtraceConfig) -> str:
