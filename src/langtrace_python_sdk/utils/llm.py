@@ -124,22 +124,44 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
     tools = kwargs.get("tools", None)
     tool_choice = kwargs.get("tool_choice", None)
+
+    # Convert numeric values to strings
+    seed = kwargs.get("seed")
+    if seed is not None:
+        seed = str(seed)
+
+    temperature = kwargs.get("temperature")
+    if temperature is not None:
+        temperature = str(temperature)
+
+    max_tokens = kwargs.get("max_tokens")
+    if max_tokens is not None:
+        max_tokens = str(max_tokens)
+
+    presence_penalty = kwargs.get("presence_penalty")
+    if presence_penalty is not None:
+        presence_penalty = str(presence_penalty)
+
+    frequency_penalty = kwargs.get("frequency_penalty")
+    if frequency_penalty is not None:
+        frequency_penalty = str(frequency_penalty)
+
     return {
         SpanAttributes.LLM_OPERATION_NAME: operation_name,
         SpanAttributes.LLM_REQUEST_MODEL: model
         or kwargs.get("model")
         or "gpt-3.5-turbo",
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
-        SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
+        SpanAttributes.LLM_REQUEST_TEMPERATURE: temperature,
         SpanAttributes.LLM_TOP_K: top_k,
         SpanAttributes.LLM_PROMPTS: json.dumps(prompts) if prompts else None,
         SpanAttributes.LLM_USER: user,
         SpanAttributes.LLM_REQUEST_TOP_P: top_p,
-        SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get("max_tokens"),
+        SpanAttributes.LLM_REQUEST_MAX_TOKENS: max_tokens,
         SpanAttributes.LLM_SYSTEM_FINGERPRINT: kwargs.get("system_fingerprint"),
-        SpanAttributes.LLM_PRESENCE_PENALTY: kwargs.get("presence_penalty"),
-        SpanAttributes.LLM_FREQUENCY_PENALTY: kwargs.get("frequency_penalty"),
-        SpanAttributes.LLM_REQUEST_SEED: kwargs.get("seed"),
+        SpanAttributes.LLM_PRESENCE_PENALTY: presence_penalty,
+        SpanAttributes.LLM_FREQUENCY_PENALTY: frequency_penalty,
+        SpanAttributes.LLM_REQUEST_SEED: seed,
         SpanAttributes.LLM_TOOLS: json.dumps(tools) if tools else None,
         SpanAttributes.LLM_TOOL_CHOICE: (
             json.dumps(tool_choice) if tool_choice else None
