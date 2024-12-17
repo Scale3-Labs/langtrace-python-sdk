@@ -394,8 +394,19 @@ class StreamWrapper:
         if hasattr(chunk, "text") and chunk.text is not None:
             content = [chunk.text]
 
+        # CohereV2
+        if (hasattr(chunk, "delta") and
+            chunk.delta is not None and
+            hasattr(chunk.delta, "message") and
+            chunk.delta.message is not None and
+            hasattr(chunk.delta.message, "content") and
+            chunk.delta.message.content is not None and
+            hasattr(chunk.delta.message.content, "text") and
+            chunk.delta.message.content.text is not None):
+            content = [chunk.delta.message.content.text]
+
         # Anthropic
-        if hasattr(chunk, "delta") and chunk.delta is not None:
+        if hasattr(chunk, "delta") and chunk.delta is not None and not hasattr(chunk.delta, "message"):
             content = [chunk.delta.text] if hasattr(chunk.delta, "text") else []
 
         if isinstance(chunk, dict):
@@ -409,7 +420,17 @@ class StreamWrapper:
 
         # Anthropic & OpenAI
         if hasattr(chunk, "type") and chunk.type == "message_start":
-            self.prompt_tokens = chunk.message.usage.input_tokens
+            if hasattr(chunk.message, "usage") and chunk.message.usage is not None:
+                self.prompt_tokens = chunk.message.usage.input_tokens
+
+        # CohereV2
+        if hasattr(chunk, "type") and chunk.type == "message-end":
+            if (hasattr(chunk, "delta") and chunk.delta is not None and
+                hasattr(chunk.delta, "usage") and chunk.delta.usage is not None and
+                hasattr(chunk.delta.usage, "billed_units") and chunk.delta.usage.billed_units is not None):
+                usage = chunk.delta.usage.billed_units
+                self.completion_tokens = int(usage.output_tokens)
+                self.prompt_tokens = int(usage.input_tokens)
 
         if hasattr(chunk, "usage") and chunk.usage is not None:
             if hasattr(chunk.usage, "output_tokens"):
