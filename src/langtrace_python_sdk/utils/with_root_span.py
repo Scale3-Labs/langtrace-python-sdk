@@ -61,11 +61,6 @@ def with_langtrace_root_span(
                 span_id = str(span.get_span_context().span_id)
                 trace_id = str(span.get_span_context().trace_id)
 
-                # Attach session ID if available
-                session_id = os.environ.get("LANGTRACE_SESSION_ID")
-                if session_id:
-                    span.set_attribute("session.id", session_id)
-
                 if (
                     "span_id" in func.__code__.co_varnames
                     and "trace_id" in func.__code__.co_varnames
@@ -87,12 +82,6 @@ def with_langtrace_root_span(
             ) as span:
                 span_id = span.get_span_context().span_id
                 trace_id = span.get_span_context().trace_id
-
-                # Attach session ID if available
-                session_id = os.environ.get("LANGTRACE_SESSION_ID")
-                if session_id:
-                    span.set_attribute("session.id", session_id)
-
                 if (
                     "span_id" in func.__code__.co_varnames
                     and "trace_id" in func.__code__.co_varnames
