@@ -24,6 +24,7 @@ from langtrace_python_sdk.utils.llm import (
     get_span_name,
     set_event_completion,
     set_usage_attributes,
+    StreamWrapper
 )
 from langtrace.trace_attributes import Event, LLMSpanAttributes
 from langtrace_python_sdk.utils import set_span_attribute
@@ -38,7 +39,7 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from langtrace.trace_attributes import SpanAttributes
 
 
-def rerank(original_method, version, tracer):
+def rerank(original_method, version, tracer, v2=False):
     """Wrap the `rerank` method."""
 
     def traced_method(wrapped, instance, args, kwargs):
@@ -49,8 +50,8 @@ def rerank(original_method, version, tracer):
             **get_llm_request_attributes(kwargs, operation_name="rerank"),
             **get_llm_url(instance),
             SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
-            SpanAttributes.LLM_URL: APIS["RERANK"]["URL"],
-            SpanAttributes.LLM_PATH: APIS["RERANK"]["ENDPOINT"],
+            SpanAttributes.LLM_URL: APIS["RERANK" if not v2 else "RERANK_V2"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["RERANK" if not v2 else "RERANK_V2"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DOCUMENTS: json.dumps(
                 kwargs.get("documents"), cls=datetime_encoder
             ),
@@ -61,7 +62,7 @@ def rerank(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            name=get_span_name(APIS["RERANK"]["METHOD"]), kind=SpanKind.CLIENT
+            name=get_span_name(APIS["RERANK" if not v2 else "RERANK_V2"]["METHOD"]), kind=SpanKind.CLIENT
         )
         for field, value in attributes.model_dump(by_alias=True).items():
             set_span_attribute(span, field, value)
@@ -119,7 +120,7 @@ def rerank(original_method, version, tracer):
     return traced_method
 
 
-def embed(original_method, version, tracer):
+def embed(original_method, version, tracer, v2=False):
     """Wrap the `embed` method."""
 
     def traced_method(wrapped, instance, args, kwargs):
@@ -129,8 +130,8 @@ def embed(original_method, version, tracer):
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
             **get_llm_url(instance),
-            SpanAttributes.LLM_URL: APIS["EMBED"]["URL"],
-            SpanAttributes.LLM_PATH: APIS["EMBED"]["ENDPOINT"],
+            SpanAttributes.LLM_URL: APIS["EMBED" if not v2 else "EMBED_V2"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["EMBED" if not v2 else "EMBED_V2"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS: json.dumps(
                 kwargs.get("texts")
             ),
@@ -143,7 +144,7 @@ def embed(original_method, version, tracer):
         attributes = LLMSpanAttributes(**span_attributes)
 
         span = tracer.start_span(
-            name=get_span_name(APIS["EMBED"]["METHOD"]),
+            name=get_span_name(APIS["EMBED" if not v2 else "EMBED_V2"]["METHOD"]),
             kind=SpanKind.CLIENT,
         )
         for field, value in attributes.model_dump(by_alias=True).items():
@@ -332,6 +333,103 @@ def chat_create(original_method, version, tracer):
                 return result
             else:
                 # For older version, stream was passed as a parameter
+                return result
+
+        except Exception as error:
+            span.record_exception(error)
+            span.set_status(Status(StatusCode.ERROR, str(error)))
+            span.end()
+            raise
+
+    return traced_method
+
+
+def chat_create_v2(original_method, version, tracer, stream=False):
+    """Wrap the `chat_create` method for Cohere API v2."""
+
+    def traced_method(wrapped, instance, args, kwargs):
+        service_provider = SERVICE_PROVIDERS["COHERE"]
+        
+        messages = kwargs.get("messages", [])
+        if kwargs.get("preamble"):
+            messages = [{"role": "system", "content": kwargs["preamble"]}] + messages
+
+        span_attributes = {
+            **get_langtrace_attributes(version, service_provider),
+            **get_llm_request_attributes(kwargs, prompts=messages),
+            **get_llm_url(instance),
+            SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("model") or "command-r-plus",
+            SpanAttributes.LLM_URL: APIS["CHAT_CREATE_V2"]["URL"],
+            SpanAttributes.LLM_PATH: APIS["CHAT_CREATE_V2"]["ENDPOINT"],
+            **get_extra_attributes(),
+        }
+
+        attributes = LLMSpanAttributes(**span_attributes)
+
+        for attr_name in ["max_input_tokens", "conversation_id", "connectors", "tools", "tool_results"]:
+            value = kwargs.get(attr_name)
+            if value is not None:
+                if attr_name == "max_input_tokens":
+                    attributes.llm_max_input_tokens = str(value)
+                elif attr_name == "conversation_id":
+                    attributes.conversation_id = value
+                else:
+                    setattr(attributes, f"llm_{attr_name}", json.dumps(value))
+
+        span = tracer.start_span(
+            name=get_span_name(APIS["CHAT_CREATE_V2"]["METHOD"]), 
+            kind=SpanKind.CLIENT
+        )
+
+        for field, value in attributes.model_dump(by_alias=True).items():
+            set_span_attribute(span, field, value)
+
+        try:
+            result = wrapped(*args, **kwargs)
+
+            if stream:
+                return StreamWrapper(
+                    result,
+                    span,
+                    tool_calls=kwargs.get("tools") is not None,
+                )
+            else:
+                if hasattr(result, "id") and result.id is not None:
+                    span.set_attribute(SpanAttributes.LLM_GENERATION_ID, result.id)
+                    span.set_attribute(SpanAttributes.LLM_RESPONSE_ID, result.id)
+
+                if (hasattr(result, "message") and 
+                    hasattr(result.message, "content") and 
+                    len(result.message.content) > 0 and
+                    hasattr(result.message.content[0], "text") and
+                    result.message.content[0].text is not None and
+                    result.message.content[0].text != ""):
+                    responses = [{
+                        "role": result.message.role,
+                        "content": result.message.content[0].text
+                    }]
+                    set_event_completion(span, responses)
+                if hasattr(result, "tool_calls") and result.tool_calls is not None:
+                    tool_calls = [tool_call.json() for tool_call in result.tool_calls]
+                    span.set_attribute(
+                        SpanAttributes.LLM_TOOL_RESULTS,
+                        json.dumps(tool_calls)
+                    )
+                if hasattr(result, "usage") and result.usage is not None:
+                    if (hasattr(result.usage, "billed_units") and 
+                        result.usage.billed_units is not None):
+                        usage = result.usage.billed_units
+                        for metric, value in {
+                            "input": usage.input_tokens or 0,
+                            "output": usage.output_tokens or 0,
+                            "total": (usage.input_tokens or 0) + (usage.output_tokens or 0),
+                        }.items():
+                            span.set_attribute(
+                                f"gen_ai.usage.{metric}_tokens",
+                                int(value)
+                            )
+                span.set_status(StatusCode.OK)
+                span.end()
                 return result
 
         except Exception as error:

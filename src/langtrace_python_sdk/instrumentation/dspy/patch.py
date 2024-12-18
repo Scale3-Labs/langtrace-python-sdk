@@ -50,7 +50,7 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
                     ),
                 }
                 span_attributes["dspy.optimizer.module.prog"] = json.dumps(prog)
-        if hasattr(instance, "metric"):
+        if hasattr(instance, "metric") and getattr(instance, "metric") is not None:
             span_attributes["dspy.optimizer.metric"] = getattr(
                 instance, "metric"
             ).__name__

@@ -9,6 +9,7 @@ from opentelemetry.trace.span import format_trace_id
 
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
+    LANGTRACE_SESSION_ID_HEADER,
 )
 from colorama import Fore
 from requests.exceptions import RequestException
@@ -51,12 +52,14 @@ class LangTraceExporter(SpanExporter):
     api_key: str
     api_host: str
     disable_logging: bool
+    session_id: str
 
     def __init__(
         self,
         api_host,
         api_key: str = None,
         disable_logging: bool = False,
+        session_id: str = None,
     ) -> None:
         self.api_key = api_key or os.environ.get("LANGTRACE_API_KEY")
         self.api_host = (
@@ -65,6 +68,7 @@ class LangTraceExporter(SpanExporter):
             else api_host
         )
         self.disable_logging = disable_logging
+        self.session_id = session_id or os.environ.get("LANGTRACE_SESSION_ID")
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         """
@@ -81,6 +85,10 @@ class LangTraceExporter(SpanExporter):
             "x-api-key": self.api_key,
             "User-Agent": "LangtraceExporter",
         }
+
+        # Add session ID if available
+        if self.session_id:
+            headers[LANGTRACE_SESSION_ID_HEADER] = self.session_id
 
         # Check if the OTEL_EXPORTER_OTLP_HEADERS environment variable is set
         otel_headers = os.getenv("OTEL_EXPORTER_OTLP_HEADERS", None)
