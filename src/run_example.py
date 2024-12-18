@@ -4,7 +4,7 @@ ENABLED_EXAMPLES = {
     "anthropic": False,
     "azureopenai": False,
     "chroma": False,
-    "cohere": False,
+    "cohere": True,
     "fastapi": False,
     "langchain": False,
     "llamaindex": False,
@@ -21,7 +21,7 @@ ENABLED_EXAMPLES = {
     "gemini": False,
     "mistral": False,
     "awsbedrock": False,
-    "cerebras": True,
+    "cerebras": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
