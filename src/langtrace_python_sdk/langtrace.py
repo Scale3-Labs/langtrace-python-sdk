@@ -99,7 +99,9 @@ class LangtraceConfig:
             or os.environ.get("LANGTRACE_HEADERS")
             or os.environ.get("OTEL_EXPORTER_OTLP_HEADERS")
         )
-        self.session_id = kwargs.get("session_id") or os.environ.get("LANGTRACE_SESSION_ID")
+        self.session_id = kwargs.get("session_id") or os.environ.get(
+            "LANGTRACE_SESSION_ID"
+        )
 
 
 def get_host(config: LangtraceConfig) -> str:
@@ -156,9 +158,16 @@ def get_exporter(config: LangtraceConfig, host: str):
         return config.custom_remote_exporter
 
     headers = get_headers(config)
-    host = f"{host}/api/trace" if host == LANGTRACE_REMOTE_URL else host
-    if "http" in host.lower() or "https" in host.lower():
-        return HTTPExporter(endpoint=host, headers=headers)
+    exporter_protocol = os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "http")
+    if "http" in exporter_protocol.lower():
+        return HTTPExporter(
+            endpoint=(
+                f"{host}/api/trace"
+                if host == LANGTRACE_REMOTE_URL
+                else f"{host}/v1/traces"
+            ),
+            headers=headers,
+        )
     else:
         return GRPCExporter(endpoint=host, headers=headers)
 
