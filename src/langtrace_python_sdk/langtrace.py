@@ -39,6 +39,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
 )
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
     LANGTRACE_REMOTE_URL,
+    LANGTRACE_SESSION_ID_HEADER,
 )
 from langtrace_python_sdk.instrumentation import (
     AnthropicInstrumentation,
@@ -98,6 +99,9 @@ class LangtraceConfig:
             or os.environ.get("LANGTRACE_HEADERS")
             or os.environ.get("OTEL_EXPORTER_OTLP_HEADERS")
         )
+        self.session_id = kwargs.get("session_id") or os.environ.get(
+            "LANGTRACE_SESSION_ID"
+        )
 
 
 def get_host(config: LangtraceConfig) -> str:
@@ -134,15 +138,19 @@ def setup_tracer_provider(config: LangtraceConfig, host: str) -> TracerProvider:
 
 
 def get_headers(config: LangtraceConfig):
-    if not config.headers:
-        return {
-            "x-api-key": config.api_key,
-        }
+    headers = {
+        "x-api-key": config.api_key,
+    }
+
+    if config.session_id:
+        headers[LANGTRACE_SESSION_ID_HEADER] = config.session_id
 
     if isinstance(config.headers, str):
-        return parse_env_headers(config.headers, liberal=True)
+        headers.update(parse_env_headers(config.headers, liberal=True))
+    elif config.headers:
+        headers.update(config.headers)
 
-    return config.headers
+    return headers
 
 
 def get_exporter(config: LangtraceConfig, host: str):
@@ -150,9 +158,16 @@ def get_exporter(config: LangtraceConfig, host: str):
         return config.custom_remote_exporter
 
     headers = get_headers(config)
-    host = f"{host}/api/trace" if host == LANGTRACE_REMOTE_URL else host
-    if "http" in host.lower() or "https" in host.lower():
-        return HTTPExporter(endpoint=host, headers=headers)
+    exporter_protocol = os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "http")
+    if "http" in exporter_protocol.lower():
+        return HTTPExporter(
+            endpoint=(
+                f"{host}/api/trace"
+                if host == LANGTRACE_REMOTE_URL
+                else f"{host}/v1/traces"
+            ),
+            headers=headers,
+        )
     else:
         return GRPCExporter(endpoint=host, headers=headers)
 
@@ -215,6 +230,7 @@ def init(
     service_name: Optional[str] = None,
     disable_logging: bool = False,
     headers: Dict[str, str] = {},
+    session_id: Optional[str] = None,
 ):
 
     check_if_sdk_is_outdated()
@@ -229,6 +245,7 @@ def init(
         service_name=service_name,
         disable_logging=disable_logging,
         headers=headers,
+        session_id=session_id,
     )
 
     if config.disable_logging:
