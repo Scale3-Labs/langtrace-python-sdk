@@ -156,8 +156,10 @@ def get_headers(config: LangtraceConfig):
 def append_api_path(host: str):
     if host == LANGTRACE_REMOTE_URL:
         return f"{host}/api/trace"
-    if "localhost" in host:
+
+    if "/api/trace" in host:
         return host
+
     return f"{host}/v1/traces"
 
 
