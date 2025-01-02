@@ -153,6 +153,14 @@ def get_headers(config: LangtraceConfig):
     return headers
 
 
+def append_api_path(host: str):
+    if host == LANGTRACE_REMOTE_URL:
+        return f"{host}/api/trace"
+    if "localhost" in host:
+        return host
+    return f"{host}/v1/traces"
+
+
 def get_exporter(config: LangtraceConfig, host: str):
     if config.custom_remote_exporter:
         return config.custom_remote_exporter
@@ -160,14 +168,8 @@ def get_exporter(config: LangtraceConfig, host: str):
     headers = get_headers(config)
     exporter_protocol = os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "http")
     if "http" in exporter_protocol.lower():
-        return HTTPExporter(
-            endpoint=(
-                f"{host}/api/trace"
-                if host == LANGTRACE_REMOTE_URL
-                else f"{host}/v1/traces"
-            ),
-            headers=headers,
-        )
+        host = append_api_path(host)
+        return HTTPExporter(endpoint=host, headers=headers)
     else:
         return GRPCExporter(endpoint=host, headers=headers)
 
