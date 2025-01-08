@@ -92,13 +92,16 @@ def patch_generate_reply(name, version, tracer: Tracer):
                 set_span_attributes(span, attributes)
                 set_event_completion(span, [{"role": "assistant", "content": result}])
                 if llm_config:
-                    total_cost, response_model = list(instance.get_total_usage().keys())
-                    set_span_attribute(
-                        span, SpanAttributes.LLM_RESPONSE_MODEL, response_model
-                    )
-                    set_usage_attributes(
-                        span, instance.get_total_usage().get(response_model)
-                    )
+                    if instance.get_total_usage() is not None:
+                        total_cost, response_model = list(
+                            instance.get_total_usage().keys()
+                        )
+                        set_span_attribute(
+                            span, SpanAttributes.LLM_RESPONSE_MODEL, response_model
+                        )
+                        set_usage_attributes(
+                            span, instance.get_total_usage().get(response_model)
+                        )
 
                 return result
 
