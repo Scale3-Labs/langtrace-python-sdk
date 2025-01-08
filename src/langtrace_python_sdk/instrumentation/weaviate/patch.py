@@ -49,7 +49,9 @@ METADATA_ATTRIBUTES = [
 def extract_inputs(args, kwargs):
     extracted_params = {}
     kwargs_without_properties = {
-        k: v for k, v in kwargs.items() if k not in ["properties", "fusion_type", "filters"]
+        k: v
+        for k, v in kwargs.items()
+        if k not in ["properties", "fusion_type", "filters"]
     }
     extracted_params.update(extract_input_params(args, kwargs_without_properties))
     if kwargs.get("filters", None):
@@ -94,7 +96,7 @@ def aggregate_responses(result):
         # For single object responses
         all_responses = get_response_object_attributes(result)
 
-    return json.dumps(all_responses)
+    return json.dumps(all_responses, default=str)
 
 
 def get_response_object_attributes(response_object):
