@@ -48,30 +48,42 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
             @wraps(original_method)
             def wrapped_method(*args, **kwargs):
                 service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
-
+                print("Here's the kwargs: ", kwargs)
                 input_content = [
                     {
-                        'role': message.get('role', 'user'),
-                        'content': message.get('content', [])[0].get('text', "")
+                        "role": message.get("role", "user"),
+                        "content": message.get("content", [])[0].get("text", ""),
                     }
-                    for message in kwargs.get('messages', [])
+                    for message in kwargs.get("messages", [])
                 ]
-                
+
                 span_attributes = {
-                    **get_langtrace_attributes(version, service_provider, vendor_type="framework"),
-                    **get_llm_request_attributes(kwargs, operation_name=operation_name, prompts=input_content),
+                    **get_langtrace_attributes(
+                        version, service_provider, vendor_type="framework"
+                    ),
+                    **get_llm_request_attributes(
+                        kwargs, operation_name=operation_name, prompts=input_content
+                    ),
                     **get_llm_url(args[0] if args else None),
                     SpanAttributes.LLM_PATH: APIS[api_name]["ENDPOINT"],
                     **get_extra_attributes(),
                 }
 
                 if api_name == "CONVERSE":
-                    span_attributes.update({
-                        SpanAttributes.LLM_REQUEST_MODEL: kwargs.get('modelId'),
-                        SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get('inferenceConfig', {}).get('maxTokens'),
-                        SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get('inferenceConfig', {}).get('temperature'),
-                        SpanAttributes.LLM_REQUEST_TOP_P: kwargs.get('inferenceConfig', {}).get('top_p'),
-                    })
+                    span_attributes.update(
+                        {
+                            SpanAttributes.LLM_REQUEST_MODEL: kwargs.get("modelId"),
+                            SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get(
+                                "inferenceConfig", {}
+                            ).get("maxTokens"),
+                            SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get(
+                                "inferenceConfig", {}
+                            ).get("temperature"),
+                            SpanAttributes.LLM_REQUEST_TOP_P: kwargs.get(
+                                "inferenceConfig", {}
+                            ).get("top_p"),
+                        }
+                    )
 
                 attributes = LLMSpanAttributes(**span_attributes)
 
@@ -92,20 +104,22 @@ def traced_aws_bedrock_call(api_name: str, operation_name: str):
                         raise err
 
             return wrapped_method
+
         return wrapper
+
     return decorator
 
 
 converse = traced_aws_bedrock_call("CONVERSE", "converse")
+invoke_model = traced_aws_bedrock_call("INVOKE_MODEL", "invoke_model")
 
 
 def converse_stream(original_method, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
-        
+
         span_attributes = {
-            **get_langtrace_attributes
-            (version, service_provider, vendor_type="llm"),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["CONVERSE_STREAM"]["ENDPOINT"],
@@ -129,29 +143,87 @@ def converse_stream(original_method, version, tracer):
                 span.record_exception(err)
                 span.set_status(Status(StatusCode.ERROR, str(err)))
                 raise err
-            
+
     return traced_method
 
 
 @silently_fail
 def _set_response_attributes(span, kwargs, result):
-    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, kwargs.get('modelId'))
-    set_span_attribute(span, SpanAttributes.LLM_TOP_K, kwargs.get('additionalModelRequestFields', {}).get('top_k'))
-    content = result.get('output', {}).get('message', {}).get('content', [])
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, kwargs.get("modelId"))
+    set_span_attribute(
+        span,
+        SpanAttributes.LLM_TOP_K,
+        kwargs.get("additionalModelRequestFields", {}).get("top_k"),
+    )
+    content = result.get("output", {}).get("message", {}).get("content", [])
     if len(content) > 0:
-        role = result.get('output', {}).get('message', {}).get('role', "assistant")
-        responses = [
-            {"role": role, "content": c.get('text', "")}
-            for c in content
-        ]
+        role = result.get("output", {}).get("message", {}).get("role", "assistant")
+        responses = [{"role": role, "content": c.get("text", "")} for c in content]
         set_event_completion(span, responses)
 
-    if 'usage' in result:
+    if "usage" in result:
         set_span_attributes(
             span,
             {
-                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS: result['usage'].get('outputTokens'),
-                SpanAttributes.LLM_USAGE_PROMPT_TOKENS: result['usage'].get('inputTokens'),
-                SpanAttributes.LLM_USAGE_TOTAL_TOKENS: result['usage'].get('totalTokens'),
-            }
+                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS: result["usage"].get(
+                    "outputTokens"
+                ),
+                SpanAttributes.LLM_USAGE_PROMPT_TOKENS: result["usage"].get(
+                    "inputTokens"
+                ),
+                SpanAttributes.LLM_USAGE_TOTAL_TOKENS: result["usage"].get(
+                    "totalTokens"
+                ),
+            },
         )
+
+
+def patch_aws_bedrock(tracer, version):
+    def traced_method(wrapped, instance, args, kwargs):
+        if args and args[0] != "bedrock-runtime":
+            return
+
+        client = wrapped(*args, **kwargs)
+        print("Here's the client: ", client)
+        client.invoke_model = patch_invoke_model(client.invoke_model, tracer, version)
+        client.invoke_model_with_response_stream = patch_invoke_model(
+            client.invoke_model_with_response_stream, tracer, version
+        )
+        client.converse = patch_invoke_model(client.converse, tracer, version)
+        client.converse_stream = patch_invoke_model(
+            client.converse_stream, tracer, version
+        )
+        return client
+
+    return traced_method
+
+
+def patch_invoke_model(original_method, tracer, version):
+    def traced_method(*args, **kwargs):
+        service_provider = SERVICE_PROVIDERS["AWS_BEDROCK"]
+        span_attributes = {
+            **get_langtrace_attributes(
+                version, service_provider, vendor_type="framework"
+            ),
+            **get_extra_attributes(),
+        }
+        with tracer.start_as_current_span(
+            name=get_span_name("aws_bedrock.invoke_model"),
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
+        ) as span:
+            set_span_attributes(span, span_attributes)
+            set_invoke_model_attributes(span, kwargs)
+            response = original_method(*args, **kwargs)
+            return response
+
+    return traced_method
+
+
+def set_invoke_model_attributes(span, kwargs):
+    modelId = kwargs.get("modelId")
+    (vendor, model_name) = modelId.split(".")
+    
+    print("Here's the vendor: ", vendor)
+    print("Here's the model_name: ", model_name)
+    print("Here's the kwargs: ", kwargs)
