@@ -20,16 +20,16 @@ async def async_demo():
 
 def basic():
     generate()
-    generate(stream=True, with_tools=True)
+    # generate(stream=True, with_tools=True)
 
     # image_to_text()
     # audio_to_text()
-    asyncio.run(async_demo())
+    # asyncio.run(async_demo())
 
 
 def generate(stream=False, with_tools=False):
     model = genai.GenerativeModel(
-        "gemini-1.5-pro", system_instruction="You are a cat. Your name is Neko."
+        "gemini-2.0-flash-exp", system_instruction="You are a cat. Your name is Neko."
     )
 
     response = model.generate_content(
