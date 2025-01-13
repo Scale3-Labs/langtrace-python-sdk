@@ -11,7 +11,6 @@ from langtrace_python_sdk.utils import handle_span_error
 from opentelemetry.trace import Tracer, SpanKind
 from opentelemetry.sdk.trace import Span
 from langtrace.trace_attributes import SpanAttributes
-from google.genai.types import GenerateContentResponse
 
 from typing import Iterator
 
@@ -72,9 +71,7 @@ def patch_google_genai_streaming(tracer: Tracer, version: str):
     return traced_method
 
 
-def set_streaming_response_attributes(
-    span: Span, response: Iterator[GenerateContentResponse]
-):
+def set_streaming_response_attributes(span: Span, response):
     accum_completion = ""
     for chunk in response:
         set_span_attribute(
@@ -103,7 +100,7 @@ def set_streaming_response_attributes(
     set_event_completion(span, [{"role": "assistant", "content": accum_completion}])
 
 
-def set_response_attributes(span: Span, response: GenerateContentResponse):
+def set_response_attributes(span: Span, response):
     completions = []
     for candidate in response.candidates:
         set_span_attribute(
