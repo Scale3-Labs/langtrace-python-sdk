@@ -22,12 +22,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
 
-from langtrace_python_sdk.instrumentation.aws_bedrock.patch import (
-    converse,
-    invoke_model,
-    converse_stream,
-    patch_aws_bedrock,
-)
+from langtrace_python_sdk.instrumentation.aws_bedrock.patch import patch_aws_bedrock
 
 logging.basicConfig(level=logging.FATAL)
 
