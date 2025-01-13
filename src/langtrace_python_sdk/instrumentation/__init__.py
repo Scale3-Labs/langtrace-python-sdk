@@ -24,6 +24,7 @@ from .litellm import LiteLLMInstrumentation
 from .pymongo import PyMongoInstrumentation
 from .cerebras import CerebrasInstrumentation
 from .milvus import MilvusInstrumentation
+from .google_genai import GoogleGenaiInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -52,4 +53,5 @@ __all__ = [
     "AWSBedrockInstrumentation",
     "CerebrasInstrumentation",
     "MilvusInstrumentation",
+    "GoogleGenaiInstrumentation",
 ]

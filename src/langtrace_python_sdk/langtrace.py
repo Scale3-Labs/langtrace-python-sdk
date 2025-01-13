@@ -68,6 +68,7 @@ from langtrace_python_sdk.instrumentation import (
     PyMongoInstrumentation,
     CerebrasInstrumentation,
     MilvusInstrumentation,
+    GoogleGenaiInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 
@@ -301,6 +302,7 @@ def init(
         "vertexai": VertexAIInstrumentation(),
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
+        "google-genai": GoogleGenaiInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
