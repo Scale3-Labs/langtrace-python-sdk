@@ -22,22 +22,13 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
 
-from langtrace_python_sdk.instrumentation.aws_bedrock.patch import (
-    converse, converse_stream
-)
+from langtrace_python_sdk.instrumentation.aws_bedrock.patch import patch_aws_bedrock
 
 logging.basicConfig(level=logging.FATAL)
 
-def _patch_client(client, version: str, tracer) -> None:
-
-    # Store original methods
-    original_converse = client.converse
-
-    # Replace with wrapped versions
-    client.converse = converse("aws_bedrock.converse", version, tracer)(original_converse)
 
 class AWSBedrockInstrumentation(BaseInstrumentor):
-    
+
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["boto3 >= 1.35.31"]
 
@@ -46,13 +37,11 @@ class AWSBedrockInstrumentation(BaseInstrumentor):
         tracer = get_tracer(__name__, "", tracer_provider)
         version = importlib.metadata.version("boto3")
 
-        def wrap_create_client(wrapped, instance, args, kwargs):
-            result = wrapped(*args, **kwargs)
-            if args and args[0] == 'bedrock-runtime':
-                _patch_client(result, version, tracer)
-            return result
-
-        _W("boto3", "client", wrap_create_client)
+        _W(
+            module="boto3",
+            name="client",
+            wrapper=patch_aws_bedrock(tracer, version),
+        )
 
     def _uninstrument(self, **kwargs):
         pass

@@ -4,7 +4,7 @@ ENABLED_EXAMPLES = {
     "anthropic": False,
     "azureopenai": False,
     "chroma": False,
-    "cohere": True,
+    "cohere": False,
     "fastapi": False,
     "langchain": False,
     "llamaindex": False,
@@ -20,7 +20,7 @@ ENABLED_EXAMPLES = {
     "vertexai": False,
     "gemini": False,
     "mistral": False,
-    "awsbedrock": False,
+    "awsbedrock": True,
     "cerebras": False,
 }
 
