@@ -20,9 +20,9 @@ ENABLED_EXAMPLES = {
     "vertexai": False,
     "gemini": False,
     "mistral": False,
-    "awsbedrock": False,
+    "awsbedrock": True,
     "cerebras": False,
-    "google_genai": True,
+    "google_genai": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:

@@ -88,6 +88,12 @@ def use_invoke_model_titan(stream=False):
             response = brt.invoke_model_with_response_stream(
                 body=body, modelId=modelId, accept=accept, contentType=contentType
             )
+            # Extract and print the response text in real-time.
+            for event in response["body"]:
+                chunk = json.loads(event["chunk"]["bytes"])
+                if "outputText" in chunk:
+                    print(chunk["outputText"], end="")
+
         else:
             response = brt.invoke_model(
                 body=body, modelId=modelId, accept=accept, contentType=contentType
@@ -130,7 +136,8 @@ def use_invoke_model_anthropic(stream=False):
             for event in stream_response:
                 chunk = event.get("chunk")
                 if chunk:
-                    print(json.loads(chunk.get("bytes").decode()))
+                    # print(json.loads(chunk.get("bytes").decode()))
+                    pass
 
     else:
         response = brt.invoke_model(
@@ -141,7 +148,7 @@ def use_invoke_model_anthropic(stream=False):
         print(response_body.get("completion"))
 
 
-def use_invoke_model_llama():
+def use_invoke_model_llama(stream=False):
     model_id = "meta.llama3-8b-instruct-v1:0"
     prompt = "What is the capital of France?"
     max_gen_len = 128
@@ -157,11 +164,18 @@ def use_invoke_model_llama():
             "top_p": top_p,
         }
     )
-    response = brt.invoke_model(body=body, modelId=model_id)
 
-    response_body = json.loads(response.get("body").read())
-
-    return response_body
+    if stream:
+        response = brt.invoke_model_with_response_stream(body=body, modelId=model_id)
+        for event in response["body"]:
+            chunk = json.loads(event["chunk"]["bytes"])
+            if "generation" in chunk:
+                # print(chunk["generation"], end="")
+                pass
+    else:
+        response = brt.invoke_model(body=body, modelId=model_id)
+        response_body = json.loads(response.get("body").read())
+        return response_body
 
 
 # print(get_foundation_models())
