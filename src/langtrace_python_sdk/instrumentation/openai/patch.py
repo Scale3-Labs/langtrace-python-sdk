@@ -254,6 +254,8 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["ARCH"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -348,6 +350,8 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["ARCH"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -447,6 +451,8 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in base_url:
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["ARCH"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
@@ -533,6 +539,8 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in base_url:
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["ARCH"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),

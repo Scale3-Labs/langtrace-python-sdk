@@ -10,6 +10,7 @@ TIKTOKEN_MODEL_MAPPING = {
 
 SERVICE_PROVIDERS = {
     "ANTHROPIC": "Anthropic",
+    "ARCH": "Arch",
     "AZURE": "Azure",
     "CHROMA": "Chroma",
     "CREWAI": "CrewAI",
