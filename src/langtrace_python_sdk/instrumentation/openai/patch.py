@@ -451,7 +451,7 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in base_url:
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
-        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+        elif ":12000" in base_url or ":10000" in base_url:
             service_provider = SERVICE_PROVIDERS["ARCH"]
 
         span_attributes = {
@@ -539,7 +539,7 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in base_url:
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
-        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+        elif ":12000" in base_url or ":10000" in base_url:
             service_provider = SERVICE_PROVIDERS["ARCH"]
 
         span_attributes = {
