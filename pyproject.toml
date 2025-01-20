@@ -58,6 +58,7 @@ dev = [
   "google-cloud-aiplatform",
   "mistralai",
   "boto3",
+  "botocore",
   "embedchain",
   "setuptools",
 ]
