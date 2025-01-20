@@ -56,12 +56,8 @@ def patch_initiate_chat(name, version, tracer: Tracer):
 def patch_generate_reply(name, version, tracer: Tracer):
 
     def traced_method(wrapped, instance, args, kwargs):
-
         llm_config = instance.llm_config
-        kwargs = {
-            **kwargs,
-            **llm_config.get("config_list")[0],
-        }
+        kwargs = parse_kwargs(kwargs, llm_config)
         service_provider = SERVICE_PROVIDERS["AUTOGEN"]
 
         span_attributes = {
@@ -84,20 +80,28 @@ def patch_generate_reply(name, version, tracer: Tracer):
             try:
 
                 result = wrapped(*args, **kwargs)
-                
+
                 # if caching is disabled, return result as langtrace will instrument the rest.
-                if "cache_seed" in llm_config and llm_config.get("cache_seed") is None:
+                if (
+                    llm_config
+                    and "cache_seed" in llm_config
+                    and llm_config.get("cache_seed") is None
+                ):
                     return result
 
                 set_span_attributes(span, attributes)
                 set_event_completion(span, [{"role": "assistant", "content": result}])
-                total_cost, response_model = list(instance.get_total_usage().keys())
-                set_span_attribute(
-                    span, SpanAttributes.LLM_RESPONSE_MODEL, response_model
-                )
-                set_usage_attributes(
-                    span, instance.get_total_usage().get(response_model)
-                )
+                if llm_config:
+                    if instance.get_total_usage() is not None:
+                        total_cost, response_model = list(
+                            instance.get_total_usage().keys()
+                        )
+                        set_span_attribute(
+                            span, SpanAttributes.LLM_RESPONSE_MODEL, response_model
+                        )
+                        set_usage_attributes(
+                            span, instance.get_total_usage().get(response_model)
+                        )
 
                 return result
 
@@ -130,3 +134,20 @@ def parse_agent(agent):
         "llm_config": str(getattr(agent, "llm_config", None)),
         "human_input_mode": getattr(agent, "human_input_mode", None),
     }
+
+
+def parse_kwargs(kwargs, llm_config):
+    # Handle cases where llm_config is False or None
+    if not llm_config:
+        return kwargs
+
+    if isinstance(llm_config, dict) and "config_list" in llm_config:
+        return {
+            **kwargs,
+            **llm_config.get("config_list")[0],
+        }
+    else:
+        return {
+            **kwargs,
+            **llm_config,
+        }

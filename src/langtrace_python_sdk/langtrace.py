@@ -68,6 +68,7 @@ from langtrace_python_sdk.instrumentation import (
     PyMongoInstrumentation,
     CerebrasInstrumentation,
     MilvusInstrumentation,
+    GoogleGenaiInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 
@@ -99,7 +100,9 @@ class LangtraceConfig:
             or os.environ.get("LANGTRACE_HEADERS")
             or os.environ.get("OTEL_EXPORTER_OTLP_HEADERS")
         )
-        self.session_id = kwargs.get("session_id") or os.environ.get("LANGTRACE_SESSION_ID")
+        self.session_id = kwargs.get("session_id") or os.environ.get(
+            "LANGTRACE_SESSION_ID"
+        )
 
 
 def get_host(config: LangtraceConfig) -> str:
@@ -151,13 +154,24 @@ def get_headers(config: LangtraceConfig):
     return headers
 
 
+def append_api_path(host: str):
+    if host == LANGTRACE_REMOTE_URL:
+        return f"{host}/api/trace"
+
+    if "/api/trace" in host:
+        return host
+
+    return f"{host}/v1/traces"
+
+
 def get_exporter(config: LangtraceConfig, host: str):
     if config.custom_remote_exporter:
         return config.custom_remote_exporter
 
     headers = get_headers(config)
-    host = f"{host}/api/trace" if host == LANGTRACE_REMOTE_URL else host
-    if "http" in host.lower() or "https" in host.lower():
+    exporter_protocol = os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL", "http")
+    if "http" in exporter_protocol.lower():
+        host = append_api_path(host)
         return HTTPExporter(endpoint=host, headers=headers)
     else:
         return GRPCExporter(endpoint=host, headers=headers)
@@ -288,6 +302,7 @@ def init(
         "vertexai": VertexAIInstrumentation(),
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
+        "google-genai": GoogleGenaiInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
