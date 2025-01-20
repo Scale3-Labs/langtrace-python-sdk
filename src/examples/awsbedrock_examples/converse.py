@@ -3,6 +3,7 @@ import json
 from langtrace_python_sdk import langtrace
 from dotenv import load_dotenv
 import botocore
+from langchain_aws import ChatBedrock
 
 load_dotenv()
 langtrace.init(write_spans_to_console=False)
@@ -186,3 +187,13 @@ def use_invoke_model_cohere():
     response = brt.invoke_model(body=body, modelId=model_id)
     response_body = json.loads(response.get("body").read())
     print(response_body)
+
+
+def init_bedrock_langchain(temperature=0.1):
+    chat = ChatBedrock(
+        model_id="anthropic.claude-v2",
+        streaming=True,
+        model_kwargs={"temperature": temperature},
+        region_name="us-east-1",
+    )
+    return chat.invoke("What is the capital of France?")
