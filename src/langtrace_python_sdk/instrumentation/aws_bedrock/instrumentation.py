@@ -42,6 +42,11 @@ class AWSBedrockInstrumentation(BaseInstrumentor):
             name="client",
             wrapper=patch_aws_bedrock(tracer, version),
         )
+        _W(
+            module="boto3.session",
+            name="Session.client",
+            wrapper=patch_aws_bedrock(tracer, version),
+        )
 
     def _uninstrument(self, **kwargs):
         pass
