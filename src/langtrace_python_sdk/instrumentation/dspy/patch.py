@@ -1,8 +1,5 @@
 import json
-import os
 
-import ujson
-from colorama import Fore
 from importlib_metadata import version as v
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry import baggage
@@ -11,16 +8,11 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.llm import (
-    get_extra_attributes,
-    get_langtrace_attributes,
-    get_span_name,
-    set_span_attributes,
-)
+from langtrace_python_sdk.utils.llm import (get_extra_attributes,
+                                            get_langtrace_attributes,
+                                            get_span_name, set_span_attributes)
 from langtrace_python_sdk.utils.silently_fail import silently_fail
 
 
@@ -139,7 +131,7 @@ def patch_signature(operation_name, version, tracer):
                     set_span_attribute(
                         span,
                         "dspy.signature.result",
-                        json.dumps(result.toDict()),
+                        json.dumps(result.toDict(), default=lambda x: list(x) if isinstance(x, set) else x),
                     )
                     span.set_status(Status(StatusCode.OK))
 
