@@ -32,6 +32,8 @@ dependencies = [
   "transformers>=4.11.3",
   "sentry-sdk>=2.14.0",
   "ujson>=5.10.0",
+  "boto3",
+  "setuptools",
 ]
 
 requires-python = ">=3.9"
@@ -57,10 +59,7 @@ dev = [
   "google-generativeai",
   "google-cloud-aiplatform",
   "mistralai",
-  "boto3",
-  "botocore",
   "embedchain",
-  "setuptools",
 ]
 
 test = ["pytest", "pytest-vcr", "pytest-asyncio"]
