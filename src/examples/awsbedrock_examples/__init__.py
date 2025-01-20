@@ -1,5 +1,6 @@
 from examples.awsbedrock_examples.converse import (
     use_invoke_model_anthropic,
+    init_bedrock_langchain,
     use_invoke_model_titan,
     use_invoke_model_llama,
 )
@@ -15,4 +16,5 @@ class AWSBedrockRunner:
         # use_invoke_model_anthropic(stream=True)
         # use_invoke_model_cohere()
         # use_invoke_model_llama(stream=False)
-        use_invoke_model_titan(stream=False)
+        # use_invoke_model_titan(stream=False)
+        init_bedrock_langchain()
