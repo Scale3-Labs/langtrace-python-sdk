@@ -50,7 +50,7 @@ def patch_bootstrapfewshot_optimizer(operation_name, version, tracer):
                     ),
                 }
                 span_attributes["dspy.optimizer.module.prog"] = json.dumps(prog)
-        if hasattr(instance, "metric"):
+        if hasattr(instance, "metric") and getattr(instance, "metric") is not None:
             span_attributes["dspy.optimizer.metric"] = getattr(
                 instance, "metric"
             ).__name__
@@ -120,8 +120,6 @@ def patch_signature(operation_name, version, tracer):
             **get_extra_attributes(),
         }
 
-        trace_checkpoint = os.environ.get("TRACE_DSPY_CHECKPOINT", "true").lower()
-
         if instance.__class__.__name__:
             span_attributes["dspy.signature.name"] = instance.__class__.__name__
             span_attributes["dspy.signature"] = str(instance.signature)
@@ -143,9 +141,6 @@ def patch_signature(operation_name, version, tracer):
                         "dspy.signature.result",
                         json.dumps(result.toDict()),
                     )
-                    if trace_checkpoint == "true":
-                        print(Fore.RED + "Note: DSPy checkpoint tracing is enabled in Langtrace. To disable it, set the env var, TRACE_DSPY_CHECKPOINT to false" + Fore.RESET)
-                        set_span_attribute(span, "dspy.checkpoint", ujson.dumps(instance.dump_state(False), indent=2))
                     span.set_status(Status(StatusCode.OK))
 
                 span.end()

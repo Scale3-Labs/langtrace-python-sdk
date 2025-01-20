@@ -254,6 +254,8 @@ def chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["XAI"]
         elif "deepseek" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["ARCH"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -342,8 +344,14 @@ def async_chat_completions_create(version: str, tracer: Tracer) -> Callable:
             service_provider = SERVICE_PROVIDERS["PPLX"]
         elif "azure" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["GROQ"]
         elif "x.ai" in get_base_url(instance):
             service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in get_base_url(instance) or ":10000" in get_base_url(instance):
+            service_provider = SERVICE_PROVIDERS["ARCH"]
         llm_prompts = []
         for item in kwargs.get("messages", []):
             tools = get_tool_calls(item)
@@ -431,6 +439,20 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
         kwargs: EmbeddingsCreateKwargs,
     ) -> Any:
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        base_url = get_base_url(instance)
+
+        if "perplexity" in base_url:
+            service_provider = SERVICE_PROVIDERS["PPLX"]
+        elif "azure" in base_url:
+            service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in base_url:
+            service_provider = SERVICE_PROVIDERS["GROQ"]
+        elif "x.ai" in base_url:
+            service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in base_url:
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in base_url or ":10000" in base_url:
+            service_provider = SERVICE_PROVIDERS["ARCH"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
@@ -469,7 +491,6 @@ def embeddings_create(version: str, tracer: Tracer) -> Callable:
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-
             set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
@@ -507,16 +528,28 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
     ) -> Awaitable[Any]:
 
         service_provider = SERVICE_PROVIDERS["OPENAI"]
+        base_url = get_base_url(instance)
+        if "perplexity" in base_url:
+            service_provider = SERVICE_PROVIDERS["PPLX"]
+        elif "azure" in base_url:
+            service_provider = SERVICE_PROVIDERS["AZURE"]
+        elif "groq" in base_url:
+            service_provider = SERVICE_PROVIDERS["GROQ"]
+        elif "x.ai" in base_url:
+            service_provider = SERVICE_PROVIDERS["XAI"]
+        elif "deepseek" in base_url:
+            service_provider = SERVICE_PROVIDERS["DEEPSEEK"]
+        elif ":12000" in base_url or ":10000" in base_url:
+            service_provider = SERVICE_PROVIDERS["ARCH"]
 
         span_attributes = {
             **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
             **get_llm_request_attributes(kwargs, operation_name="embed"),
+            **get_llm_url(instance),
             SpanAttributes.LLM_PATH: APIS["EMBEDDINGS_CREATE"]["ENDPOINT"],
             SpanAttributes.LLM_REQUEST_DIMENSIONS: kwargs.get("dimensions"),
             **get_extra_attributes(),  # type: ignore
         }
-
-        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         encoding_format = kwargs.get("encoding_format")
         if encoding_format is not None:
@@ -530,17 +563,31 @@ def async_embeddings_create(version: str, tracer: Tracer) -> Callable:
             span_attributes[SpanAttributes.LLM_REQUEST_EMBEDDING_INPUTS] = json.dumps(
                 [kwargs.get("input", "")]
             )
+            span_attributes[SpanAttributes.LLM_PROMPTS] = json.dumps(
+                [
+                    {
+                        "role": "user",
+                        "content": kwargs.get("input"),
+                    }
+                ]
+            )
+
+        attributes = LLMSpanAttributes(**filter_valid_attributes(span_attributes))
 
         with tracer.start_as_current_span(
             name=get_span_name(APIS["EMBEDDINGS_CREATE"]["METHOD"]),
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-
             set_span_attributes(span, attributes)
             try:
                 # Attempt to call the original method
                 result = await wrapped(*args, **kwargs)
+                usage = getattr(result, "usage", None)
+                if usage:
+                    set_usage_attributes(
+                        span, {"prompt_tokens": getattr(usage, "prompt_tokens", 0)}
+                    )
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:

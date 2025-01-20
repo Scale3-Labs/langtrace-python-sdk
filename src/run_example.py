@@ -20,8 +20,9 @@ ENABLED_EXAMPLES = {
     "vertexai": False,
     "gemini": False,
     "mistral": False,
-    "awsbedrock": False,
-    "cerebras": True,
+    "awsbedrock": True,
+    "cerebras": False,
+    "google_genai": False,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -137,3 +138,9 @@ if ENABLED_EXAMPLES["cerebras"]:
 
     print(Fore.BLUE + "Running Cerebras example" + Fore.RESET)
     CerebrasRunner().run()
+
+if ENABLED_EXAMPLES["google_genai"]:
+    from examples.google_genai_example import GoogleGenaiRunner
+
+    print(Fore.BLUE + "Running Google Genai example" + Fore.RESET)
+    GoogleGenaiRunner().run()
