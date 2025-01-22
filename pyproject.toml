@@ -40,7 +40,7 @@ requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-  "openai==1.45.0",
+  "openai==1.60.0",
   "anthropic",
   "chromadb",
   "qdrant-client",
