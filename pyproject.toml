@@ -18,7 +18,7 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 dependencies = [
-  'trace-attributes==7.1.0',
+  'trace-attributes==7.1.1',
   'opentelemetry-api>=1.25.0',
   'opentelemetry-sdk>=1.25.0',
   'opentelemetry-instrumentation>=0.47b0',
@@ -40,7 +40,7 @@ requires-python = ">=3.9"
 
 [project.optional-dependencies]
 dev = [
-  "openai==1.45.0",
+  "openai==1.60.0",
   "anthropic",
   "chromadb",
   "qdrant-client",
