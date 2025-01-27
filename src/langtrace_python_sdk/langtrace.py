@@ -14,74 +14,50 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import logging
 import os
 import sys
+from typing import Any, Dict, Optional
+
 import sentry_sdk
-import logging
-from typing import Dict, Optional, Any
 from colorama import Fore
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME, SENTRY_DSN
 from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
+    OTLPSpanExporter as GRPCExporter
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
+    OTLPSpanExporter as HTTPExporter
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    ConsoleSpanExporter,
-    SimpleSpanProcessor,
-)
-
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-    OTLPSpanExporter as GRPCExporter,
-)
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-    OTLPSpanExporter as HTTPExporter,
-)
-from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL,
-    LANGTRACE_SESSION_ID_HEADER,
-)
-from langtrace_python_sdk.instrumentation import (
-    AnthropicInstrumentation,
-    ChromaInstrumentation,
-    CohereInstrumentation,
-    CrewAIInstrumentation,
-    DspyInstrumentation,
-    EmbedchainInstrumentation,
-    GeminiInstrumentation,
-    GroqInstrumentation,
-    LangchainCommunityInstrumentation,
-    LangchainCoreInstrumentation,
-    LangchainInstrumentation,
-    LanggraphInstrumentation,
-    LiteLLMInstrumentation,
-    LlamaindexInstrumentation,
-    MistralInstrumentation,
-    AWSBedrockInstrumentation,
-    OllamaInstrumentor,
-    OpenAIInstrumentation,
-    PineconeInstrumentation,
-    QdrantInstrumentation,
-    AutogenInstrumentation,
-    VertexAIInstrumentation,
-    WeaviateInstrumentation,
-    PyMongoInstrumentation,
-    CerebrasInstrumentation,
-    MilvusInstrumentation,
-    GoogleGenaiInstrumentation,
-)
+from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
+                                            ConsoleSpanExporter,
+                                            SimpleSpanProcessor)
 from opentelemetry.util.re import parse_env_headers
-
-from langtrace_python_sdk.types import DisableInstrumentations, InstrumentationMethods
-from langtrace_python_sdk.utils import (
-    check_if_sdk_is_outdated,
-    get_sdk_version,
-    is_package_installed,
-    validate_instrumentations,
-)
-from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
-from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from sentry_sdk.types import Event, Hint
+
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME, SENTRY_DSN
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
+    LANGTRACE_REMOTE_URL, LANGTRACE_SESSION_ID_HEADER)
+from langtrace_python_sdk.extensions.langtrace_exporter import \
+    LangTraceExporter
+from langtrace_python_sdk.instrumentation import (
+    AnthropicInstrumentation, AutogenInstrumentation,
+    AWSBedrockInstrumentation, CerebrasInstrumentation, ChromaInstrumentation,
+    CohereInstrumentation, CrewAIInstrumentation, CrewaiToolsInstrumentation,
+    DspyInstrumentation, EmbedchainInstrumentation, GeminiInstrumentation,
+    GoogleGenaiInstrumentation, GroqInstrumentation,
+    LangchainCommunityInstrumentation, LangchainCoreInstrumentation,
+    LangchainInstrumentation, LanggraphInstrumentation, LiteLLMInstrumentation,
+    LlamaindexInstrumentation, MilvusInstrumentation, MistralInstrumentation,
+    OllamaInstrumentor, OpenAIInstrumentation, PineconeInstrumentation,
+    PyMongoInstrumentation, QdrantInstrumentation, VertexAIInstrumentation,
+    WeaviateInstrumentation)
+from langtrace_python_sdk.types import (DisableInstrumentations,
+                                        InstrumentationMethods)
+from langtrace_python_sdk.utils import (check_if_sdk_is_outdated,
+                                        get_sdk_version, is_package_installed,
+                                        validate_instrumentations)
+from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 
 
 class LangtraceConfig:
@@ -309,6 +285,7 @@ def init(
         "pymongo": PyMongoInstrumentation(),
         "cerebras-cloud-sdk": CerebrasInstrumentation(),
         "pymilvus": MilvusInstrumentation(),
+        "crewai-tools": CrewaiToolsInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
