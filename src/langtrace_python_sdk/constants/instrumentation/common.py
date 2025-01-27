@@ -30,7 +30,7 @@ SERVICE_PROVIDERS = {
     "QDRANT": "Qdrant",
     "WEAVIATE": "Weaviate",
     "OLLAMA": "Ollama",
-    "VERTEXAI": "VertexAI",
+    "VERTEXAI": "Vertex AI",
     "GEMINI": "Gemini",
     "MISTRAL": "Mistral",
     "EMBEDCHAIN": "Embedchain",
