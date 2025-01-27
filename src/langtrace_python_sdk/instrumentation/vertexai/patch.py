@@ -27,12 +27,13 @@ def patch_vertexai(name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
         service_provider = SERVICE_PROVIDERS["VERTEXAI"]
         prompts = serialize_prompts(args, kwargs)
+
         span_attributes = {
             **get_langtrace_attributes(version, service_provider),
             **get_llm_request_attributes(
                 kwargs,
                 prompts=prompts,
-                model=get_llm_model(instance),
+                model=get_llm_model(instance, kwargs),
             ),
             **get_llm_url(instance),
             SpanAttributes.LLM_PATH: "",
@@ -77,6 +78,10 @@ def set_response_attributes(span: Span, result):
     if hasattr(result, "text"):
         set_event_completion(span, [{"role": "assistant", "content": result.text}])
 
+    if hasattr(result, "candidates"):
+        parts = result.candidates[0].content.parts
+        set_event_completion(span, [{"role": "assistant", "content": parts[0].text}])
+
     if hasattr(result, "usage_metadata") and result.usage_metadata is not None:
         usage = result.usage_metadata
         input_tokens = usage.prompt_token_count
@@ -96,17 +101,23 @@ def set_response_attributes(span: Span, result):
 
 
 def is_streaming_response(response):
-    return isinstance(response, types.GeneratorType) or isinstance(
-        response, types.AsyncGeneratorType
+    return (
+        isinstance(response, types.GeneratorType)
+        or isinstance(response, types.AsyncGeneratorType)
+        or str(type(response).__name__) == "_StreamingResponseIterator"
     )
 
 
-def get_llm_model(instance):
+def get_llm_model(instance, kwargs):
+    if "request" in kwargs:
+        return kwargs.get("request").model.split("/")[-1]
+
     if hasattr(instance, "_model_name"):
         return instance._model_name.replace("publishers/google/models/", "")
     return getattr(instance, "_model_id", "unknown")
 
 
+@silently_fail
 def serialize_prompts(args, kwargs):
     if args and len(args) > 0:
         prompt_parts = []
@@ -122,5 +133,24 @@ def serialize_prompts(args, kwargs):
 
         return [{"role": "user", "content": "\n".join(prompt_parts)}]
     else:
-        content = kwargs.get("prompt") or kwargs.get("message")
-        return [{"role": "user", "content": content}] if content else []
+        # Handle PredictionServiceClient for google-cloud-aiplatform.
+        if "request" in kwargs:
+            prompt = []
+            prompt_body = kwargs.get("request")
+            if prompt_body.system_instruction:
+                for part in prompt_body.system_instruction.parts:
+                    prompt.append({"role": "system", "content": part.text})
+
+            contents = prompt_body.contents
+
+            if not contents:
+                return []
+
+            for c in contents:
+                role = c.role if c.role else "user"
+                content = c.parts[0].text if c.parts else ""
+                prompt.append({"role": role, "content": content})
+            return prompt
+        else:
+            content = kwargs.get("prompt") or kwargs.get("message")
+            return [{"role": "user", "content": content}] if content else []

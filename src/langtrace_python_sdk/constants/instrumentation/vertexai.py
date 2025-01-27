@@ -39,4 +39,24 @@ APIS = {
         "method": "ChatSession",
         "operation": "send_message_streaming",
     },
+    "PREDICTION_SERVICE_BETA_GENERATE_CONTENT": {
+        "module": "google.cloud.aiplatform_v1beta1.services.prediction_service.client",
+        "method": "PredictionServiceClient",
+        "operation": "generate_content",
+    },
+    "PREDICTION_SERVICE_GENERATE_CONTENT": {
+        "module": "google.cloud.aiplatform_v1.services.prediction_service.client",
+        "method": "PredictionServiceClient",
+        "operation": "generate_content",
+    },
+    "PREDICTION_SERVICE_BETA_STREAM_GENERATE_CONTENT": {
+        "module": "google.cloud.aiplatform_v1beta1.services.prediction_service.client",
+        "method": "PredictionServiceClient",
+        "operation": "stream_generate_content",
+    },
+    "PREDICTION_SERVICE_STREAM_GENERATE_CONTENT": {
+        "module": "google.cloud.aiplatform_v1.services.prediction_service.client",
+        "method": "PredictionServiceClient",
+        "operation": "stream_generate_content",
+    },
 }
