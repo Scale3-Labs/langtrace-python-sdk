@@ -131,7 +131,7 @@ def patch_signature(operation_name, version, tracer):
                     set_span_attribute(
                         span,
                         "dspy.signature.result",
-                        json.dumps(result.toDict(), default=lambda x: list(x) if isinstance(x, set) else x),
+                        json.dumps(result.toDict(), default=lambda x: str(x) if isinstance(x, (set, object)) else x),
                     )
                     span.set_status(Status(StatusCode.OK))
 
