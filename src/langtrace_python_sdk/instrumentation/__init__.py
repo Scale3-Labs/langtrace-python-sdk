@@ -1,30 +1,31 @@
 from .anthropic import AnthropicInstrumentation
+from .autogen import AutogenInstrumentation
+from .aws_bedrock import AWSBedrockInstrumentation
+from .cerebras import CerebrasInstrumentation
 from .chroma import ChromaInstrumentation
 from .cohere import CohereInstrumentation
 from .crewai import CrewAIInstrumentation
+from .crewai_tools import CrewaiToolsInstrumentation
+from .dspy import DspyInstrumentation
+from .embedchain import EmbedchainInstrumentation
+from .gemini import GeminiInstrumentation
+from .google_genai import GoogleGenaiInstrumentation
 from .groq import GroqInstrumentation
 from .langchain import LangchainInstrumentation
 from .langchain_community import LangchainCommunityInstrumentation
 from .langchain_core import LangchainCoreInstrumentation
 from .langgraph import LanggraphInstrumentation
+from .litellm import LiteLLMInstrumentation
 from .llamaindex import LlamaindexInstrumentation
+from .milvus import MilvusInstrumentation
+from .mistral import MistralInstrumentation
+from .ollama import OllamaInstrumentor
 from .openai import OpenAIInstrumentation
 from .pinecone import PineconeInstrumentation
-from .qdrant import QdrantInstrumentation
-from .weaviate import WeaviateInstrumentation
-from .ollama import OllamaInstrumentor
-from .dspy import DspyInstrumentation
-from .autogen import AutogenInstrumentation
-from .vertexai import VertexAIInstrumentation
-from .gemini import GeminiInstrumentation
-from .mistral import MistralInstrumentation
-from .aws_bedrock import AWSBedrockInstrumentation
-from .embedchain import EmbedchainInstrumentation
-from .litellm import LiteLLMInstrumentation
 from .pymongo import PyMongoInstrumentation
-from .cerebras import CerebrasInstrumentation
-from .milvus import MilvusInstrumentation
-from .google_genai import GoogleGenaiInstrumentation
+from .qdrant import QdrantInstrumentation
+from .vertexai import VertexAIInstrumentation
+from .weaviate import WeaviateInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -54,4 +55,5 @@ __all__ = [
     "CerebrasInstrumentation",
     "MilvusInstrumentation",
     "GoogleGenaiInstrumentation",
+    "CrewaiToolsInstrumentation",
 ]
