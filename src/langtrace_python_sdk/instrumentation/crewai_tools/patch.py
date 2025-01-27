@@ -16,7 +16,6 @@ from langtrace_python_sdk.utils.misc import serialize_args, serialize_kwargs
 
 def patch_run(operation_name, version, tracer: Tracer):
     def traced_method(wrapped, instance, args, kwargs):
-        print("\n\n\nTracing CrewaiTools\n\n\n")
         service_provider = SERVICE_PROVIDERS["CREWAI"]
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
         span_attributes = {

@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from typing import Collection
+
+from importlib_metadata import version as v
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
-from typing import Collection
-from importlib_metadata import version as v
+
 from .patch import patch_run
 
 
@@ -30,7 +32,6 @@ class CrewaiToolsInstrumentation(BaseInstrumentor):
         return ["crewai-tools >= 0.32.0"]
 
     def _instrument(self, **kwargs):
-        print("Instrumenting CrewaiTools")
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
         version = v("crewai-tools")
