@@ -29,11 +29,6 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
-<<<<<<< HEAD
-from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
-                                            ConsoleSpanExporter,
-                                            SimpleSpanProcessor)
-=======
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
@@ -80,7 +75,6 @@ from langtrace_python_sdk.instrumentation import (
     GoogleGenaiInstrumentation,
     GraphlitInstrumentation,
 )
->>>>>>> 0f7e0f0 (add graphlit instrumentation)
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
 
