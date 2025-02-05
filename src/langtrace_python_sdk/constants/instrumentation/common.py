@@ -40,6 +40,7 @@ SERVICE_PROVIDERS = {
     "AWS_BEDROCK": "AWS Bedrock",
     "CEREBRAS": "Cerebras",
     "MILVUS": "Milvus",
+    "GRAPHLIT": "Graphlit",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

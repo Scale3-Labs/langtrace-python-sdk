@@ -29,9 +29,52 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
-                                            ConsoleSpanExporter,
-                                            SimpleSpanProcessor)
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
+
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GRPCExporter,
+)
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter as HTTPExporter,
+)
+from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
+    LANGTRACE_REMOTE_URL,
+    LANGTRACE_SESSION_ID_HEADER,
+)
+from langtrace_python_sdk.instrumentation import (
+    AnthropicInstrumentation,
+    ChromaInstrumentation,
+    CohereInstrumentation,
+    CrewAIInstrumentation,
+    DspyInstrumentation,
+    EmbedchainInstrumentation,
+    GeminiInstrumentation,
+    GroqInstrumentation,
+    LangchainCommunityInstrumentation,
+    LangchainCoreInstrumentation,
+    LangchainInstrumentation,
+    LanggraphInstrumentation,
+    LiteLLMInstrumentation,
+    LlamaindexInstrumentation,
+    MistralInstrumentation,
+    AWSBedrockInstrumentation,
+    OllamaInstrumentor,
+    OpenAIInstrumentation,
+    PineconeInstrumentation,
+    QdrantInstrumentation,
+    AutogenInstrumentation,
+    VertexAIInstrumentation,
+    WeaviateInstrumentation,
+    PyMongoInstrumentation,
+    CerebrasInstrumentation,
+    MilvusInstrumentation,
+    GoogleGenaiInstrumentation,
+    GraphlitInstrumentation,
+)
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
 
@@ -279,6 +322,7 @@ def init(
         "google-cloud-aiplatform": VertexAIInstrumentation(),
         "google-generativeai": GeminiInstrumentation(),
         "google-genai": GoogleGenaiInstrumentation(),
+        "graphlit-client": GraphlitInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
