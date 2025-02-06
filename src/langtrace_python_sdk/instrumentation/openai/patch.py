@@ -1,44 +1,31 @@
 import json
-from typing import Any, Dict, List, Optional, Callable, Awaitable, Union
-from langtrace.trace_attributes import (
-    LLMSpanAttributes,
-    SpanAttributes,
-)
-from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.silently_fail import silently_fail
-from opentelemetry import trace
-from opentelemetry.trace import SpanKind, Tracer, Span
-from opentelemetry.trace.status import Status, StatusCode
-from opentelemetry.trace.propagation import set_span_in_context
-from langtrace_python_sdk.constants.instrumentation.common import (
-    SERVICE_PROVIDERS,
-)
-from langtrace_python_sdk.constants.instrumentation.openai import APIS
-from langtrace_python_sdk.utils.llm import (
-    calculate_prompt_tokens,
-    get_base_url,
-    get_extra_attributes,
-    get_langtrace_attributes,
-    get_llm_request_attributes,
-    get_llm_url,
-    get_span_name,
-    get_tool_calls,
-    is_streaming,
-    set_event_completion,
-    StreamWrapper,
-    set_span_attributes,
-    set_usage_attributes,
-)
-from langtrace_python_sdk.types import NOT_GIVEN
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Union
 
+from langtrace.trace_attributes import LLMSpanAttributes, SpanAttributes
+from opentelemetry import trace
+from opentelemetry.trace import Span, SpanKind, Tracer
+from opentelemetry.trace.propagation import set_span_in_context
+from opentelemetry.trace.status import Status, StatusCode
+
+from langtrace_python_sdk.constants.instrumentation.common import \
+    SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.instrumentation.openai.types import (
-    ImagesGenerateKwargs,
-    ChatCompletionsCreateKwargs,
-    EmbeddingsCreateKwargs,
-    ImagesEditKwargs,
-    ResultType,
-    ContentItem,
-)
+    ChatCompletionsCreateKwargs, ContentItem, EmbeddingsCreateKwargs,
+    ImagesEditKwargs, ImagesGenerateKwargs, ResultType)
+from langtrace_python_sdk.types import NOT_GIVEN
+from langtrace_python_sdk.utils import set_span_attribute
+from langtrace_python_sdk.utils.llm import (StreamWrapper,
+                                            calculate_prompt_tokens,
+                                            get_base_url, get_extra_attributes,
+                                            get_langtrace_attributes,
+                                            get_llm_request_attributes,
+                                            get_llm_url, get_span_name,
+                                            get_tool_calls, is_streaming,
+                                            set_event_completion,
+                                            set_span_attributes,
+                                            set_usage_attributes)
+from langtrace_python_sdk.utils.silently_fail import silently_fail
 
 
 def filter_valid_attributes(attributes):
@@ -716,4 +703,9 @@ def _set_response_attributes(span: Span, result: ResultType) -> None:
                 span,
                 SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
                 result.usage.total_tokens,
+            )
+            set_span_attribute(
+                span,
+                "gen_ai.usage.cached_tokens",
+                result.usage.prompt_tokens_details.cached_tokens if result.usage.prompt_tokens_details else 0,
             )
