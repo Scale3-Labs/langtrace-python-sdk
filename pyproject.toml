@@ -18,7 +18,7 @@ classifiers = [
   "Operating System :: OS Independent",
 ]
 dependencies = [
-  'trace-attributes==7.1.1',
+  'trace-attributes==7.2.0',
   'opentelemetry-api>=1.25.0',
   'opentelemetry-sdk>=1.25.0',
   'opentelemetry-instrumentation>=0.47b0',
@@ -44,6 +44,7 @@ dev = [
   "anthropic",
   "chromadb",
   "qdrant-client",
+  "graphlit-client",
   "python-dotenv",
   "pinecone-client",
   "langchain",

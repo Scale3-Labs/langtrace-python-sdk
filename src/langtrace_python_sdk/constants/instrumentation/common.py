@@ -30,7 +30,7 @@ SERVICE_PROVIDERS = {
     "QDRANT": "Qdrant",
     "WEAVIATE": "Weaviate",
     "OLLAMA": "Ollama",
-    "VERTEXAI": "VertexAI",
+    "VERTEXAI": "Vertex AI",
     "GEMINI": "Gemini",
     "MISTRAL": "Mistral",
     "EMBEDCHAIN": "Embedchain",
@@ -40,6 +40,7 @@ SERVICE_PROVIDERS = {
     "AWS_BEDROCK": "AWS Bedrock",
     "CEREBRAS": "Cerebras",
     "MILVUS": "Milvus",
+    "GRAPHLIT": "Graphlit",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

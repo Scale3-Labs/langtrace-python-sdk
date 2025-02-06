@@ -395,18 +395,30 @@ class StreamWrapper:
             content = [chunk.text]
 
         # CohereV2
-        if (hasattr(chunk, "delta") and
-            chunk.delta is not None and
-            hasattr(chunk.delta, "message") and
-            chunk.delta.message is not None and
-            hasattr(chunk.delta.message, "content") and
-            chunk.delta.message.content is not None and
-            hasattr(chunk.delta.message.content, "text") and
-            chunk.delta.message.content.text is not None):
+        if (
+            hasattr(chunk, "delta")
+            and chunk.delta is not None
+            and hasattr(chunk.delta, "message")
+            and chunk.delta.message is not None
+            and hasattr(chunk.delta.message, "content")
+            and chunk.delta.message.content is not None
+            and hasattr(chunk.delta.message.content, "text")
+            and chunk.delta.message.content.text is not None
+        ):
             content = [chunk.delta.message.content.text]
-
+        # google-cloud-aiplatform
+        if hasattr(chunk, "candidates") and chunk.candidates is not None:
+            for candidate in chunk.candidates:
+                if hasattr(candidate, "content") and candidate.content is not None:
+                    for part in candidate.content.parts:
+                        if hasattr(part, "text") and part.text is not None:
+                            content.append(part.text)
         # Anthropic
-        if hasattr(chunk, "delta") and chunk.delta is not None and not hasattr(chunk.delta, "message"):
+        if (
+            hasattr(chunk, "delta")
+            and chunk.delta is not None
+            and not hasattr(chunk.delta, "message")
+        ):
             content = [chunk.delta.text] if hasattr(chunk.delta, "text") else []
 
         if isinstance(chunk, dict):
@@ -425,9 +437,14 @@ class StreamWrapper:
 
         # CohereV2
         if hasattr(chunk, "type") and chunk.type == "message-end":
-            if (hasattr(chunk, "delta") and chunk.delta is not None and
-                hasattr(chunk.delta, "usage") and chunk.delta.usage is not None and
-                hasattr(chunk.delta.usage, "billed_units") and chunk.delta.usage.billed_units is not None):
+            if (
+                hasattr(chunk, "delta")
+                and chunk.delta is not None
+                and hasattr(chunk.delta, "usage")
+                and chunk.delta.usage is not None
+                and hasattr(chunk.delta.usage, "billed_units")
+                and chunk.delta.usage.billed_units is not None
+            ):
                 usage = chunk.delta.usage.billed_units
                 self.completion_tokens = int(usage.output_tokens)
                 self.prompt_tokens = int(usage.input_tokens)

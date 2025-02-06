@@ -20,9 +20,10 @@ ENABLED_EXAMPLES = {
     "vertexai": False,
     "gemini": False,
     "mistral": False,
-    "awsbedrock": True,
+    "awsbedrock": False,
     "cerebras": False,
     "google_genai": False,
+    "graphlit": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -144,3 +145,9 @@ if ENABLED_EXAMPLES["google_genai"]:
 
     print(Fore.BLUE + "Running Google Genai example" + Fore.RESET)
     GoogleGenaiRunner().run()
+
+if ENABLED_EXAMPLES["graphlit"]:
+    from examples.graphlit_example import GraphlitRunner
+
+    print(Fore.BLUE + "Running Graphlit example" + Fore.RESET)
+    GraphlitRunner().run()

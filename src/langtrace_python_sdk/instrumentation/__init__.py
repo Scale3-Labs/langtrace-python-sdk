@@ -26,6 +26,10 @@ from .pymongo import PyMongoInstrumentation
 from .qdrant import QdrantInstrumentation
 from .vertexai import VertexAIInstrumentation
 from .weaviate import WeaviateInstrumentation
+from .cerebras import CerebrasInstrumentation
+from .milvus import MilvusInstrumentation
+from .google_genai import GoogleGenaiInstrumentation
+from .graphlit import GraphlitInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -56,4 +60,5 @@ __all__ = [
     "MilvusInstrumentation",
     "GoogleGenaiInstrumentation",
     "CrewaiToolsInstrumentation",
+    "GraphlitInstrumentation",
 ]
