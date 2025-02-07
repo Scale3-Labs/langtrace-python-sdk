@@ -114,7 +114,8 @@ def patch_signature(operation_name, version, tracer):
 
         if instance.__class__.__name__:
             span_attributes["dspy.signature.name"] = instance.__class__.__name__
-            span_attributes["dspy.signature"] = str(instance.signature)
+            # TODO(Karthik): This is not working for dspy >= 2.6.2
+            # span_attributes["dspy.signature"] = str(instance.signature)
 
         if kwargs and len(kwargs) > 0:
             span_attributes["dspy.signature.args"] = str(kwargs)
