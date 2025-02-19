@@ -30,6 +30,7 @@ from .cerebras import CerebrasInstrumentation
 from .milvus import MilvusInstrumentation
 from .google_genai import GoogleGenaiInstrumentation
 from .graphlit import GraphlitInstrumentation
+from .phidata import PhiDataInstrumentation
 
 __all__ = [
     "AnthropicInstrumentation",
@@ -61,4 +62,5 @@ __all__ = [
     "GoogleGenaiInstrumentation",
     "CrewaiToolsInstrumentation",
     "GraphlitInstrumentation",
+    "PhiDataInstrumentation",
 ]
