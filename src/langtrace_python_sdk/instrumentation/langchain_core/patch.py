@@ -248,8 +248,9 @@ def clean_empty(d):
         elif isinstance(val, object):
             # some langchain objects have a text attribute
             val = getattr(val, "text", None)
-            if val is not None and val.strip() != "":
-                result[k] = val.strip()
+            if val is not None and isinstance(val, str):
+                if val.strip() != "":
+                    result[k] = val.strip()
     return result
 
 
