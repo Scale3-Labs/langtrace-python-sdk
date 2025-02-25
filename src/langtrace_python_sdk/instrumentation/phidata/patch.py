@@ -137,7 +137,7 @@ def patch_agent(operation_name, version, tracer: Tracer):
 
                         if response.content:
                             accumulated_content += response.content
-                            set_span_attribute(span, "phidata.agent.accumulated_content", accumulated_content)
+                            set_span_attribute(span, "phidata.agent.response", accumulated_content)
 
                         if response.messages:
                             for msg in response.messages:
