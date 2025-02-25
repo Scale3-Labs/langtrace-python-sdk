@@ -46,7 +46,7 @@ dev = [
   "qdrant-client",
   "graphlit-client",
   "python-dotenv",
-  "pinecone-client",
+  "pinecone",
   "langchain",
   "langchain-community",
   "langchain-openai",

@@ -33,12 +33,12 @@ class PineconeInstrumentation(BaseInstrumentor):
     The PineconeInstrumentation class represents the Pinecone instrumentation"""
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["pinecone-client >= 3.1.0"]
+        return ["pinecone >= 3.1.0"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
         tracer = get_tracer(__name__, "", tracer_provider)
-        version = importlib.metadata.version("pinecone-client")
+        version = importlib.metadata.version("pinecone")
         for operation_name, details in APIS.items():
             operation = details["OPERATION"]
             # Dynamically creating the patching call
