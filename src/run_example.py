@@ -23,7 +23,8 @@ ENABLED_EXAMPLES = {
     "awsbedrock": False,
     "cerebras": False,
     "google_genai": False,
-    "graphlit": True,
+    "graphlit": False,
+    "phidata": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -151,3 +152,9 @@ if ENABLED_EXAMPLES["graphlit"]:
 
     print(Fore.BLUE + "Running Graphlit example" + Fore.RESET)
     GraphlitRunner().run()
+
+if ENABLED_EXAMPLES["phidata"]:
+    from examples.phidata_example import PhiDataRunner
+
+    print(Fore.BLUE + "Running PhiData example" + Fore.RESET)
+    PhiDataRunner().run()

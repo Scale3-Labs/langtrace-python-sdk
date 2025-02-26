@@ -74,6 +74,7 @@ from langtrace_python_sdk.instrumentation import (
     MilvusInstrumentation,
     GoogleGenaiInstrumentation,
     GraphlitInstrumentation,
+    PhiDataInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
@@ -323,6 +324,7 @@ def init(
         "google-generativeai": GeminiInstrumentation(),
         "google-genai": GoogleGenaiInstrumentation(),
         "graphlit-client": GraphlitInstrumentation(),
+        "phidata": PhiDataInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
