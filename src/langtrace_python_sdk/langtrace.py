@@ -75,6 +75,7 @@ from langtrace_python_sdk.instrumentation import (
     GoogleGenaiInstrumentation,
     GraphlitInstrumentation,
     PhiDataInstrumentation,
+    AgnoInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
@@ -325,6 +326,7 @@ def init(
         "google-genai": GoogleGenaiInstrumentation(),
         "graphlit-client": GraphlitInstrumentation(),
         "phidata": PhiDataInstrumentation(),
+        "agno": AgnoInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
