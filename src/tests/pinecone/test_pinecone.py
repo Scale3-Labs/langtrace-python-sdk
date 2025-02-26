@@ -34,7 +34,7 @@ def test_upsert(openai_client, pinecone_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["PINECONE"]
     assert attributes.get("langtrace.service.type") == "vectordb"
-    assert attributes.get("langtrace.service.version") == v("pinecone-client")
+    assert attributes.get("langtrace.service.version") == v("pinecone")
     assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("db.system") == "pinecone"
     assert attributes.get("db.operation") == APIS["UPSERT"]["OPERATION"]
@@ -67,7 +67,7 @@ def test_query(openai_client, pinecone_client, exporter):
     assert attributes.get("langtrace.sdk.name") == "langtrace-python-sdk"
     assert attributes.get("langtrace.service.name") == SERVICE_PROVIDERS["PINECONE"]
     assert attributes.get("langtrace.service.type") == "vectordb"
-    assert attributes.get("langtrace.service.version") == v("pinecone-client")
+    assert attributes.get("langtrace.service.version") == v("pinecone")
     assert attributes.get("langtrace.version") == v("langtrace-python-sdk")
     assert attributes.get("db.system") == "pinecone"
     assert attributes.get("db.operation") == APIS["QUERY"]["OPERATION"]

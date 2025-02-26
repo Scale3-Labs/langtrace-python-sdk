@@ -301,7 +301,7 @@ def init(
     all_instrumentations = {
         "openai": OpenAIInstrumentation(),
         "groq": GroqInstrumentation(),
-        "pinecone-client": PineconeInstrumentation(),
+        "pinecone": PineconeInstrumentation(),
         "llama-index": LlamaindexInstrumentation(),
         "chromadb": ChromaInstrumentation(),
         "embedchain": EmbedchainInstrumentation(),

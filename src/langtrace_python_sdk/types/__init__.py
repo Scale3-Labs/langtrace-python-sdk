@@ -25,7 +25,7 @@ class InstrumentationType(Enum):
     MISTRALAI = "mistralai"
     OLLAMA = "ollama"
     OPENAI = "openai"
-    PINECONE = "pinecone-client"
+    PINECONE = "pinecone"
     QDRANT = "qdrant"
     SQLALCHEMY = "sqlalchemy"
     VERTEXAI = "vertexai"
