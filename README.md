@@ -82,6 +82,9 @@ Langtrace automatically captures traces from the following vendors:
 | Autogen | ❌ | ✅ |
 | HiveAgent | ❌ | ✅ |
 | Inspect AI | ❌ | ✅ |
+| Graphlit | ❌ | ✅ |
+| Phidata | ❌ | ✅ |
+| Arch | ❌ | ✅ |
 
 ### Vector Databases
 | Database | TypeScript SDK | Python SDK |
