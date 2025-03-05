@@ -41,6 +41,8 @@ SERVICE_PROVIDERS = {
     "CEREBRAS": "Cerebras",
     "MILVUS": "Milvus",
     "GRAPHLIT": "Graphlit",
+    "PHIDATA": "Phidata",
+    "AGNO": "Agno",
 }
 
 LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY = "langtrace_additional_attributes"

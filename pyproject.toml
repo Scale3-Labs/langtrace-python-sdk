@@ -46,7 +46,7 @@ dev = [
   "qdrant-client",
   "graphlit-client",
   "python-dotenv",
-  "pinecone-client",
+  "pinecone",
   "langchain",
   "langchain-community",
   "langchain-openai",
@@ -61,6 +61,7 @@ dev = [
   "google-cloud-aiplatform",
   "mistralai",
   "embedchain",
+  "phidata",
 ]
 
 test = ["pytest", "pytest-vcr", "pytest-asyncio"]

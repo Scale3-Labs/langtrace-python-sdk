@@ -74,6 +74,8 @@ from langtrace_python_sdk.instrumentation import (
     MilvusInstrumentation,
     GoogleGenaiInstrumentation,
     GraphlitInstrumentation,
+    PhiDataInstrumentation,
+    AgnoInstrumentation,
 )
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
@@ -301,7 +303,7 @@ def init(
     all_instrumentations = {
         "openai": OpenAIInstrumentation(),
         "groq": GroqInstrumentation(),
-        "pinecone-client": PineconeInstrumentation(),
+        "pinecone": PineconeInstrumentation(),
         "llama-index": LlamaindexInstrumentation(),
         "chromadb": ChromaInstrumentation(),
         "embedchain": EmbedchainInstrumentation(),
@@ -323,6 +325,8 @@ def init(
         "google-generativeai": GeminiInstrumentation(),
         "google-genai": GoogleGenaiInstrumentation(),
         "graphlit-client": GraphlitInstrumentation(),
+        "phidata": PhiDataInstrumentation(),
+        "agno": AgnoInstrumentation(),
         "mistralai": MistralInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
