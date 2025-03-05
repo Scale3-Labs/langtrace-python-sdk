@@ -29,54 +29,9 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    ConsoleSpanExporter,
-    SimpleSpanProcessor,
-)
-
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-    OTLPSpanExporter as GRPCExporter,
-)
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
-    OTLPSpanExporter as HTTPExporter,
-)
-from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL,
-    LANGTRACE_SESSION_ID_HEADER,
-)
-from langtrace_python_sdk.instrumentation import (
-    AnthropicInstrumentation,
-    ChromaInstrumentation,
-    CohereInstrumentation,
-    CrewAIInstrumentation,
-    DspyInstrumentation,
-    EmbedchainInstrumentation,
-    GeminiInstrumentation,
-    GroqInstrumentation,
-    LangchainCommunityInstrumentation,
-    LangchainCoreInstrumentation,
-    LangchainInstrumentation,
-    LanggraphInstrumentation,
-    LiteLLMInstrumentation,
-    LlamaindexInstrumentation,
-    MistralInstrumentation,
-    AWSBedrockInstrumentation,
-    OllamaInstrumentor,
-    OpenAIInstrumentation,
-    PineconeInstrumentation,
-    QdrantInstrumentation,
-    AutogenInstrumentation,
-    VertexAIInstrumentation,
-    WeaviateInstrumentation,
-    PyMongoInstrumentation,
-    CerebrasInstrumentation,
-    MilvusInstrumentation,
-    GoogleGenaiInstrumentation,
-    GraphlitInstrumentation,
-    PhiDataInstrumentation,
-    AgnoInstrumentation,
-)
+from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
+                                            ConsoleSpanExporter,
+                                            SimpleSpanProcessor)
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
 
@@ -86,17 +41,18 @@ from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
 from langtrace_python_sdk.extensions.langtrace_exporter import \
     LangTraceExporter
 from langtrace_python_sdk.instrumentation import (
-    AnthropicInstrumentation, AutogenInstrumentation,
+    AgnoInstrumentation, AnthropicInstrumentation, AutogenInstrumentation,
     AWSBedrockInstrumentation, CerebrasInstrumentation, ChromaInstrumentation,
-    CohereInstrumentation, CrewAIInstrumentation, CrewaiToolsInstrumentation,
-    DspyInstrumentation, EmbedchainInstrumentation, GeminiInstrumentation,
-    GoogleGenaiInstrumentation, GroqInstrumentation,
-    LangchainCommunityInstrumentation, LangchainCoreInstrumentation,
-    LangchainInstrumentation, LanggraphInstrumentation, LiteLLMInstrumentation,
+    CleanLabInstrumentation, CohereInstrumentation, CrewAIInstrumentation,
+    CrewaiToolsInstrumentation, DspyInstrumentation, EmbedchainInstrumentation,
+    GeminiInstrumentation, GoogleGenaiInstrumentation, GraphlitInstrumentation,
+    GroqInstrumentation, LangchainCommunityInstrumentation,
+    LangchainCoreInstrumentation, LangchainInstrumentation,
+    LanggraphInstrumentation, LiteLLMInstrumentation,
     LlamaindexInstrumentation, MilvusInstrumentation, MistralInstrumentation,
-    OllamaInstrumentor, OpenAIInstrumentation, PineconeInstrumentation,
-    PyMongoInstrumentation, QdrantInstrumentation, VertexAIInstrumentation,
-    WeaviateInstrumentation)
+    OllamaInstrumentor, OpenAIInstrumentation, PhiDataInstrumentation,
+    PineconeInstrumentation, PyMongoInstrumentation, QdrantInstrumentation,
+    VertexAIInstrumentation, WeaviateInstrumentation)
 from langtrace_python_sdk.types import (DisableInstrumentations,
                                         InstrumentationMethods)
 from langtrace_python_sdk.utils import (check_if_sdk_is_outdated,
@@ -334,6 +290,7 @@ def init(
         "cerebras-cloud-sdk": CerebrasInstrumentation(),
         "pymilvus": MilvusInstrumentation(),
         "crewai-tools": CrewaiToolsInstrumentation(),
+        "cleanlab-tlm": CleanLabInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
