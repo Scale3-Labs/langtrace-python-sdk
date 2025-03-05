@@ -1,4 +1,5 @@
 import json
+
 from importlib_metadata import version as v
 from langtrace.trace_attributes import FrameworkSpanAttributes
 from opentelemetry import baggage
@@ -7,9 +8,7 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 from langtrace_python_sdk.utils.llm import set_span_attributes
 from langtrace_python_sdk.utils.misc import serialize_args, serialize_kwargs
 
@@ -27,8 +26,8 @@ def patch_graphlit_operation(operation_name, version, tracer: Tracer):
             **(extra_attributes if extra_attributes is not None else {}),
         }
 
-        span_attributes["langchain.metadata"] = serialize_kwargs(**kwargs)
-        span_attributes["langchain.inputs"] = serialize_args(*args)
+        span_attributes["graphlit.metadata"] = serialize_kwargs(**kwargs)
+        span_attributes["graphlit.inputs"] = serialize_args(*args)
 
         attributes = FrameworkSpanAttributes(**span_attributes)
 
