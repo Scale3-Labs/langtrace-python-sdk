@@ -51,15 +51,7 @@ def _extract_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
                 'prompt_tokens_details', 'completion_tokens_details', 'tool_call_times']:
         if key in metrics:
             formatted_metrics[key] = metrics[key]
-    
-    # Extract nested metric details if present
-    if 'prompt_tokens_details' in metrics:
-        formatted_metrics['prompt_tokens_details'] = metrics['prompt_tokens_details']
-    if 'completion_tokens_details' in metrics:
-        formatted_metrics['completion_tokens_details'] = metrics['completion_tokens_details']
-    if 'tool_call_times' in metrics:
-        formatted_metrics['tool_call_times'] = metrics['tool_call_times']
-        
+
     return formatted_metrics
 
 
