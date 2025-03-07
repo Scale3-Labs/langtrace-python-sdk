@@ -63,7 +63,7 @@ def collection_patch(method, version, tracer):
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
         ) as span:
-            collection_name = kwargs.get("collection_name") or args[0]
+            collection_name = kwargs.get("collection_name") if kwargs.get("collection_name") is not None else (args[0] if args else None)
             operation = api["OPERATION"]
             set_span_attribute(span, "db.collection.name", collection_name)
 
