@@ -50,9 +50,9 @@ from langtrace_python_sdk.instrumentation import (
     LangchainCoreInstrumentation, LangchainInstrumentation,
     LanggraphInstrumentation, LiteLLMInstrumentation,
     LlamaindexInstrumentation, MilvusInstrumentation, MistralInstrumentation,
-    OllamaInstrumentor, OpenAIInstrumentation, PhiDataInstrumentation,
-    PineconeInstrumentation, PyMongoInstrumentation, QdrantInstrumentation,
-    VertexAIInstrumentation, WeaviateInstrumentation)
+    OllamaInstrumentor, OpenAIAgentsInstrumentation, OpenAIInstrumentation,
+    PhiDataInstrumentation, PineconeInstrumentation, PyMongoInstrumentation,
+    QdrantInstrumentation, VertexAIInstrumentation, WeaviateInstrumentation)
 from langtrace_python_sdk.types import (DisableInstrumentations,
                                         InstrumentationMethods)
 from langtrace_python_sdk.utils import (check_if_sdk_is_outdated,
@@ -291,6 +291,7 @@ def init(
         "pymilvus": MilvusInstrumentation(),
         "crewai-tools": CrewaiToolsInstrumentation(),
         "cleanlab-tlm": CleanLabInstrumentation(),
+        "openai-agents": OpenAIAgentsInstrumentation(),
     }
 
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
