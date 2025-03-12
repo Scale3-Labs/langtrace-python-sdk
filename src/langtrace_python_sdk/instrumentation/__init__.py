@@ -24,6 +24,7 @@ from .milvus import MilvusInstrumentation
 from .mistral import MistralInstrumentation
 from .ollama import OllamaInstrumentor
 from .openai import OpenAIInstrumentation
+from .openai_agents import OpenAIAgentsInstrumentation
 from .phidata import PhiDataInstrumentation
 from .pinecone import PineconeInstrumentation
 from .pymongo import PyMongoInstrumentation
@@ -64,4 +65,5 @@ __all__ = [
     "PhiDataInstrumentation",
     "AgnoInstrumentation",
     "CleanLabInstrumentation",
+    "OpenAIAgentsInstrumentation",
 ]
