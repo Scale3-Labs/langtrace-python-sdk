@@ -1,5 +1,5 @@
 """
-Copyright (c) 2024 Scale3 Labs
+Copyright (c) 2025 Scale3 Labs
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,12 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from typing import Collection
+
+from importlib_metadata import version as v
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
-from typing import Collection
-from importlib_metadata import version as v
+
 from .patch import patch_agent, patch_memory
+
 
 class AgnoInstrumentation(BaseInstrumentor):
     def instrumentation_dependencies(self) -> Collection[str]:
