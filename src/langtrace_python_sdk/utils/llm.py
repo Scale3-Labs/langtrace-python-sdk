@@ -94,139 +94,6 @@ def calculate_price_from_usage(model, usage):
     return 0
 
 
-def convert_mistral_messages_to_serializable(mistral_messages):
-    serializable_messages = []
-    
-    try:
-        for message in mistral_messages:
-            serializable_message = {"role": message.role}
-        
-            # Handle content
-            if hasattr(message, "content"):
-                serializable_message["content"] = message.content
-            
-            # Handle tool_calls
-            if hasattr(message, "tool_calls") and message.tool_calls is not None:
-                serializable_tool_calls = []
-                
-                for tool_call in message.tool_calls:
-                    serializable_tool_call = {}
-                    
-                    # Handle id, type, and index
-                    if hasattr(tool_call, "id"):
-                        serializable_tool_call["id"] = tool_call.id
-                    if hasattr(tool_call, "type"):
-                        serializable_tool_call["type"] = tool_call.type
-                    if hasattr(tool_call, "index"):
-                        serializable_tool_call["index"] = tool_call.index
-                    
-                    # Handle function
-                    if hasattr(tool_call, "function"):
-                        function_call = tool_call.function
-                        serializable_function = {}
-                        
-                        if hasattr(function_call, "name"):
-                            serializable_function["name"] = function_call.name
-                        if hasattr(function_call, "arguments"):
-                            serializable_function["arguments"] = function_call.arguments
-                        
-                        serializable_tool_call["function"] = serializable_function
-                    
-                    serializable_tool_calls.append(serializable_tool_call)
-                
-                serializable_message["tool_calls"] = serializable_tool_calls
-            
-            # Handle tool_call_id for tool messages
-            if hasattr(message, "tool_call_id"):
-                serializable_message["tool_call_id"] = message.tool_call_id
-            
-            serializable_messages.append(serializable_message)
-    except Exception as e:
-        pass
-    
-    return serializable_messages
-
-
-def convert_gemini_messages_to_serializable(formatted_messages, system_message=None):
-    """
-    Converts Gemini-formatted messages back to a JSON serializable format.
-    
-    Args:
-        formatted_messages: The formatted messages from Gemini.
-        system_message (str, optional): System message content.
-        
-    Returns:
-        List[dict]: JSON serializable list of message dictionaries.
-    """
-    serializable_messages = []
-    
-    try:
-        # Add system message if present
-        if system_message:
-            serializable_messages.append({
-                "role": "system",
-                "content": system_message
-            })
-        
-        for message_item in formatted_messages:
-            # Handle the case where the item is a dict with 'role' and 'content' keys
-            if isinstance(message_item, dict) and 'role' in message_item and 'content' in message_item:
-                role = message_item['role']
-                content_value = message_item['content']
-                
-                # Initialize our serializable message
-                serializable_message = {"role": role}
-                
-                # If content is a list of Content objects
-                if isinstance(content_value, list) and len(content_value) > 0:
-                    for content_obj in content_value:
-                        # Process each Content object
-                        if hasattr(content_obj, 'parts') and hasattr(content_obj, 'role'):
-                            parts = content_obj.parts
-                            
-                            # Extract text from parts
-                            text_parts = []
-                            for part in parts:
-                                if hasattr(part, 'text') and part.text:
-                                    text_parts.append(part.text)
-                            
-                            if text_parts:
-                                serializable_message["content"] = " ".join(text_parts)
-                            
-                            # Here you can add additional processing for other part types
-                            # like function_call, function_response, inline_data, etc.
-                            # Similar to the previous implementation
-                
-                # If content is a string or already a primitive type
-                elif isinstance(content_value, (str, int, float, bool)) or content_value is None:
-                    serializable_message["content"] = content_value
-                
-                # Add the processed message to our list
-                serializable_messages.append(serializable_message)
-            
-            # Handle the case where the item is a Content object directly
-            elif hasattr(message_item, 'role') and hasattr(message_item, 'parts'):
-                # This is the case from the previous implementation
-                # Process a Content object directly
-                serializable_message = {"role": message_item.role}
-                
-                parts = message_item.parts
-                text_parts = []
-                
-                for part in parts:
-                    if hasattr(part, 'text') and part.text:
-                        text_parts.append(part.text)
-                
-                if text_parts:
-                    serializable_message["content"] = " ".join(text_parts)
-                
-                serializable_messages.append(serializable_message)
-    except Exception as e:
-        pass
-    
-    return serializable_messages
-
-
 def get_langtrace_attributes(version, service_provider, vendor_type="llm"):
     return {
         SpanAttributes.LANGTRACE_SDK_NAME: LANGTRACE_SDK_NAME,
@@ -253,23 +120,6 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
         or kwargs.get("top_k", None)
         or kwargs.get("top_n", None)
     )
-    
-    try:
-        prompts = json.dumps(prompts) if prompts else None
-    except Exception as e:
-        if "is not JSON serializable" in str(e):
-            # check model
-            if kwargs.get("model") is not None:
-                if kwargs.get("model").startswith("gemini"):
-                    prompts = json.dumps(convert_gemini_messages_to_serializable(prompts))
-                elif kwargs.get("model").startswith("mistral"):
-                    prompts = json.dumps(convert_mistral_messages_to_serializable(prompts))
-                else:
-                    prompts = "[]"
-            else:
-                prompts = "[]"
-        else:
-            prompts = "[]"
 
     top_p = kwargs.get("p", None) or kwargs.get("top_p", None)
     tools = kwargs.get("tools", None)
@@ -282,7 +132,7 @@ def get_llm_request_attributes(kwargs, prompts=None, model=None, operation_name=
         SpanAttributes.LLM_IS_STREAMING: kwargs.get("stream"),
         SpanAttributes.LLM_REQUEST_TEMPERATURE: kwargs.get("temperature"),
         SpanAttributes.LLM_TOP_K: top_k,
-        SpanAttributes.LLM_PROMPTS: prompts if prompts else None,
+        SpanAttributes.LLM_PROMPTS: json.dumps(prompts) if prompts else None,
         SpanAttributes.LLM_USER: user,
         SpanAttributes.LLM_REQUEST_TOP_P: top_p,
         SpanAttributes.LLM_REQUEST_MAX_TOKENS: kwargs.get("max_tokens"),
