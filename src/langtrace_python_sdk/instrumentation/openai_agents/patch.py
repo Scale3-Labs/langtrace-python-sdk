@@ -1,9 +1,6 @@
 import json
 from typing import Any, Callable, List
 
-from agents.exceptions import (InputGuardrailTripwireTriggered,
-                               OutputGuardrailTripwireTriggered)
-from agents.run import Runner
 from importlib_metadata import version as v
 from langtrace.trace_attributes import FrameworkSpanAttributes, SpanAttributes
 from opentelemetry import baggage, trace
@@ -16,6 +13,29 @@ from langtrace_python_sdk.constants.instrumentation.common import (
 from langtrace_python_sdk.utils.llm import (set_event_completion,
                                             set_span_attributes,
                                             set_usage_attributes)
+
+
+# Define dummy classes to use when imports fail
+class DummyRunner:
+    pass
+
+
+class DummyException(Exception):
+    pass
+
+
+# Try importing from openai-agents package
+try:
+    from agents.exceptions import (InputGuardrailTripwireTriggered,
+                                   OutputGuardrailTripwireTriggered)
+    from agents.run import Runner
+    OPENAI_AGENTS_AVAILABLE = True
+except ImportError:
+    # Define dummy classes if imports fail
+    InputGuardrailTripwireTriggered = DummyException
+    OutputGuardrailTripwireTriggered = DummyException
+    Runner = DummyRunner
+    OPENAI_AGENTS_AVAILABLE = False
 
 
 def extract_agent_details(agent_or_handoff):
@@ -70,6 +90,10 @@ def extract_handoff_details(handoff):
 
 def get_handoffs(version: str, tracer: Tracer) -> Callable:
     """Wrap the `prompt` method of the `TLM` class to trace it."""
+    if not OPENAI_AGENTS_AVAILABLE:
+        def noop_traced_method(wrapped: Callable, instance: Any, args: List[Any], kwargs: Any) -> Any:
+            return wrapped(*args, **kwargs)
+        return noop_traced_method
 
     def traced_method(
         wrapped: Callable,
@@ -117,7 +141,8 @@ def get_handoffs(version: str, tracer: Tracer) -> Callable:
             attributes = FrameworkSpanAttributes(**span_attributes)
 
             with tracer.start_as_current_span(
-                name=f"openai_agents.available_handoffs", kind=SpanKind.CLIENT
+                name="openai_agents.available_handoffs",
+                kind=SpanKind.CLIENT
             ) as span:
                 try:
                     set_span_attributes(span, attributes)
@@ -157,12 +182,11 @@ def get_handoffs(version: str, tracer: Tracer) -> Callable:
                         pass  # Silently fail if error recording fails
                     raise  # Re-raise the original error since it's from the wrapped function
 
-        except Exception as outer_err:
-            # If anything fails in our instrumentation wrapper, catch it and return control to the wrapped function
+        except Exception:
             try:
                 return wrapped(*args, **kwargs)
             except Exception as wrapped_err:
-                raise wrapped_err  # Only raise errors from the wrapped function
+                raise wrapped_err
 
     return traced_method
 
@@ -328,6 +352,10 @@ def extract_run_config(config):
 
 def get_new_response(version: str, tracer: Tracer) -> Callable:
     """Wrap the _get_new_response method to trace inputs and outputs."""
+    if not OPENAI_AGENTS_AVAILABLE:
+        async def noop_traced_method(wrapped: Callable, instance: Any, args: List[Any], kwargs: Any) -> Any:
+            return await wrapped(*args, **kwargs)
+        return noop_traced_method
 
     async def traced_method(
         wrapped: Callable,
@@ -524,7 +552,7 @@ def get_new_response(version: str, tracer: Tracer) -> Callable:
 
                     raise
 
-        except Exception as outer_err:
+        except Exception:  # Remove outer_err since it's unused
             try:
                 return await wrapped(*args, **kwargs)
             except Exception as wrapped_err:
