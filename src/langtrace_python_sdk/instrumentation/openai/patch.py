@@ -104,15 +104,16 @@ def openai_responses_create(version: str, tracer: Tracer) -> Callable:
             name="openai.responses.create",
             kind=SpanKind.CLIENT,
             context=set_span_in_context(trace.get_current_span()),
+            end_on_exit=False,
         ) as span:
             try:
                 set_span_attributes(span, span_attributes)
 
                 response = wrapped(*args, **kwargs)
-                _set_openai_agentic_response_attributes(span, response)
-
-                print("3. Response", response)
-
+                if is_streaming(kwargs) and span.is_recording():
+                    return StreamWrapper(response, span)
+                else:
+                    _set_openai_agentic_response_attributes(span, response)
                 return response
             except Exception as err:
                 span.record_exception(err)
