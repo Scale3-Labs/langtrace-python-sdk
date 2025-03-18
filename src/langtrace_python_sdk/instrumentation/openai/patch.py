@@ -7,25 +7,118 @@ from opentelemetry.trace import Span, SpanKind, Tracer
 from opentelemetry.trace.propagation import set_span_in_context
 from opentelemetry.trace.status import Status, StatusCode
 
-from langtrace_python_sdk.constants.instrumentation.common import \
-    SERVICE_PROVIDERS
+from langtrace_python_sdk.constants.instrumentation.common import SERVICE_PROVIDERS
 from langtrace_python_sdk.constants.instrumentation.openai import APIS
 from langtrace_python_sdk.instrumentation.openai.types import (
-    ChatCompletionsCreateKwargs, ContentItem, EmbeddingsCreateKwargs,
-    ImagesEditKwargs, ImagesGenerateKwargs, ResultType)
+    ChatCompletionsCreateKwargs,
+    ContentItem,
+    EmbeddingsCreateKwargs,
+    ImagesEditKwargs,
+    ImagesGenerateKwargs,
+    ResultType,
+)
 from langtrace_python_sdk.types import NOT_GIVEN
 from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.utils.llm import (StreamWrapper,
-                                            calculate_prompt_tokens,
-                                            get_base_url, get_extra_attributes,
-                                            get_langtrace_attributes,
-                                            get_llm_request_attributes,
-                                            get_llm_url, get_span_name,
-                                            get_tool_calls, is_streaming,
-                                            set_event_completion,
-                                            set_span_attributes,
-                                            set_usage_attributes)
+from langtrace_python_sdk.utils.llm import (
+    StreamWrapper,
+    calculate_prompt_tokens,
+    get_base_url,
+    get_extra_attributes,
+    get_langtrace_attributes,
+    get_llm_request_attributes,
+    get_llm_url,
+    get_span_name,
+    get_tool_calls,
+    is_streaming,
+    set_event_completion,
+    set_span_attributes,
+    set_usage_attributes,
+)
 from langtrace_python_sdk.utils.silently_fail import silently_fail
+
+
+def async_openai_responses_create(version: str, tracer: Tracer) -> Callable:
+    """Wrap the `create` method of the `openai.AsyncResponse.create` class to trace it."""
+
+    async def traced_method(
+        wrapped: Callable, instance: Any, args: List[Any], kwargs: Dict[str, Any]
+    ):
+        input_value = kwargs.get("input")
+        prompt = (
+            input_value[0]
+            if isinstance(input_value, list)
+            else [{"role": "user", "content": input_value}]
+        )
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        span_attributes = {
+            "instructions": kwargs.get("instructions"),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(
+                kwargs,
+                operation_name="openai.responses.create",
+                prompts=prompt,
+            ),
+        }
+        with tracer.start_as_current_span(
+            name="openai.responses.create",
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
+        ) as span:
+            try:
+                set_span_attributes(span, span_attributes)
+
+                response = await wrapped(*args, **kwargs)
+                _set_openai_agentic_response_attributes(span, response)
+
+                return response
+            except Exception as err:
+                span.record_exception(err)
+                raise
+
+    return traced_method
+
+
+def openai_responses_create(version: str, tracer: Tracer) -> Callable:
+    """Wrap the `create` method of the `openai.responses.create` class to trace it."""
+
+    def traced_method(
+        wrapped: Callable, instance: Any, args: List[Any], kwargs: Dict[str, Any]
+    ):
+        input_value = kwargs.get("input")
+        prompt = (
+            input_value[0]
+            if isinstance(input_value, list)
+            else [{"role": "user", "content": input_value}]
+        )
+        service_provider = SERVICE_PROVIDERS["OPENAI"]
+        span_attributes = {
+            "instructions": kwargs.get("instructions"),
+            **get_langtrace_attributes(version, service_provider, vendor_type="llm"),
+            **get_llm_request_attributes(
+                kwargs,
+                operation_name="openai.responses.create",
+                prompts=prompt,
+            ),
+        }
+        with tracer.start_as_current_span(
+            name="openai.responses.create",
+            kind=SpanKind.CLIENT,
+            context=set_span_in_context(trace.get_current_span()),
+        ) as span:
+            try:
+                set_span_attributes(span, span_attributes)
+
+                response = wrapped(*args, **kwargs)
+                _set_openai_agentic_response_attributes(span, response)
+
+                print("3. Response", response)
+
+                return response
+            except Exception as err:
+                span.record_exception(err)
+                raise
+
+    return traced_method
 
 
 def filter_valid_attributes(attributes):
@@ -634,6 +727,21 @@ def extract_content(choice: Any) -> Union[str, List[Dict[str, Any]], Dict[str, A
         return ""
 
 
+def _set_openai_agentic_response_attributes(span: Span, response) -> None:
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_ID, response.id)
+    set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, response.model)
+    set_event_completion(span, [{"role": "assistant", "content": response.output_text}])
+    set_usage_attributes(
+        span,
+        {
+            "input_tokens": response.usage.input_tokens,
+            "output_tokens": response.usage.output_tokens,
+            "total_tokens": response.usage.total_tokens,
+            "cached_tokens": response.usage.input_tokens_details["cached_tokens"],
+        },
+    )
+
+
 @silently_fail
 def _set_input_attributes(
     span: Span, kwargs: ChatCompletionsCreateKwargs, attributes: LLMSpanAttributes
@@ -707,5 +815,9 @@ def _set_response_attributes(span: Span, result: ResultType) -> None:
             set_span_attribute(
                 span,
                 "gen_ai.usage.cached_tokens",
-                result.usage.prompt_tokens_details.cached_tokens if result.usage.prompt_tokens_details else 0,
+                (
+                    result.usage.prompt_tokens_details.cached_tokens
+                    if result.usage.prompt_tokens_details
+                    else 0
+                ),
             )
