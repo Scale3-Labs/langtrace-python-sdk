@@ -48,8 +48,8 @@ from langtrace_python_sdk.instrumentation import (
     GeminiInstrumentation, GoogleGenaiInstrumentation, GraphlitInstrumentation,
     GroqInstrumentation, LangchainCommunityInstrumentation,
     LangchainCoreInstrumentation, LangchainInstrumentation,
-    LanggraphInstrumentation, LiteLLMInstrumentation,
-    LlamaindexInstrumentation, MilvusInstrumentation, MistralInstrumentation,
+    LanggraphInstrumentation, LiteLLMInstrumentation, LlamaindexInstrumentation,
+    MilvusInstrumentation, MistralInstrumentation, Neo4jGraphRAGInstrumentation,
     OllamaInstrumentor, OpenAIAgentsInstrumentation, OpenAIInstrumentation,
     PhiDataInstrumentation, PineconeInstrumentation, PyMongoInstrumentation,
     QdrantInstrumentation, VertexAIInstrumentation, WeaviateInstrumentation)
@@ -284,6 +284,7 @@ def init(
         "phidata": PhiDataInstrumentation(),
         "agno": AgnoInstrumentation(),
         "mistralai": MistralInstrumentation(),
+        "neo4j-graphrag": Neo4jGraphRAGInstrumentation(),
         "boto3": AWSBedrockInstrumentation(),
         "autogen": AutogenInstrumentation(),
         "pymongo": PyMongoInstrumentation(),
