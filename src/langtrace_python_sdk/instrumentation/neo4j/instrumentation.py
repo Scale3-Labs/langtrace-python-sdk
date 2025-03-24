@@ -23,11 +23,7 @@ from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 
 from langtrace_python_sdk.constants.instrumentation.neo4j import APIS
-from langtrace_python_sdk.instrumentation.neo4j.patch import (
-    session_patch, 
-    driver_patch,
-    transaction_patch
-)
+from langtrace_python_sdk.instrumentation.neo4j.patch import driver_patch
 
 logging.basicConfig(level=logging.FATAL)
 
