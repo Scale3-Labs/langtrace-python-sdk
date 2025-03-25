@@ -22,6 +22,7 @@ from .litellm import LiteLLMInstrumentation
 from .llamaindex import LlamaindexInstrumentation
 from .milvus import MilvusInstrumentation
 from .mistral import MistralInstrumentation
+from .neo4j import Neo4jInstrumentation
 from .neo4j_graphrag import Neo4jGraphRAGInstrumentation
 from .ollama import OllamaInstrumentor
 from .openai import OpenAIInstrumentation
