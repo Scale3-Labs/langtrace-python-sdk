@@ -48,9 +48,9 @@ def driver_patch(operation_name, version, tracer):
             "langtrace.service.type": "vectordb",
             "langtrace.service.version": version,
             "langtrace.version": v(LANGTRACE_SDK_NAME),
-            "neo4j.db.system": "neo4j",
-            "neo4j.db.operation": api["OPERATION"],
-            "neo4j.db.query": json.dumps(kwargs),
+            "db.system": "neo4j",
+            "db.operation": api["OPERATION"],
+            "db.query": json.dumps(kwargs),
             **(extra_attributes if extra_attributes is not None else {}),
         }
         
