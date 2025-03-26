@@ -119,42 +119,34 @@ def _set_result_attributes(span, records, result_summary, keys):
     """
     Set attributes related to the query result and summary
     """
-    # Set record count
     if records is not None:
         record_count = len(records)
         set_span_attribute(span, "neo4j.result.record_count", record_count)
         if record_count > 0:
             set_span_attribute(span, "neo4j.result.records", json.dumps(records))
-    
-    # Set keys information
+
     if keys is not None:
         set_span_attribute(span, "neo4j.result.keys", json.dumps(keys))
-    
-    # Process result summary if available
+
     if result_summary:
-        # Database info
         if hasattr(result_summary, "database") and result_summary.database:
             set_span_attribute(span, "neo4j.db.name", result_summary.database)
-        
-        # Query type
+
         if hasattr(result_summary, "query_type") and result_summary.query_type:
             set_span_attribute(span, "neo4j.result.query_type", result_summary.query_type)
-            
-        # Parameters
+
         if hasattr(result_summary, "parameters") and result_summary.parameters:
             try:
                 set_span_attribute(span, "neo4j.result.parameters", json.dumps(result_summary.parameters))
             except (TypeError, ValueError):
                 pass
         
-        # Timing information
         if hasattr(result_summary, "result_available_after") and result_summary.result_available_after is not None:
             set_span_attribute(span, "neo4j.result.available_after_ms", result_summary.result_available_after)
         
         if hasattr(result_summary, "result_consumed_after") and result_summary.result_consumed_after is not None:
             set_span_attribute(span, "neo4j.result.consumed_after_ms", result_summary.result_consumed_after)
-        
-        # Process counters
+
         if hasattr(result_summary, "counters") and result_summary.counters:
             counters = result_summary.counters
             if hasattr(counters, "nodes_created") and counters.nodes_created:
@@ -171,15 +163,13 @@ def _set_result_attributes(span, records, result_summary, keys):
             
             if hasattr(counters, "properties_set") and counters.properties_set:
                 set_span_attribute(span, "neo4j.result.properties_set", counters.properties_set)
-        
-        # Process plan/profile if available
+
         if hasattr(result_summary, "plan") and result_summary.plan:
             try:
                 set_span_attribute(span, "neo4j.result.plan", json.dumps(result_summary.plan))
             except (TypeError, ValueError):
                 pass
-        
-        # Process notifications
+
         if hasattr(result_summary, "notifications") and result_summary.notifications:
             try:
                 set_span_attribute(span, "neo4j.result.notification_count", len(result_summary.notifications))
