@@ -41,7 +41,6 @@ def driver_patch(operation_name, version, tracer):
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS.get("NEO4J", "neo4j")
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": service_provider,
@@ -50,7 +49,7 @@ def driver_patch(operation_name, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "neo4j",
             "db.operation": api["OPERATION"],
-            "db.query": json.dumps(kwargs),
+            "db.query": json.dumps(args[0]) if args and len(args) > 0 else "",
             **(extra_attributes if extra_attributes is not None else {}),
         }
         
@@ -70,6 +69,14 @@ def driver_patch(operation_name, version, tracer):
             
             try:
                 result = wrapped(*args, **kwargs)
+
+                if isinstance(result, tuple) and len(result) == 3:
+                    records, result_summary, keys = result
+                    _set_result_attributes(span, records, result_summary, keys)
+                else:
+                    res = json.dumps(result)
+                    set_span_attribute(span, "neo4j.result.query_response", res)
+
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
@@ -85,14 +92,12 @@ def _set_execute_query_attributes(span, args, kwargs):
     query = args[0] if args else kwargs.get("query_", None)
     if query:
         if hasattr(query, "text"):
-            set_span_attribute(span, "db.statement", query.text)
             set_span_attribute(span, "db.query", query.text)
             if hasattr(query, "metadata") and query.metadata:
                 set_span_attribute(span, "db.query.metadata", json.dumps(query.metadata))
             if hasattr(query, "timeout") and query.timeout:
                 set_span_attribute(span, "db.query.timeout", query.timeout)
         else:
-            set_span_attribute(span, "db.statement", query)
             set_span_attribute(span, "db.query", query)
 
     parameters = kwargs.get("parameters_", None)
@@ -104,8 +109,72 @@ def _set_execute_query_attributes(span, args, kwargs):
 
     database = kwargs.get("database_", None)
     if database:
-        set_span_attribute(span, "db.name", database)
+        set_span_attribute(span, "neo4j.db.name", database)
 
     routing = kwargs.get("routing_", None)
     if routing:
-        set_span_attribute(span, "db.routing", str(routing))
+        set_span_attribute(span, "neo4j.db.routing", str(routing))
+        
+        
+@silently_fail
+def _set_result_attributes(span, records, result_summary, keys):
+    """
+    Set attributes related to the query result and summary
+    """
+    if records is not None:
+        record_count = len(records)
+        set_span_attribute(span, "neo4j.result.record_count", record_count)
+        if record_count > 0:
+            set_span_attribute(span, "neo4j.result.records", json.dumps(records))
+
+    if keys is not None:
+        set_span_attribute(span, "neo4j.result.keys", json.dumps(keys))
+
+    if result_summary:
+        if hasattr(result_summary, "database") and result_summary.database:
+            set_span_attribute(span, "neo4j.db.name", result_summary.database)
+
+        if hasattr(result_summary, "query_type") and result_summary.query_type:
+            set_span_attribute(span, "neo4j.result.query_type", result_summary.query_type)
+
+        if hasattr(result_summary, "parameters") and result_summary.parameters:
+            try:
+                set_span_attribute(span, "neo4j.result.parameters", json.dumps(result_summary.parameters))
+            except (TypeError, ValueError):
+                pass
+        
+        if hasattr(result_summary, "result_available_after") and result_summary.result_available_after is not None:
+            set_span_attribute(span, "neo4j.result.available_after_ms", result_summary.result_available_after)
+        
+        if hasattr(result_summary, "result_consumed_after") and result_summary.result_consumed_after is not None:
+            set_span_attribute(span, "neo4j.result.consumed_after_ms", result_summary.result_consumed_after)
+
+        if hasattr(result_summary, "counters") and result_summary.counters:
+            counters = result_summary.counters
+            if hasattr(counters, "nodes_created") and counters.nodes_created:
+                set_span_attribute(span, "neo4j.result.nodes_created", counters.nodes_created)
+            
+            if hasattr(counters, "nodes_deleted") and counters.nodes_deleted:
+                set_span_attribute(span, "neo4j.result.nodes_deleted", counters.nodes_deleted)
+            
+            if hasattr(counters, "relationships_created") and counters.relationships_created:
+                set_span_attribute(span, "neo4j.result.relationships_created", counters.relationships_created)
+            
+            if hasattr(counters, "relationships_deleted") and counters.relationships_deleted:
+                set_span_attribute(span, "neo4j.result.relationships_deleted", counters.relationships_deleted)
+            
+            if hasattr(counters, "properties_set") and counters.properties_set:
+                set_span_attribute(span, "neo4j.result.properties_set", counters.properties_set)
+
+        if hasattr(result_summary, "plan") and result_summary.plan:
+            try:
+                set_span_attribute(span, "neo4j.result.plan", json.dumps(result_summary.plan))
+            except (TypeError, ValueError):
+                pass
+
+        if hasattr(result_summary, "notifications") and result_summary.notifications:
+            try:
+                set_span_attribute(span, "neo4j.result.notification_count", len(result_summary.notifications))
+                set_span_attribute(span, "neo4j.result.notifications", json.dumps(result_summary.notifications))
+            except (AttributeError, TypeError):
+                pass
