@@ -41,7 +41,6 @@ def driver_patch(operation_name, version, tracer):
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS.get("NEO4J", "neo4j")
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
-
         span_attributes = {
             "langtrace.sdk.name": "langtrace-python-sdk",
             "langtrace.service.name": service_provider,
@@ -50,7 +49,7 @@ def driver_patch(operation_name, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "neo4j",
             "db.operation": api["OPERATION"],
-            "db.query": json.dumps(kwargs),
+            "db.query": json.dumps(args[0]) if args and len(args) > 0 else "",
             **(extra_attributes if extra_attributes is not None else {}),
         }
         
@@ -74,7 +73,10 @@ def driver_patch(operation_name, version, tracer):
                 if isinstance(result, tuple) and len(result) == 3:
                     records, result_summary, keys = result
                     _set_result_attributes(span, records, result_summary, keys)
-                
+                else:
+                    res = json.dumps(result)
+                    set_span_attribute(span, "neo4j.result.query_response", res)
+
                 span.set_status(StatusCode.OK)
                 return result
             except Exception as err:
