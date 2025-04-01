@@ -64,7 +64,7 @@ def generic_patch(operation_name, version, tracer):
         ) as span:
 
             if span.is_recording():
-                set_span_attribute(span, "server.address", instance.config.host)
+                set_span_attribute(span, "server.address", instance._config.host)
                 if operation_name == "QUERY":
                     set_query_input_attributes(span, kwargs)
 
