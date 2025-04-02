@@ -347,19 +347,19 @@ def set_usage_attributes(span, usage):
     set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-        input_tokens,
+        int(input_tokens),
     )
 
     set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-        output_tokens,
+        int(output_tokens),
     )
 
     set_span_attribute(
         span,
         SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-        input_tokens + output_tokens,
+        int(input_tokens) + int(output_tokens),
     )
 
     if "search_units" in usage:

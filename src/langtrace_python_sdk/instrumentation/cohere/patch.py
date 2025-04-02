@@ -87,25 +87,25 @@ def rerank(original_method, version, tracer, v2=False):
                     and result.meta.billed_units is not None
                 ):
                     usage = result.meta.billed_units
-                    if usage is not None:
-                        span.set_attribute(
-                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-                            usage.input_tokens or 0,
-                        )
-                        span.set_attribute(
-                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-                            usage.output_tokens or 0,
-                        )
-
-                        span.set_attribute(
-                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                            (usage.input_tokens or 0) + (usage.output_tokens or 0),
-                        )
-
-                        span.set_attribute(
-                            "search_units",
-                            usage.search_units or 0,
-                        )
+                    input_tokens = int(usage.input_tokens) if usage.input_tokens else 0
+                    output_tokens = int(usage.output_tokens) if usage.output_tokens else 0
+                    span.set_attribute(
+                        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                        input_tokens,
+                    )
+                    span.set_attribute(
+                        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                        output_tokens,
+                    )
+                    span.set_attribute(
+                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                        input_tokens + output_tokens,
+                    )
+                    span.set_attribute(
+                        "search_units",
+                        int(usage.search_units) if usage.search_units else 0,
+                    )
+                        
 
             span.set_status(StatusCode.OK)
             span.end()
@@ -309,25 +309,25 @@ def chat_create(original_method, version, tracer):
                         and result.meta.billed_units is not None
                     ):
                         usage = result.meta.billed_units
-                        if usage is not None:
-                            span.set_attribute(
-                                SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-                                usage.input_tokens or 0,
-                            )
-                            span.set_attribute(
-                                SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-                                usage.output_tokens or 0,
-                            )
-
-                            span.set_attribute(
-                                SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                                (usage.input_tokens or 0) + (usage.output_tokens or 0),
-                            )
-
-                            span.set_attribute(
-                                "search_units",
-                                usage.search_units or 0,
-                            )
+                        input_tokens = int(usage.input_tokens) if usage.input_tokens else 0
+                        output_tokens = int(usage.output_tokens) if usage.output_tokens else 0
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                            input_tokens,
+                        )
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                            output_tokens,
+                        )
+                        span.set_attribute(
+                            SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                            input_tokens + output_tokens,
+                        )
+                        span.set_attribute(
+                            "search_units",
+                            int(usage.search_units) if usage.search_units else 0,
+                        )
+                            
                 span.set_status(StatusCode.OK)
                 span.end()
                 return result
@@ -419,10 +419,12 @@ def chat_create_v2(original_method, version, tracer, stream=False):
                     if (hasattr(result.usage, "billed_units") and 
                         result.usage.billed_units is not None):
                         usage = result.usage.billed_units
+                        input_tokens = int(usage.input_tokens) if usage.input_tokens else 0
+                        output_tokens = int(usage.output_tokens) if usage.output_tokens else 0
                         for metric, value in {
-                            "input": usage.input_tokens or 0,
-                            "output": usage.output_tokens or 0,
-                            "total": (usage.input_tokens or 0) + (usage.output_tokens or 0),
+                            "input": input_tokens,
+                            "output": output_tokens,
+                            "total": input_tokens + output_tokens,
                         }.items():
                             span.set_attribute(
                                 f"gen_ai.usage.{metric}_tokens",
@@ -571,26 +573,27 @@ def chat_stream(original_method, version, tracer):
                                 and response.meta.billed_units is not None
                             ):
                                 usage = response.meta.billed_units
-                                if usage is not None:
-                                    span.set_attribute(
-                                        SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
-                                        usage.input_tokens or 0,
-                                    )
-                                    span.set_attribute(
-                                        SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
-                                        usage.output_tokens or 0,
-                                    )
+                                input_tokens = int(usage.input_tokens) if usage.input_tokens else 0
+                                output_tokens = int(usage.output_tokens) if usage.output_tokens else 0
+                                span.set_attribute(
+                                    SpanAttributes.LLM_USAGE_PROMPT_TOKENS,
+                                    input_tokens,
+                                )
+                                span.set_attribute(
+                                    SpanAttributes.LLM_USAGE_COMPLETION_TOKENS,
+                                    output_tokens,
+                                )
+                                span.set_attribute(
+                                    SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
+                                    input_tokens + output_tokens,
+                                )
 
+                                if usage.search_units is not None:
                                     span.set_attribute(
-                                        SpanAttributes.LLM_USAGE_TOTAL_TOKENS,
-                                        (usage.input_tokens or 0)
-                                        + (usage.output_tokens or 0),
+                                        "search_units",
+                                        int(usage.search_units) if usage.search_units else 0,
                                     )
-                                    if usage.search_units is not None:
-                                        span.set_attribute(
-                                            "search_units",
-                                            usage.search_units or 0,
-                                        )
+                                    
 
                     yield event
             finally:
