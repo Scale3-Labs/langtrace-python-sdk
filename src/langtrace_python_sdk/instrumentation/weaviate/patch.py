@@ -26,9 +26,7 @@ from opentelemetry.trace.status import Status, StatusCode
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    SERVICE_PROVIDERS,
-)
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, SERVICE_PROVIDERS)
 from langtrace_python_sdk.constants.instrumentation.weaviate import APIS
 from langtrace_python_sdk.utils.llm import get_span_name
 from langtrace_python_sdk.utils.misc import extract_input_params, to_iso_format
@@ -53,6 +51,8 @@ def extract_inputs(args, kwargs):
         for k, v in kwargs.items()
         if k not in ["properties", "fusion_type", "filters"]
     }
+    # don't include vector in kwargs_without_properties
+    kwargs_without_properties.pop("vector", None)
     extracted_params.update(extract_input_params(args, kwargs_without_properties))
     if kwargs.get("filters", None):
         extracted_params["filters"] = str(kwargs["filters"])
@@ -109,7 +109,7 @@ def get_response_object_attributes(response_object):
         **{k: convert_value(v) for k, v in response_object.properties.items()},
         "uuid": str(response_object.uuid) if hasattr(response_object, "uuid") else None,
         "collection": getattr(response_object, "collection", None),
-        "vector": getattr(response_object, "vector", None),
+        # "vector": getattr(response_object, "vector", None),
         "references": getattr(response_object, "references", None),
         "metadata": (
             extract_metadata(response_object.metadata)
