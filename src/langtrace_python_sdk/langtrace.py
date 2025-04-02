@@ -299,7 +299,8 @@ def init(
     init_instrumentations(config.disable_instrumentations, all_instrumentations)
     add_span_processor(provider, config, exporter)
 
-    sys.stdout = sys.__stdout__
+    if config.disable_logging:
+        sys.stdout = sys.__stdout__
     init_sentry(config, host)
 
 
