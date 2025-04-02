@@ -738,7 +738,7 @@ def _set_openai_agentic_response_attributes(span: Span, response) -> None:
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
             "total_tokens": response.usage.total_tokens,
-            "cached_tokens": response.usage.input_tokens_details["cached_tokens"],
+            "cached_tokens": response.usage.input_tokens_details.cached_tokens,
         },
     )
 
