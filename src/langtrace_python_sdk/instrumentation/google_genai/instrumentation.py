@@ -8,7 +8,7 @@ from .patch import patch_google_genai, patch_google_genai_streaming
 
 class GoogleGenaiInstrumentation(BaseInstrumentor):
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["google-genai >= 0.1.0", "google-generativeai < 1.0.0"]
+        return ["google-genai >= 0.1.0"]
 
     def _instrument(self, **kwargs):
         trace_provider = kwargs.get("tracer_provider")

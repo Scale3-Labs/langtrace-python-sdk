@@ -14,25 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from typing import Any, Dict, Union
-from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
-from langtrace_python_sdk.utils import set_span_attribute
-from langtrace_python_sdk.types import NOT_GIVEN
-from tiktoken import get_encoding, list_encoding_names
-
-from langtrace_python_sdk.constants.instrumentation.common import (
-    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY,
-    TIKTOKEN_MODEL_MAPPING,
-)
-from langtrace_python_sdk.constants.instrumentation.openai import OPENAI_COST_TABLE
-from langtrace.trace_attributes import SpanAttributes
-from importlib_metadata import version as v
 import json
+import os
+from typing import Any, Dict, Union
+
+from importlib_metadata import version as v
+from langtrace.trace_attributes import SpanAttributes
 from opentelemetry import baggage
 from opentelemetry.trace import Span
 from opentelemetry.trace.status import StatusCode
+from tiktoken import get_encoding, list_encoding_names
 
-import os
+from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
+from langtrace_python_sdk.constants.instrumentation.common import (
+    LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY, TIKTOKEN_MODEL_MAPPING)
+from langtrace_python_sdk.constants.instrumentation.openai import \
+    OPENAI_COST_TABLE
+from langtrace_python_sdk.types import NOT_GIVEN
+from langtrace_python_sdk.utils import set_span_attribute
 
 
 def get_span_name(operation_name):
@@ -437,7 +436,6 @@ class StreamWrapper:
                 "".join(self.result_content), response_model
             )
         if self._span_started:
-            print("SPAAN", self.span)
             set_span_attribute(
                 self.span,
                 SpanAttributes.LLM_RESPONSE_MODEL,
