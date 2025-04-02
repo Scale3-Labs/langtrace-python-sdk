@@ -114,6 +114,9 @@ def openai_responses_create(version: str, tracer: Tracer) -> Callable:
                     return StreamWrapper(response, span)
                 else:
                     _set_openai_agentic_response_attributes(span, response)
+                    
+                span.set_status(StatusCode.OK)
+                span.end()
                 return response
             except Exception as err:
                 span.record_exception(err)
