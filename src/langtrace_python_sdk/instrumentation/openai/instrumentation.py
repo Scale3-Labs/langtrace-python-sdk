@@ -24,6 +24,8 @@ from langtrace_python_sdk.instrumentation.openai.patch import (
     async_embeddings_create,
     async_images_generate,
     chat_completions_create,
+    openai_responses_create,
+    async_openai_responses_create,
     embeddings_create,
     images_edit,
     images_generate,
@@ -32,7 +34,7 @@ from langtrace_python_sdk.instrumentation.openai.patch import (
 logging.basicConfig(level=logging.FATAL)
 
 
-class OpenAIInstrumentation(BaseInstrumentor): # type: ignore
+class OpenAIInstrumentation(BaseInstrumentor):  # type: ignore
 
     def instrumentation_dependencies(self) -> Collection[str]:
         return ["openai >= 0.27.0", "trace-attributes >= 4.0.5"]
@@ -52,6 +54,18 @@ class OpenAIInstrumentation(BaseInstrumentor): # type: ignore
             "openai.resources.chat.completions",
             "AsyncCompletions.create",
             async_chat_completions_create(version, tracer),
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.responses",
+            "AsyncResponses.create",
+            async_openai_responses_create(version, tracer),
+        )
+
+        wrap_function_wrapper(
+            "openai.resources.responses",
+            "Responses.create",
+            openai_responses_create(version, tracer),
         )
 
         wrap_function_wrapper(

@@ -24,7 +24,9 @@ ENABLED_EXAMPLES = {
     "cerebras": False,
     "google_genai": False,
     "graphlit": False,
-    "phidata": True,
+    "phidata": False,
+    "neo4j": True,
+    "neo4jgraphrag": True,
 }
 
 if ENABLED_EXAMPLES["anthropic"]:
@@ -158,3 +160,15 @@ if ENABLED_EXAMPLES["phidata"]:
 
     print(Fore.BLUE + "Running PhiData example" + Fore.RESET)
     PhiDataRunner().run()
+    
+if ENABLED_EXAMPLES["neo4j"]:
+    from examples.neo4j_example import Neo4jRunner
+
+    print(Fore.BLUE + "Running Neo4j example" + Fore.RESET)
+    Neo4jRunner().run()
+    
+if ENABLED_EXAMPLES["neo4jgraphrag"]:
+    from examples.neo4j_graphrag_example import Neo4jGraphRagRunner
+
+    print(Fore.BLUE + "Running Neo4jGraphRag example" + Fore.RESET)
+    Neo4jGraphRagRunner().run()
