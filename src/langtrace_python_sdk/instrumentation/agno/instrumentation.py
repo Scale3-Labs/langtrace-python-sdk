@@ -21,7 +21,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper as _W
 
-from .patch import patch_agent, patch_memory
+from .patch import patch_agent, patch_memory, patch_team
 
 
 class AgnoInstrumentation(BaseInstrumentor):
@@ -74,6 +74,27 @@ class AgnoInstrumentation(BaseInstrumentor):
                 "agno.memory.agent",
                 "AgentMemory.aupdate_summary",
                 patch_memory("AgentMemory.aupdate_summary", version, tracer),
+            )
+
+            _W(
+                "agno.team.team",
+                "Team.run",
+                patch_team("Team.run", version, tracer),
+            )
+            _W(
+                "agno.team.team",
+                "Team.arun",
+                patch_team("Team.arun", version, tracer),
+            )
+            _W(
+                "agno.team.team",
+                "Team._run",
+                patch_team("Team._run", version, tracer),
+            )
+            _W(
+                "agno.team.team",
+                "Team._arun",
+                patch_team("Team._arun", version, tracer),
             )
 
         except Exception:
