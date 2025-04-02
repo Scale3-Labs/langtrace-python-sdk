@@ -114,6 +114,9 @@ def openai_responses_create(version: str, tracer: Tracer) -> Callable:
                     return StreamWrapper(response, span)
                 else:
                     _set_openai_agentic_response_attributes(span, response)
+                    
+                span.set_status(StatusCode.OK)
+                span.end()
                 return response
             except Exception as err:
                 span.record_exception(err)
@@ -738,7 +741,7 @@ def _set_openai_agentic_response_attributes(span: Span, response) -> None:
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens,
             "total_tokens": response.usage.total_tokens,
-            "cached_tokens": response.usage.input_tokens_details["cached_tokens"],
+            "cached_tokens": response.usage.input_tokens_details.cached_tokens,
         },
     )
 
