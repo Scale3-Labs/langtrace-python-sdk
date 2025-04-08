@@ -37,7 +37,11 @@ from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME
 
 def driver_patch(operation_name, version, tracer):
     def traced_method(wrapped, instance, args, kwargs):
-        
+        try:
+            query = args[0].text if hasattr(args[0], "text") else args[0]
+            query_text = json.dumps(query)
+        except (AttributeError, TypeError):
+            query_text = args[0]
         api = APIS[operation_name]
         service_provider = SERVICE_PROVIDERS.get("NEO4J", "neo4j")
         extra_attributes = baggage.get_baggage(LANGTRACE_ADDITIONAL_SPAN_ATTRIBUTES_KEY)
@@ -49,7 +53,7 @@ def driver_patch(operation_name, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "neo4j",
             "db.operation": api["OPERATION"],
-            "db.query": json.dumps(args[0]) if args and len(args) > 0 else "",
+            "db.query": query_text,
             **(extra_attributes if extra_attributes is not None else {}),
         }
         
