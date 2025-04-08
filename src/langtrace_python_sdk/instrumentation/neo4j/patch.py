@@ -53,11 +53,7 @@ def driver_patch(operation_name, version, tracer):
             "langtrace.version": v(LANGTRACE_SDK_NAME),
             "db.system": "neo4j",
             "db.operation": api["OPERATION"],
-<<<<<<< HEAD
-            "db.query": json.dumps(args[0]) if args and len(args) > 0 else "",
-=======
             "db.query": query_text,
->>>>>>> development
             **(extra_attributes if extra_attributes is not None else {}),
         }
         
