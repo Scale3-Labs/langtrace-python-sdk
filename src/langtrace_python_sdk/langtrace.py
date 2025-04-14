@@ -205,7 +205,30 @@ def add_span_processor(provider: TracerProvider, config: LangtraceConfig, export
         )
     else:
         provider.add_span_processor(BatchSpanProcessor(exporter))
-        print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
+        project = get_project(config)
+        if project:
+            print(Fore.BLUE + f"Exporting spans to {project['name']}.." + Fore.RESET)
+            print(
+                Fore.BLUE
+                + f"Langtrace Project URL: {LANGTRACE_REMOTE_URL}/project/{project['id']}/traces"
+                + Fore.RESET
+            )
+        else:
+            print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
+
+
+def get_project(config: LangtraceConfig):
+    import requests
+
+    try:
+
+        response = requests.get(
+            f"{LANGTRACE_REMOTE_URL}/api/project",
+            headers={"x-api-key": config.api_key},
+        )
+        return response.json()["project"]
+    except Exception as error:
+        return None
 
 
 def init_sentry(config: LangtraceConfig, host: str):
