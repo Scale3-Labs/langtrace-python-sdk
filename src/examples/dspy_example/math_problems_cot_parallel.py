@@ -9,8 +9,8 @@ from langtrace_python_sdk import langtrace, with_langtrace_root_span, inject_add
 
 langtrace.init()
 
-turbo = dspy.OpenAI(model="gpt-3.5-turbo", max_tokens=250)
-dspy.settings.configure(lm=turbo)
+lm = dspy.LM('gpt-3.5-turbo')
+dspy.configure(lm=lm)
 
 # Load math questions from the GSM8K dataset
 gsm8k = GSM8K()
