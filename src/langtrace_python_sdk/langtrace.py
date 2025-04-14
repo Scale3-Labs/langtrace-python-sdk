@@ -221,7 +221,7 @@ def get_project(config: LangtraceConfig):
     import requests
 
     try:
-        print(config.api_key)
+
         response = requests.get(
             f"{LANGTRACE_REMOTE_URL}/api/project",
             headers={"x-api-key": config.api_key},
