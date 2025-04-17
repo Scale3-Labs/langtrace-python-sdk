@@ -71,11 +71,6 @@ class DspyInstrumentation(BaseInstrumentor):
             patch_signature("MultiChainComparison.forward", version, tracer),
         )
         _W(
-            "dspy.predict.retry",
-            "Retry.forward",
-            patch_signature("Retry.forward", version, tracer),
-        )
-        _W(
             "dspy.evaluate.evaluate",
             "Evaluate.__call__",
             patch_evaluate("Evaluate", version, tracer),

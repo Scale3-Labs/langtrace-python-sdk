@@ -8,8 +8,8 @@ langtrace.init(disable_instrumentations={"all_except": ["dspy", "anthropic"]})
 
 # configure the language model to be used by dspy
 
-llm = dspy.Claude()
-dspy.settings.configure(lm=llm)
+lm = dspy.LM('claude-3-opus-20240229')
+dspy.configure(lm=lm)
 
 # create a prompt format that says that the llm will take a question and give back an answer
 predict = dspy.Predict("question -> answer")
