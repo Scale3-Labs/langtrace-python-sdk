@@ -63,6 +63,10 @@ def generic_patch(version: str, tracer: Tracer) -> Callable:
                             result_json = str(result)
 
                     span.set_attribute("tlm.result", str(result_json))
+                    trustworthiness_score = result_json["trustworthiness_score"]
+                    log = result_json["log"]
+                    span.set_attribute("tlm.trustworthiness_score", str(trustworthiness_score))
+                    span.set_attribute("tlm.explanation", str(log.get("explanation", "")))
                     span.set_status(Status(StatusCode.OK))
 
                 return result
