@@ -17,47 +17,79 @@ limitations under the License.
 import logging
 import os
 import sys
+import warnings
 from typing import Any, Dict, Optional
 
 import sentry_sdk
 from colorama import Fore
 from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
-    OTLPSpanExporter as GRPCExporter
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import \
-    OTLPSpanExporter as HTTPExporter
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GRPCExporter,
+)
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter as HTTPExporter,
+)
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
-                                            ConsoleSpanExporter,
-                                            SimpleSpanProcessor)
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
 from opentelemetry.util.re import parse_env_headers
 from sentry_sdk.types import Event, Hint
 
 from langtrace_python_sdk.constants import LANGTRACE_SDK_NAME, SENTRY_DSN
 from langtrace_python_sdk.constants.exporter.langtrace_exporter import (
-    LANGTRACE_REMOTE_URL, LANGTRACE_SESSION_ID_HEADER)
-from langtrace_python_sdk.extensions.langtrace_exporter import \
-    LangTraceExporter
+    LANGTRACE_REMOTE_URL,
+    LANGTRACE_SESSION_ID_HEADER,
+)
+from langtrace_python_sdk.extensions.langtrace_exporter import LangTraceExporter
 from langtrace_python_sdk.instrumentation import (
-    AgnoInstrumentation, AnthropicInstrumentation, AutogenInstrumentation,
-    AWSBedrockInstrumentation, CerebrasInstrumentation, ChromaInstrumentation,
-    CleanLabInstrumentation, CohereInstrumentation, CrewAIInstrumentation,
-    CrewaiToolsInstrumentation, DspyInstrumentation, EmbedchainInstrumentation,
-    GeminiInstrumentation, GoogleGenaiInstrumentation, GraphlitInstrumentation,
-    GroqInstrumentation, LangchainCommunityInstrumentation,
-    LangchainCoreInstrumentation, LangchainInstrumentation, LanggraphInstrumentation, 
-    LiteLLMInstrumentation, LlamaindexInstrumentation, MilvusInstrumentation, 
-    MistralInstrumentation, Neo4jInstrumentation, Neo4jGraphRAGInstrumentation,
-    OllamaInstrumentor, OpenAIAgentsInstrumentation, OpenAIInstrumentation,
-    PhiDataInstrumentation, PineconeInstrumentation, PyMongoInstrumentation,
-    QdrantInstrumentation, VertexAIInstrumentation, WeaviateInstrumentation)
-from langtrace_python_sdk.types import (DisableInstrumentations,
-                                        InstrumentationMethods)
-from langtrace_python_sdk.utils import (check_if_sdk_is_outdated,
-                                        get_sdk_version, is_package_installed,
-                                        validate_instrumentations)
+    AgnoInstrumentation,
+    AnthropicInstrumentation,
+    AutogenInstrumentation,
+    AWSBedrockInstrumentation,
+    CerebrasInstrumentation,
+    ChromaInstrumentation,
+    CleanLabInstrumentation,
+    CohereInstrumentation,
+    CrewAIInstrumentation,
+    CrewaiToolsInstrumentation,
+    DspyInstrumentation,
+    EmbedchainInstrumentation,
+    GeminiInstrumentation,
+    GoogleGenaiInstrumentation,
+    GraphlitInstrumentation,
+    GroqInstrumentation,
+    LangchainCommunityInstrumentation,
+    LangchainCoreInstrumentation,
+    LangchainInstrumentation,
+    LanggraphInstrumentation,
+    LiteLLMInstrumentation,
+    LlamaindexInstrumentation,
+    MilvusInstrumentation,
+    MistralInstrumentation,
+    Neo4jInstrumentation,
+    Neo4jGraphRAGInstrumentation,
+    OllamaInstrumentor,
+    OpenAIAgentsInstrumentation,
+    OpenAIInstrumentation,
+    PhiDataInstrumentation,
+    PineconeInstrumentation,
+    PyMongoInstrumentation,
+    QdrantInstrumentation,
+    VertexAIInstrumentation,
+    WeaviateInstrumentation,
+)
+from langtrace_python_sdk.types import DisableInstrumentations, InstrumentationMethods
+from langtrace_python_sdk.utils import (
+    check_if_sdk_is_outdated,
+    get_sdk_version,
+    is_package_installed,
+    validate_instrumentations,
+)
 from langtrace_python_sdk.utils.langtrace_sampler import LangtraceSampler
 
 
@@ -173,7 +205,30 @@ def add_span_processor(provider: TracerProvider, config: LangtraceConfig, export
         )
     else:
         provider.add_span_processor(BatchSpanProcessor(exporter))
-        print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
+        project = get_project(config)
+        if project:
+            print(Fore.BLUE + f"Exporting spans to {project['name']}.." + Fore.RESET)
+            print(
+                Fore.BLUE
+                + f"Langtrace Project URL: {LANGTRACE_REMOTE_URL}/project/{project['id']}/traces"
+                + Fore.RESET
+            )
+        else:
+            print(Fore.BLUE + "Exporting spans to Langtrace cloud.." + Fore.RESET)
+
+
+def get_project(config: LangtraceConfig):
+    import requests
+
+    try:
+
+        response = requests.get(
+            f"{LANGTRACE_REMOTE_URL}/api/project",
+            headers={"x-api-key": config.api_key},
+        )
+        return response.json()["project"]
+    except Exception as error:
+        return None
 
 
 def init_sentry(config: LangtraceConfig, host: str):
@@ -329,6 +384,8 @@ def init_instrumentations(
             if is_package_installed(name):
                 try:
                     v.instrument()
+                    warnings.filterwarnings("ignore", category=DeprecationWarning)
+                    warnings.filterwarnings("ignore", category=UserWarning)
                 except Exception as e:
                     print(f"Skipping {name} due to error while instrumenting: {e}")
 
@@ -354,5 +411,7 @@ def init_instrumentations(
             if is_package_installed(name):
                 try:
                     v.instrument()
+                    warnings.filterwarnings("ignore", category=DeprecationWarning)
+                    warnings.filterwarnings("ignore", category=UserWarning)
                 except Exception as e:
                     print(f"Skipping {name} due to error while instrumenting: {e}")
