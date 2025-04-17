@@ -15,8 +15,8 @@ from langtrace_python_sdk import langtrace, with_langtrace_root_span
 
 langtrace.init()
 
-turbo = dspy.OpenAI(model="gpt-3.5-turbo", max_tokens=250)
-dspy.settings.configure(lm=turbo)
+lm = dspy.LM('gpt-3.5-turbo')
+dspy.configure(lm=lm)
 
 colbertv2_wiki17_abstracts = dspy.ColBERTv2(
     url="http://20.102.90.50:2017/wiki17_abstracts"
