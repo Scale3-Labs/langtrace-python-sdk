@@ -7,8 +7,8 @@ load_dotenv()
 langtrace.init(disable_instrumentations={"all_except": ["dspy", "anthropic"]})
 
 # configure the language model to be used by dspy
-llm = dspy.Claude()
-dspy.settings.configure(lm=llm)
+lm = dspy.LM('claude-3-opus-20240229')
+dspy.configure(lm=lm)
 
 
 # create a signature for basic question answering
