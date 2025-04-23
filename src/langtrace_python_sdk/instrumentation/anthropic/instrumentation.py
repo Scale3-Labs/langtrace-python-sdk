@@ -23,7 +23,7 @@ from opentelemetry.trace import TracerProvider
 from opentelemetry.trace import get_tracer
 from wrapt import wrap_function_wrapper
 from typing import Any
-from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create
+from langtrace_python_sdk.instrumentation.anthropic.patch import messages_create, messages_stream
 
 logging.basicConfig(level=logging.FATAL)
 
@@ -45,6 +45,12 @@ class AnthropicInstrumentation(BaseInstrumentor):  # type: ignore[misc]
             "anthropic.resources.messages",
             "Messages.create",
             messages_create(version, tracer),
+        )
+        
+        wrap_function_wrapper(
+            "anthropic.resources.messages",
+            "Messages.stream",
+            messages_stream(version, tracer),
         )
 
     def _instrument_module(self, module_name: str) -> None:
