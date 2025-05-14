@@ -1,3 +1,4 @@
+import base64
 from langtrace_python_sdk.utils.llm import (
     get_langtrace_attributes,
     get_llm_request_attributes,
@@ -14,20 +15,65 @@ from langtrace.trace_attributes import SpanAttributes
 
 from typing import Iterator
 
+def capture_input_data(contents):
+    input_data = []
+    
+    if isinstance(contents, list):
+        content_parts = []
+        for content in contents:
+            if hasattr(content, 'parts'):
+                for part in content.parts:
+                    if hasattr(part, 'text') and part.text:
+                        content_parts.append({
+                            "type": "text",
+                            "text": part.text
+                        })
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        content_parts.append({
+                            "type": "image_url",
+                            "image_url": f"data:{part.inline_data.mime_type};base64,{base64.b64encode(part.inline_data.data).decode('utf-8')}"
+                        })
+            else:
+                if isinstance(content, str):
+                    content_parts.append({
+                        "type": "text",
+                        "text": content
+                    })
+                elif hasattr(content, 'text') and content.text:
+                    content_parts.append({
+                        "type": "text",
+                        "text": content.text
+                    })
+                elif hasattr(content, 'inline_data') and content.inline_data:
+                    content_parts.append({
+                        "type": "image_url",
+                        "image_url": f"data:{content.inline_data.mime_type};base64,{base64.b64encode(content.inline_data.data).decode('utf-8')}"
+                    })
+                else:
+                    content_parts.append({
+                        "type": "text",
+                        "text": content
+                    })
+        input_data.append({
+            "role": "user",
+            "content": content_parts
+        })
+    else:
+        input_data.append({
+            "role": "user",
+            "content": contents
+        })
+    
+    return input_data
+
 
 def patch_google_genai(tracer: Tracer, version: str):
     def traced_method(wrapped, instance, args, kwargs):
-        prompt = [
-            {
-                "role": "user",
-                "content": kwargs["contents"],
-            }
-        ]
         span_attributes = {
             **get_langtrace_attributes(
                 service_provider="google_genai", version=version
             ),
-            **get_llm_request_attributes(kwargs=kwargs, prompts=prompt),
+            **get_llm_request_attributes(kwargs=kwargs, prompts=capture_input_data(kwargs["contents"])),
         }
         with tracer.start_as_current_span(
             name="google.genai.generate_content",
