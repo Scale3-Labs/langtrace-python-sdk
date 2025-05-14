@@ -84,6 +84,9 @@ packages = ["src/langtrace_python_sdk", "src/examples", "src/tests"]
 [tool.hatch.source]
 url = "https://langtrace.gateway.scarf.sh/simple/"
 
+[global]
+extra-index-url = "https://langtrace.gateway.scarf.sh/simple/"
+
 [project.entry-points."fsspec.specs"]
 langtracefs = "langtrace_python_sdk:LangTraceFileSystem"
 
