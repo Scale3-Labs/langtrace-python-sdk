@@ -169,7 +169,13 @@ def patch_converse(original_method, tracer, version):
 
 
 def parse_vendor_and_model_name_from_model_id(model_id):
-    # FIXME: Handle in-region, cross-region inference and ARN models too.
+    if model_id.startswith("arn:aws:bedrock:"):
+        # This needs to be in one of the following forms:
+        # arn:aws:bedrock:region:account-id:foundation-model/vendor.model-name
+        # arn:aws:bedrock:region:account-id:custom-model/vendor.model-name/model-id
+        parts = model_id.split("/")
+        identifiers = parts[1].split(".")
+        return identifiers[0], identifiers[1]
     parts = model_id.split(".")
     if len(parts) == 1:
         return parts[0], parts[0]
@@ -252,7 +258,7 @@ def handle_streaming_call(span, kwargs, response):
 
 def handle_call(span, kwargs, response):
     modelId = kwargs.get("modelId")
-    vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
+    vendor, model_name = parse_vendor_and_model_name_from_model_id(modelId)
     read_response_body = response.get("body").read()
     request_body = json.loads(kwargs.get("body"))
     response_body = json.loads(read_response_body)
@@ -264,7 +270,10 @@ def handle_call(span, kwargs, response):
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, modelId)
 
     if vendor == "amazon":
-        set_amazon_attributes(span, request_body, response_body)
+        if model_name.startswith("titan-embed-text"):
+            set_amazon_embedding_attributes(span, request_body, response_body)
+        else:
+            set_amazon_attributes(span, request_body, response_body)
 
     if vendor == "anthropic":
         if "prompt" in request_body:
@@ -366,6 +375,27 @@ def set_amazon_attributes(span, request_body, response_body):
         },
     )
     set_event_completion(span, completions)
+
+
+def set_amazon_embedding_attributes(span, request_body, response_body):
+    input_text = request_body.get("inputText")
+    set_span_attribute(span, SpanAttributes.LLM_CONTENT_PROMPT, input_text)
+
+    embeddings = response_body.get("embedding", [])
+    input_tokens = response_body.get("inputTextTokenCount")
+    set_usage_attributes(
+        span,
+        {
+            "input_tokens": input_tokens,
+            "output": len(embeddings),
+        },
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MODEL, request_body.get("modelId")
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, request_body.get("modelId")
+    )
 
 
 def set_anthropic_completions_attributes(span, request_body, response_body):
