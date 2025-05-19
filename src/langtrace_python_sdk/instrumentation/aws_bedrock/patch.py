@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import json
+import io
 
 from wrapt import ObjectProxy
 from .stream_body_wrapper import BufferedStreamBody
@@ -167,10 +168,20 @@ def patch_converse(original_method, tracer, version):
     return traced_method
 
 
+def parse_vendor_and_model_name_from_model_id(model_id):
+    # FIXME: Handle in-region, cross-region inference and ARN models too.
+    parts = model_id.split(".")
+    if len(parts) == 1:
+        return parts[0], parts[0]
+    else:
+        return parts[-2], parts[-1]
+
+
 def patch_invoke_model(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
+        print("vendor=%s from modelId=%s", vendor, modelId)
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
             **get_extra_attributes(),
@@ -241,12 +252,13 @@ def handle_streaming_call(span, kwargs, response):
 
 def handle_call(span, kwargs, response):
     modelId = kwargs.get("modelId")
-    (vendor, model_name) = modelId.split(".")
-    response["body"] = BufferedStreamBody(
-        response["body"]._raw_stream, response["body"]._content_length
-    )
+    vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
+    read_response_body = response.get("body").read()
     request_body = json.loads(kwargs.get("body"))
-    response_body = json.loads(response.get("body").read())
+    response_body = json.loads(read_response_body)
+    response["body"] = BufferedStreamBody(
+        io.BytesIO(read_response_body), len(read_response_body)
+    )
 
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, modelId)
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, modelId)
