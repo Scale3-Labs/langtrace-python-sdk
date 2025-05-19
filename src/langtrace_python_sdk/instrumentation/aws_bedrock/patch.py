@@ -44,6 +44,7 @@ from langtrace_python_sdk.utils.llm import (
     set_span_attributes,
     set_usage_attributes,
 )
+from langtrace_python_sdk.utils import set_event_prompt
 
 
 def converse_stream(original_method, version, tracer):
@@ -190,6 +191,8 @@ def patch_invoke_model(original_method, tracer, version):
         print("vendor=%s from modelId=%s", vendor, modelId)
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
+            SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL"]["ENDPOINT"],
+            SpanAttributes.LLM_IS_STREAMING: False,
             **get_extra_attributes(),
         }
         with tracer.start_as_current_span(
@@ -213,6 +216,8 @@ def patch_invoke_model_with_response_stream(original_method, tracer, version):
         (vendor, _) = modelId.split(".")
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
+            SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL"]["ENDPOINT"],
+            SpanAttributes.LLM_IS_STREAMING: True,
             **get_extra_attributes(),
         }
         span = tracer.start_span(
@@ -379,7 +384,7 @@ def set_amazon_attributes(span, request_body, response_body):
 
 def set_amazon_embedding_attributes(span, request_body, response_body):
     input_text = request_body.get("inputText")
-    set_span_attribute(span, SpanAttributes.LLM_CONTENT_PROMPT, input_text)
+    set_event_prompt(span, input_text)
 
     embeddings = response_body.get("embedding", [])
     input_tokens = response_body.get("inputTextTokenCount")
