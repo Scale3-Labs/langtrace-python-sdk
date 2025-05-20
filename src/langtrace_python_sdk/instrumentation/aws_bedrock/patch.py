@@ -188,7 +188,6 @@ def patch_invoke_model(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
         vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
-        print("vendor=%s from modelId=%s", vendor, modelId)
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
             SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL"]["ENDPOINT"],
@@ -213,10 +212,10 @@ def patch_invoke_model_with_response_stream(original_method, tracer, version):
     @wraps(original_method)
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
-            SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL"]["ENDPOINT"],
+            SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL_WITH_RESPONSE_STREAM"]["ENDPOINT"],
             SpanAttributes.LLM_IS_STREAMING: True,
             **get_extra_attributes(),
         }
@@ -239,7 +238,7 @@ def handle_streaming_call(span, kwargs, response):
     def stream_finished(response_body):
         request_body = json.loads(kwargs.get("body"))
 
-        (vendor, model) = kwargs.get("modelId").split(".")
+        vendor, model = parse_vendor_and_model_name_from_model_id(kwargs.get("modelId"))
 
         set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
         set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
