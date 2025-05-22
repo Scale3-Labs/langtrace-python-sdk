@@ -5,6 +5,10 @@ APIS = {
         "METHOD": "aws_bedrock.invoke_model",
         "ENDPOINT": "/invoke-model",
     },
+    "INVOKE_MODEL_WITH_RESPONSE_STREAM": {
+        "METHOD": "aws_bedrock.invoke_model_with_response_stream",
+        "ENDPOINT": "/invoke-model-with-response-stream",
+    },
     "CONVERSE": {
         "METHOD": AWSBedrockMethods.CONVERSE.value,
         "ENDPOINT": "/converse",
