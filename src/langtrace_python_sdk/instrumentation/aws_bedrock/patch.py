@@ -17,6 +17,7 @@ limitations under the License.
 import json
 
 from wrapt import ObjectProxy
+from itertools import tee
 from .stream_body_wrapper import BufferedStreamBody
 from functools import wraps
 from langtrace.trace_attributes import (
@@ -128,7 +129,9 @@ def patch_converse_stream(original_method, tracer, version):
             response = original_method(*args, **kwargs)
 
             if span.is_recording():
-                set_span_streaming_response(span, response)
+                stream1, stream2 = tee(response["stream"])
+                set_span_streaming_response(span, stream1)
+                response["stream"] = stream2
             return response
 
     return traced_method
@@ -442,10 +445,10 @@ def _set_response_attributes(span, kwargs, result):
         )
 
 
-def set_span_streaming_response(span, response):
+def set_span_streaming_response(span, response_stream):
     streaming_response = ""
     role = None
-    for event in response["stream"]:
+    for event in response_stream:
         if "messageStart" in event:
             role = event["messageStart"]["role"]
         elif "contentBlockDelta" in event:
