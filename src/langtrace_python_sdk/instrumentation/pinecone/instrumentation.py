@@ -33,7 +33,7 @@ class PineconeInstrumentation(BaseInstrumentor):
     The PineconeInstrumentation class represents the Pinecone instrumentation"""
 
     def instrumentation_dependencies(self) -> Collection[str]:
-        return ["pinecone >= 3.1.0"]
+        return ["pinecone >= 3.1.0", "pinecone <= 6.0.2"]
 
     def _instrument(self, **kwargs):
         tracer_provider = kwargs.get("tracer_provider")
