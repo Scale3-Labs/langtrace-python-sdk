@@ -524,13 +524,15 @@ class StreamingBedrockWrapper(ObjectProxy):
         stream_done_callback=None,
     ):
         super().__init__(response)
-
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = {"generation": ""}
+        self.last_chunk = None
 
     def __iter__(self):
         for event in self.__wrapped__:
+            # Process the event
             self._process_event(event)
+            # Yield the original event immediately
             yield event
 
     def _process_event(self, event):
@@ -545,7 +547,11 @@ class StreamingBedrockWrapper(ObjectProxy):
             self._stream_done_callback(decoded_chunk)
             return
         if "generation" in decoded_chunk:
-            self._accumulating_body["generation"] += decoded_chunk.get("generation")
+            generation = decoded_chunk.get("generation")
+            if self.last_chunk == generation:
+                return
+            self.last_chunk = generation
+            self._accumulating_body["generation"] += generation
 
         if type == "message_start":
             self._accumulating_body = decoded_chunk.get("message")
@@ -554,9 +560,11 @@ class StreamingBedrockWrapper(ObjectProxy):
                 decoded_chunk.get("content_block")
             )
         elif type == "content_block_delta":
-            self._accumulating_body["content"][-1]["text"] += decoded_chunk.get(
-                "delta"
-            ).get("text")
+            text = decoded_chunk.get("delta").get("text")
+            if self.last_chunk == text:
+                return
+            self.last_chunk = text
+            self._accumulating_body["content"][-1]["text"] += text
 
         elif self.has_finished(type, decoded_chunk):
             self._accumulating_body["invocation_metrics"] = decoded_chunk.get(
