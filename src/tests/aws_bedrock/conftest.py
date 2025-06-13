@@ -14,7 +14,9 @@ from langtrace_python_sdk.instrumentation.aws_bedrock.instrumentation import (
 @pytest.fixture(autouse=True)
 def environment():
     if not os.getenv("AWS_ACCESS_KEY_ID"):
-        os.environ["AWS_ACCESS_KEY_ID"] = "test_api_key"
+        os.environ["AWS_ACCESS_KEY_ID"] = "test_aws_access_key_id"
+    if not os.getenv("AWS_SECRET_ACCESS_KEY"):
+        os.environ["AWS_SECRET_ACCESS_KEY"] = "test_aws_secret_access_key"
 
 
 @pytest.fixture
