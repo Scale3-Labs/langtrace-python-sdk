@@ -107,7 +107,7 @@ def patch_aws_bedrock(tracer, version):
 def patch_converse_stream(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         input_content = [
             {
                 "role": message.get("role", "user"),
@@ -142,7 +142,7 @@ def patch_converse_stream(original_method, tracer, version):
 def patch_converse(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         input_content = [
             {
                 "role": message.get("role", "user"),
