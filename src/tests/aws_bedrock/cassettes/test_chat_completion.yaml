@@ -1,0 +1,45 @@
+interactions:
+- request:
+    body: '{"messages": [{"role": "user", "content": "Say this is a test three times"}],
+      "anthropic_version": "bedrock-2023-05-31", "max_tokens": 100}'
+    headers:
+      Accept:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      Content-Length:
+      - '139'
+      Content-Type:
+      - !!binary |
+        YXBwbGljYXRpb24vanNvbg==
+      User-Agent:
+      - !!binary |
+        Qm90bzMvMS4zOC4xOCBtZC9Cb3RvY29yZSMxLjM4LjE4IHVhLzIuMSBvcy9tYWNvcyMyNC40LjAg
+        bWQvYXJjaCNhcm02NCBsYW5nL3B5dGhvbiMzLjEzLjEgbWQvcHlpbXBsI0NQeXRob24gbS9aLGIg
+        Y2ZnL3JldHJ5LW1vZGUjc3RhbmRhcmQgQm90b2NvcmUvMS4zOC4xOA==
+    method: POST
+    uri: https://bedrock-runtime.us-east-1.amazonaws.com/model/us.anthropic.claude-3-7-sonnet-20250219-v1%3A0/invoke
+  response:
+    body:
+      string: '{"id":"msg_bdrk_01NJB1bDTLkFh6pgfoAD5hkb","type":"message","role":"assistant","model":"claude-3-7-sonnet-20250219","content":[{"type":"text","text":"This
+        is a test.\nThis is a test.\nThis is a test."}],"stop_reason":"end_turn","stop_sequence":null,"usage":{"input_tokens":14,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":20}}'
+    headers:
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '355'
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 19 May 2025 16:42:05 GMT
+      X-Amzn-Bedrock-Input-Token-Count:
+      - '14'
+      X-Amzn-Bedrock-Invocation-Latency:
+      - '926'
+      X-Amzn-Bedrock-Output-Token-Count:
+      - '20'
+      x-amzn-RequestId:
+      - c0a92363-ec28-4a8b-9c09-571131d946b0
+    status:
+      code: 200
+      message: OK
+version: 1

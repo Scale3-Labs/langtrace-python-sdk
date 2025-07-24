@@ -15,8 +15,10 @@ limitations under the License.
 """
 
 import json
+import io
 
 from wrapt import ObjectProxy
+from itertools import tee
 from .stream_body_wrapper import BufferedStreamBody
 from functools import wraps
 from langtrace.trace_attributes import (
@@ -43,6 +45,7 @@ from langtrace_python_sdk.utils.llm import (
     set_span_attributes,
     set_usage_attributes,
 )
+from langtrace_python_sdk.utils import set_event_prompt
 
 
 def converse_stream(original_method, version, tracer):
@@ -104,7 +107,7 @@ def patch_aws_bedrock(tracer, version):
 def patch_converse_stream(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         input_content = [
             {
                 "role": message.get("role", "user"),
@@ -128,7 +131,9 @@ def patch_converse_stream(original_method, tracer, version):
             response = original_method(*args, **kwargs)
 
             if span.is_recording():
-                set_span_streaming_response(span, response)
+                stream1, stream2 = tee(response["stream"])
+                set_span_streaming_response(span, stream1)
+                response["stream"] = stream2
             return response
 
     return traced_method
@@ -137,7 +142,7 @@ def patch_converse_stream(original_method, tracer, version):
 def patch_converse(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         input_content = [
             {
                 "role": message.get("role", "user"),
@@ -167,12 +172,29 @@ def patch_converse(original_method, tracer, version):
     return traced_method
 
 
+def parse_vendor_and_model_name_from_model_id(model_id):
+    if model_id.startswith("arn:aws:bedrock:"):
+        # This needs to be in one of the following forms:
+        # arn:aws:bedrock:region:account-id:foundation-model/vendor.model-name
+        # arn:aws:bedrock:region:account-id:custom-model/vendor.model-name/model-id
+        parts = model_id.split("/")
+        identifiers = parts[1].split(".")
+        return identifiers[0], identifiers[1]
+    parts = model_id.split(".")
+    if len(parts) == 1:
+        return parts[0], parts[0]
+    else:
+        return parts[-2], parts[-1]
+
+
 def patch_invoke_model(original_method, tracer, version):
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
+            SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL"]["ENDPOINT"],
+            SpanAttributes.LLM_IS_STREAMING: False,
             **get_extra_attributes(),
         }
         with tracer.start_as_current_span(
@@ -193,9 +215,11 @@ def patch_invoke_model_with_response_stream(original_method, tracer, version):
     @wraps(original_method)
     def traced_method(*args, **kwargs):
         modelId = kwargs.get("modelId")
-        (vendor, _) = modelId.split(".")
+        vendor, _ = parse_vendor_and_model_name_from_model_id(modelId)
         span_attributes = {
             **get_langtrace_attributes(version, vendor, vendor_type="framework"),
+            SpanAttributes.LLM_PATH: APIS["INVOKE_MODEL_WITH_RESPONSE_STREAM"]["ENDPOINT"],
+            SpanAttributes.LLM_IS_STREAMING: True,
             **get_extra_attributes(),
         }
         span = tracer.start_span(
@@ -217,7 +241,7 @@ def handle_streaming_call(span, kwargs, response):
     def stream_finished(response_body):
         request_body = json.loads(kwargs.get("body"))
 
-        (vendor, model) = kwargs.get("modelId").split(".")
+        vendor, model = parse_vendor_and_model_name_from_model_id(kwargs.get("modelId"))
 
         set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, model)
         set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, model)
@@ -241,18 +265,22 @@ def handle_streaming_call(span, kwargs, response):
 
 def handle_call(span, kwargs, response):
     modelId = kwargs.get("modelId")
-    (vendor, model_name) = modelId.split(".")
-    response["body"] = BufferedStreamBody(
-        response["body"]._raw_stream, response["body"]._content_length
-    )
+    vendor, model_name = parse_vendor_and_model_name_from_model_id(modelId)
+    read_response_body = response.get("body").read()
     request_body = json.loads(kwargs.get("body"))
-    response_body = json.loads(response.get("body").read())
+    response_body = json.loads(read_response_body)
+    response["body"] = BufferedStreamBody(
+        io.BytesIO(read_response_body), len(read_response_body)
+    )
 
     set_span_attribute(span, SpanAttributes.LLM_RESPONSE_MODEL, modelId)
     set_span_attribute(span, SpanAttributes.LLM_REQUEST_MODEL, modelId)
 
     if vendor == "amazon":
-        set_amazon_attributes(span, request_body, response_body)
+        if model_name.startswith("titan-embed-text"):
+            set_amazon_embedding_attributes(span, request_body, response_body)
+        else:
+            set_amazon_attributes(span, request_body, response_body)
 
     if vendor == "anthropic":
         if "prompt" in request_body:
@@ -356,6 +384,27 @@ def set_amazon_attributes(span, request_body, response_body):
     set_event_completion(span, completions)
 
 
+def set_amazon_embedding_attributes(span, request_body, response_body):
+    input_text = request_body.get("inputText")
+    set_event_prompt(span, input_text)
+
+    embeddings = response_body.get("embedding", [])
+    input_tokens = response_body.get("inputTextTokenCount")
+    set_usage_attributes(
+        span,
+        {
+            "input_tokens": input_tokens,
+            "output": len(embeddings),
+        },
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_REQUEST_MODEL, request_body.get("modelId")
+    )
+    set_span_attribute(
+        span, SpanAttributes.LLM_RESPONSE_MODEL, request_body.get("modelId")
+    )
+
+
 def set_anthropic_completions_attributes(span, request_body, response_body):
     set_span_attribute(
         span,
@@ -442,10 +491,10 @@ def _set_response_attributes(span, kwargs, result):
         )
 
 
-def set_span_streaming_response(span, response):
+def set_span_streaming_response(span, response_stream):
     streaming_response = ""
     role = None
-    for event in response["stream"]:
+    for event in response_stream:
         if "messageStart" in event:
             role = event["messageStart"]["role"]
         elif "contentBlockDelta" in event:
@@ -475,13 +524,15 @@ class StreamingBedrockWrapper(ObjectProxy):
         stream_done_callback=None,
     ):
         super().__init__(response)
-
         self._stream_done_callback = stream_done_callback
         self._accumulating_body = {"generation": ""}
+        self.last_chunk = None
 
     def __iter__(self):
         for event in self.__wrapped__:
+            # Process the event
             self._process_event(event)
+            # Yield the original event immediately
             yield event
 
     def _process_event(self, event):
@@ -496,7 +547,11 @@ class StreamingBedrockWrapper(ObjectProxy):
             self._stream_done_callback(decoded_chunk)
             return
         if "generation" in decoded_chunk:
-            self._accumulating_body["generation"] += decoded_chunk.get("generation")
+            generation = decoded_chunk.get("generation")
+            if self.last_chunk == generation:
+                return
+            self.last_chunk = generation
+            self._accumulating_body["generation"] += generation
 
         if type == "message_start":
             self._accumulating_body = decoded_chunk.get("message")
@@ -505,9 +560,11 @@ class StreamingBedrockWrapper(ObjectProxy):
                 decoded_chunk.get("content_block")
             )
         elif type == "content_block_delta":
-            self._accumulating_body["content"][-1]["text"] += decoded_chunk.get(
-                "delta"
-            ).get("text")
+            text = decoded_chunk.get("delta").get("text")
+            if self.last_chunk == text:
+                return
+            self.last_chunk = text
+            self._accumulating_body["content"][-1]["text"] += text
 
         elif self.has_finished(type, decoded_chunk):
             self._accumulating_body["invocation_metrics"] = decoded_chunk.get(
